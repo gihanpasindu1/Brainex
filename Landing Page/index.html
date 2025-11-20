@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brainex - AI-Powered A/L ICT Exam Prep | Smarter Study Plans & Model Papers</title>
+    <meta
+      name="description"
+      content="Transform your A/L ICT exam preparation with Brainex. AI-powered study plans, 50+ MCQ model papers, weekly challenges, gamified learning with badges & XP. Built for Sri Lankan students."
+    />
+    <meta name="author" content="Brainex" />
+
+    <!-- Inter font (same as original) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- OG / Twitter (same content, no React needed) -->
+    <meta property="og:title" content="Brainex - Smarter Exam Prep for A/L ICT Students" />
+    <meta
+      property="og:description"
+      content="AI-powered study plans, model papers, weekly challenges, and gamification for A/L ICT students"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Brainex - AI-Powered A/L ICT Exam Prep" />
+    <meta name="twitter:description" content="Transform your A/L ICT exam preparation with AI-powered learning" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <!-- HEADER -->
+    <header class="header" id="site-header">
+      <div class="container header-inner">
+        <!-- Logo -->
+        <button class="logo" id="logo-top">
+          <div class="logo-icon">🧠</div>
+          <span class="logo-text">Brainex</span>
+        </button>
+
+        <!-- Desktop nav -->
+        <nav class="nav-desktop">
+          <button class="nav-link" data-scroll-target="features">Features</button>
+          <button class="nav-link" data-scroll-target="how-it-works">How It Works</button>
+          <button class="nav-link" data-scroll-target="gamification">Gamification</button>
+          <button class="nav-link" data-scroll-target="testimonials">Testimonials</button>
+        </nav>
+
+        <!-- Desktop CTA -->
+        <div class="header-cta">
+          <button class="btn btn-primary">Download App</button>
+        </div>
+
+        <!-- Mobile menu button -->
+        <button class="menu-toggle" id="menu-toggle" aria-label="Open navigation">
+          ☰
+        </button>
+      </div>
+
+      <!-- Mobile sheet menu -->
+      <div class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-inner">
+          <div class="mobile-menu-header">
+            <div class="logo-icon">🧠</div>
+            <span class="logo-text">Brainex</span>
+            <button class="menu-close" id="menu-close" aria-label="Close navigation">✕</button>
+          </div>
+          <nav class="mobile-nav-links">
+            <button class="mobile-nav-link" data-scroll-target="features">Features</button>
+            <button class="mobile-nav-link" data-scroll-target="how-it-works">How It Works</button>
+            <button class="mobile-nav-link" data-scroll-target="gamification">Gamification</button>
+            <button class="mobile-nav-link" data-scroll-target="testimonials">Testimonials</button>
+          </nav>
+          <div class="mobile-cta">
+            <button class="btn btn-primary btn-block">Download App</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-bg-layer hero-bg-1"></div>
+        <div class="hero-bg-layer hero-bg-2"></div>
+        <div class="hero-bg-layer hero-bg-3"></div>
+
+        <div class="container hero-grid">
+          <!-- Left -->
+          <div class="hero-left animate-fade-in-up">
+            <h1 class="hero-title">
+              <span class="hero-title-gradient">Brainex</span><br />
+              <span class="hero-title-main">Smarter Exam Prep for A/L ICT Students</span>
+            </h1>
+            <p class="hero-subtitle">
+              AI-powered study plans, model papers, weekly challenges, badges, and smart note summaries — all in one app
+              built for your success.
+            </p>
+
+            <div class="hero-actions">
+              <button class="btn btn-primary btn-lg">Download App</button>
+              <button class="btn btn-outline btn-lg">
+                ▶
+                <span>Watch Demo</span>
+              </button>
+            </div>
+
+            <div class="hero-stats">
+              <div class="hero-stat">
+                <div class="hero-stat-number hero-stat-primary">50+</div>
+                <div class="hero-stat-label">Model Papers</div>
+              </div>
+              <div class="hero-stat">
+                <div class="hero-stat-number hero-stat-secondary">15+</div>
+                <div class="hero-stat-label">Topic Badges</div>
+              </div>
+              <div class="hero-stat">
+                <div class="hero-stat-number hero-stat-accent">24/7</div>
+                <div class="hero-stat-label">AI Chatbot</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right (hero mockup image) -->
+          <div class="hero-right animate-fade-in" style="animation-delay: 0.3s">
+            <div class="hero-mockup animate-float">
+              <!-- Replace src with your real hero-mockup image if you want -->
+              <img src="hero-mockup.png" alt="Brainex App Dashboard" class="hero-mockup-img" />
+              <div class="hero-mockup-glow"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="scroll-indicator">
+          <div class="scroll-indicator-frame">
+            <div class="scroll-indicator-dot"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURES -->
+      <section class="section bg-background" id="features">
+        <div class="blob blob-top-right"></div>
+        <div class="blob blob-bottom-left"></div>
+
+        <div class="container section-inner">
+          <div class="section-heading animate-fade-in-up">
+            <h2 class="section-title">
+              <span class="text-gradient-primary">Powerful Features</span><br />
+              <span>Built for Your Success</span>
+            </h2>
+            <p class="section-subtitle">
+              Everything you need to master A/L ICT, all in one intelligent platform
+            </p>
+          </div>
+
+          <div class="grid features-grid">
+            <!-- Feature cards (same text as React version) -->
+            <article class="card feature-card animate-fade-in-up" style="animation-delay: 0s">
+              <div class="feature-icon gradient-1">🤖</div>
+              <h3 class="card-title">AI Chatbot (Syllabus-Based)</h3>
+              <p class="card-text">
+                A smart chatbot trained strictly on A/L ICT syllabus. It explains any ICT topic, theory, or past paper
+                question clearly.
+              </p>
+            </article>
+
+            <article class="card feature-card animate-fade-in-up" style="animation-delay: 0.1s">
+              <div class="feature-icon gradient-2">🎯</div>
+              <h3 class="card-title">Smart Study Plans</h3>
+              <p class="card-text">
+                Personalized study plans for final or term exams, based on student preferences, grade, and available
+                time.
+              </p>
+            </article>
+
+            <article class="card feature-card animate-fade-in-up" style="animation-delay: 0.2s">
+              <div class="feature-icon gradient-3">📄</div>
+              <h3 class="card-title">50 MCQ Model Paper Generator</h3>
+              <p class="card-text">
+                AI-generated model papers using RAG-trained ICT content. Auto-evaluates answers and shows detailed
+                explanations.
+              </p>
+            </article>
+
+            <article class="card feature-card animate-fade-in-up" style="animation-delay: 0.3s">
+              <div class="feature-icon gradient-4">📅</div>
+              <h3 class="card-title">Weekly Activities</h3>
+              <p class="card-text">
+                Weekly quizzes and small challenges generated automatically based on the student's study plan.
+              </p>
+            </article>
+
+            <article class="card feature-card animate-fade-in-up" style="animation-delay: 0.4s">
+              <div class="feature-icon gradient-5">🏆</div>
+              <h3 class="card-title">Active Challenges</h3>
+              <p class="card-text">
+                Global weekly challenges and friend challenges with leaderboards, countdown start, and winner results.
+              </p>
+            </article>
+
+            <article class="card feature-card animate-fade-in-up" style="animation-delay: 0.5s">
+              <div class="feature-icon gradient-6">✨</div>
+              <h3 class="card-title">Badges, XP & Gamification</h3>
+              <p class="card-text">
+                Topic badges like Python, DB, Logic Gates, etc. Users earn XP for model papers, challenges, and daily
+                usage.
+              </p>
+            </article>
+
+            <article class="card feature-card animate-fade-in-up" style="animation-delay: 0.6s">
+              <div class="feature-icon gradient-7">📚</div>
+              <h3 class="card-title">Short Note Generator</h3>
+              <p class="card-text">
+                Converts handwritten notes or PDFs into clean summaries in Sinhala, English, or Tamil.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS -->
+      <section class="section section-gradient" id="how-it-works">
+        <div class="container section-inner">
+          <div class="section-heading animate-fade-in-up">
+            <h2 class="section-title">
+              <span>How It</span>
+              <span class="text-gradient-primary"> Works</span>
+            </h2>
+            <p class="section-subtitle">
+              Your journey to A/L ICT success in four simple steps
+            </p>
+          </div>
+
+          <div class="how-grid-wrapper">
+            <div class="how-connector"></div>
+
+            <div class="how-grid">
+              <article class="card how-card animate-fade-in-up" style="animation-delay: 0s">
+                <div class="how-number">1</div>
+                <div class="how-icon how-icon-primary">✅</div>
+                <h3 class="card-title">Select Exam Mode</h3>
+                <p class="card-text">
+                  Choose Final Exam or Term Exam, grade 12/13, and term number.
+                </p>
+              </article>
+
+              <article class="card how-card animate-fade-in-up" style="animation-delay: 0.15s">
+                <div class="how-number">2</div>
+                <div class="how-icon how-icon-indigo">📖</div>
+                <h3 class="card-title">Get a Personalized Study Plan</h3>
+                <p class="card-text">
+                  AI creates a weekly breakdown with goals and tasks tailored for you.
+                </p>
+              </article>
+
+              <article class="card how-card animate-fade-in-up" style="animation-delay: 0.3s">
+                <div class="how-number">3</div>
+                <div class="how-icon how-icon-accent">📝</div>
+                <h3 class="card-title">Practice Model Papers & Quizzes</h3>
+                <p class="card-text">
+                  Do 50-MCQ papers and weekly activities with instant marking and feedback.
+                </p>
+              </article>
+
+              <article class="card how-card animate-fade-in-up" style="animation-delay: 0.45s">
+                <div class="how-number">4</div>
+                <div class="how-icon how-icon-secondary">🏅</div>
+                <h3 class="card-title">Earn XP & Unlock Badges</h3>
+                <p class="card-text">
+                  Complete topics, rank higher, and join challenges to unlock achievements.
+                </p>
+              </article>
+            </div>
+          </div>
+
+          <div class="section-cta animate-fade-in-up" style="animation-delay: 0.8s">
+            <p class="section-cta-text">Ready to transform your study routine?</p>
+            <div class="badge-pill">Start Your Journey Today</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAMIFICATION -->
+      <section class="section bg-background" id="gamification">
+        <div class="gamification-bg"></div>
+
+        <div class="container section-inner">
+          <div class="section-heading animate-fade-in-up">
+            <h2 class="section-title">
+              <span>Level Up Your</span>
+              <span class="text-gradient-primary"> Learning</span>
+            </h2>
+            <p class="section-subtitle">
+              Brainex makes studying fun with badges, XP, progress rings, special collectible badges, and weekly global competitions
+            </p>
+          </div>
+
+          <div class="gamification-grid">
+            <!-- Left image + floating stats -->
+            <div class="gamification-left animate-fade-in-up" style="animation-delay: 0.2s">
+              <div class="gamification-image-wrapper">
+                <!-- Replace with badges.png if you have it -->
+                <img src="badges.png" alt="Achievement Badges" class="gamification-img" />
+                <div class="gamification-img-glow"></div>
+              </div>
+
+              <div class="float-card float-card-top animate-float">
+                <div class="float-icon gradient-primary">⚡</div>
+                <div>
+                  <div class="float-number">2,450</div>
+                  <div class="float-label">Total XP</div>
+                </div>
+              </div>
+
+              <div class="float-card float-card-bottom animate-float" style="animation-delay: 1s">
+                <div class="float-icon gradient-secondary">🏆</div>
+                <div>
+                  <div class="float-number">12/15</div>
+                  <div class="float-label">Badges Earned</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right cards -->
+            <div class="gamification-right">
+              <article class="card gamification-card animate-fade-in-up" style="animation-delay: 0.3s">
+                <div class="gamification-card-icon gradient-primary">🎓</div>
+                <div>
+                  <h3 class="card-title">Topic Badges</h3>
+                  <p class="card-text">
+                    Earn unique badges for mastering topics like Python, Databases, Logic Gates, Networking, and more.
+                    Each badge shows your expertise.
+                  </p>
+                </div>
+              </article>
+
+              <article class="card gamification-card animate-fade-in-up" style="animation-delay: 0.4s">
+                <div class="gamification-card-icon gradient-secondary">📈</div>
+                <div>
+                  <h3 class="card-title">XP & Progress</h3>
+                  <p class="card-text">
+                    Gain XP for completing model papers, challenges, and daily activities. Watch your progress bar fill
+                    up and level up your learning journey.
+                  </p>
+                </div>
+              </article>
+
+              <article class="card gamification-card animate-fade-in-up" style="animation-delay: 0.5s">
+                <div class="gamification-card-icon gradient-neon">👥</div>
+                <div>
+                  <h3 class="card-title">Leaderboards & Leagues</h3>
+                  <p class="card-text">
+                    Compete in weekly global challenges. Climb the ranks, challenge friends, and see where you stand
+                    among thousands of A/L students.
+                  </p>
+                </div>
+              </article>
+
+              <article class="card gamification-card animate-fade-in-up" style="animation-delay: 0.6s">
+                <div class="gamification-card-icon gradient-neon-2">🏅</div>
+                <div>
+                  <h3 class="card-title">Special Collectibles</h3>
+                  <p class="card-text">
+                    Unlock rare collectible badges for achievements like perfect scores, winning streaks, and special
+                    events. Show off your collection!
+                  </p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TESTIMONIALS -->
+      <section class="section section-muted" id="testimonials">
+        <div class="container section-inner">
+          <div class="section-heading animate-fade-in-up">
+            <h2 class="section-title">
+              <span>What Students</span>
+              <span class="text-gradient-primary"> Say About Us</span>
+            </h2>
+            <p class="section-subtitle">
+              Join thousands of A/L ICT students who are achieving their dreams with Brainex
+            </p>
+          </div>
+
+          <div class="grid testimonials-grid">
+            <!-- 4 testimonial cards -->
+            <article class="card testimonial-card animate-fade-in-up" style="animation-delay: 0s">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-text">
+                "Brainex helped me master ICT step-by-step. The model papers and challenges kept me motivated every week.
+                I improved my grades significantly!"
+              </p>
+              <div class="testimonial-footer">
+                <div class="testimonial-avatar">SP</div>
+                <div>
+                  <div class="testimonial-name">Sanduni Perera</div>
+                  <div class="testimonial-meta">Grade 13, A/L ICT Student</div>
+                </div>
+              </div>
+              <div class="quote-mark">“</div>
+            </article>
+
+            <article class="card testimonial-card animate-fade-in-up" style="animation-delay: 0.1s">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-text">
+                "The AI chatbot is amazing! It explains everything so clearly. I can ask any question about the syllabus
+                and get instant, accurate answers."
+              </p>
+              <div class="testimonial-footer">
+                <div class="testimonial-avatar">KF</div>
+                <div>
+                  <div class="testimonial-name">Kasun Fernando</div>
+                  <div class="testimonial-meta">Grade 12, A/L ICT Student</div>
+                </div>
+              </div>
+              <div class="quote-mark">“</div>
+            </article>
+
+            <article class="card testimonial-card animate-fade-in-up" style="animation-delay: 0.2s">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-text">
+                "I love the gamification features! Earning badges and competing on leaderboards makes studying fun. The
+                smart study plan keeps me on track."
+              </p>
+              <div class="testimonial-footer">
+                <div class="testimonial-avatar">DS</div>
+                <div>
+                  <div class="testimonial-name">Dilini Silva</div>
+                  <div class="testimonial-meta">Grade 13, A/L ICT Student</div>
+                </div>
+              </div>
+              <div class="quote-mark">“</div>
+            </article>
+
+            <article class="card testimonial-card animate-fade-in-up" style="animation-delay: 0.3s">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-text">
+                "The note summarizer is a game-changer. I can quickly convert my handwritten notes into clean summaries.
+                Saves me so much time!"
+              </p>
+              <div class="testimonial-footer">
+                <div class="testimonial-avatar">RJ</div>
+                <div>
+                  <div class="testimonial-name">Ravindu Jayasinghe</div>
+                  <div class="testimonial-meta">Grade 12, A/L ICT Student</div>
+                </div>
+              </div>
+              <div class="quote-mark">“</div>
+            </article>
+          </div>
+
+          <!-- Trust indicators -->
+          <div class="trust-row animate-fade-in-up" style="animation-delay: 0.5s">
+            <div class="trust-item">
+              <div class="trust-number">5,000+</div>
+              <div class="trust-label">Active Students</div>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-item">
+              <div class="trust-number">50,000+</div>
+              <div class="trust-label">Papers Completed</div>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-item">
+              <div class="trust-number">4.9/5</div>
+              <div class="trust-label">Student Rating</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FINAL CTA -->
+      <section class="final-cta">
+        <div class="final-cta-bg final-cta-bg-1"></div>
+        <div class="final-cta-bg final-cta-bg-2"></div>
+        <div class="final-cta-bg final-cta-bg-3"></div>
+
+        <div class="container final-cta-inner">
+          <div class="final-cta-icon-wrapper">
+            <div class="final-cta-icon">✨</div>
+          </div>
+
+          <h2 class="final-cta-title">
+            <span>Ready to Master</span><br />
+            <span class="text-gradient-primary">A/L ICT with Brainex?</span>
+          </h2>
+
+          <p class="final-cta-subtitle">
+            Join thousands of students who are transforming their exam preparation with AI-powered learning
+          </p>
+
+          <div class="final-cta-tags">
+            <div class="tag-pill tag-primary">
+              <span class="tag-dot"></span>
+              <span>Free to start</span>
+            </div>
+            <div class="tag-pill tag-secondary">
+              <span class="tag-dot"></span>
+              <span>No credit card required</span>
+            </div>
+            <div class="tag-pill tag-accent">
+              <span class="tag-dot"></span>
+              <span>Instant access</span>
+            </div>
+          </div>
+
+          <div class="final-cta-button-wrapper">
+            <button class="btn btn-primary btn-xl">
+              Download App
+              <span class="arrow-right">➜</span>
+            </button>
+          </div>
+
+          <p class="final-cta-trust">
+            🎓 Trusted by <span class="highlight">5,000+ A/L students</span> across Sri Lanka
+          </p>
+        </div>
+
+        <div class="final-cta-bottom-fade"></div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div class="footer-top">
+          <div class="footer-column">
+            <div class="footer-brand">
+              <div class="logo-icon">🧠</div>
+              <span class="logo-text">Brainex</span>
+            </div>
+            <p class="footer-text">
+              AI-powered exam preparation platform designed specifically for A/L ICT students in Sri Lanka.
+            </p>
+          </div>
+
+          <div class="footer-column">
+            <h3 class="footer-heading">Quick Links</h3>
+            <ul class="footer-links">
+              <li><a href="#" class="footer-link">About Us</a></li>
+              <li><a href="#" class="footer-link">Features</a></li>
+              <li><a href="#" class="footer-link">Pricing</a></li>
+              <li><a href="#" class="footer-link">Blog</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-column">
+            <h3 class="footer-heading">Legal</h3>
+            <ul class="footer-links">
+              <li><a href="#" class="footer-link">Privacy Policy</a></li>
+              <li><a href="#" class="footer-link">Terms &amp; Conditions</a></li>
+              <li><a href="#" class="footer-link">Cookie Policy</a></li>
+              <li><a href="#" class="footer-link">Support</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-column">
+            <h3 class="footer-heading">Contact</h3>
+            <ul class="footer-links">
+              <li>
+                <span class="footer-icon">✉</span>
+                <a href="mailto:hello@brainex.lk" class="footer-link">hello@brainex.lk</a>
+              </li>
+              <li>
+                <span class="footer-icon">☎</span>
+                <a href="tel:+94112345678" class="footer-link">+94 11 234 5678</a>
+              </li>
+              <li>
+                <span class="footer-icon">📍</span>
+                <span class="footer-link">Colombo, Sri Lanka</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p class="footer-copy">© <span id="year"></span> Brainex. All rights reserved.</p>
+          <div class="footer-social">
+            <a href="#" class="social-circle" aria-label="Facebook">f</a>
+            <a href="#" class="social-circle" aria-label="Twitter">t</a>
+            <a href="#" class="social-circle" aria-label="Instagram">♛</a>
+            <a href="#" class="social-circle" aria-label="LinkedIn">in</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
