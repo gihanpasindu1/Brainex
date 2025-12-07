@@ -70,6 +70,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -79,12 +80,13 @@ body {
     sans-serif;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+  overflow-x: hidden;
 }
 
 /* Reusable */
 
 .container {
-  max-width: 1120px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 0 1rem;
 }
