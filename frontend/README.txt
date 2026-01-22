@@ -7,4 +7,4 @@ All UI-related work is done here:
 - Language files (English / Sinhala / Tamil)
 
 Frontend can work independently using mock data
-even if the backend is not ready.
+even if the backend is not ready..
