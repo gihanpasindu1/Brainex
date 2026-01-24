@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "269414354340",
+    "project_id": "brainex-41ff7",
+    "storage_bucket": "brainex-41ff7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:269414354340:android:2451cf57e1c3778d170531",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKIkz178KPbKgf_fZbtHDcYXaDhZBS6LI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
