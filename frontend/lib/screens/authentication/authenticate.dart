@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/authentication/register.dart';
 import 'package:frontend/screens/authentication/sign_in.dart';
 
 class Authenticate extends StatefulWidget {
