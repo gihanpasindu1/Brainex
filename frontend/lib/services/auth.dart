@@ -4,20 +4,18 @@ import 'package:frontend/models/UserModel.dart';
 class AuthServices {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  UserModel? _userWithFirebaseUserUid(User? user){
+  UserModel? _userWithFirebaseUserUid(User? user) {
     return user != null ? UserModel(uid: user.uid) : null;
   }
 
-  Stream<UserModel?>get user{
+  Stream<UserModel?> get user {
     return _auth.authStateChanges().map(_userWithFirebaseUserUid);
   }
 
-
-
-  Future signInAnonymously() async {
+  Future<UserModel?> signInAnonymously() async {
     try {
-      UserCredential result = await _auth.signInAnonymously();
-      User? user = result.user;
+      final UserCredential result = await _auth.signInAnonymously();
+      final User? user = result.user;
       return _userWithFirebaseUserUid(user);
     } catch (err) {
       print(err.toString());
