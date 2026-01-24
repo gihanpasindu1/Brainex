@@ -8,6 +8,12 @@ class AuthServices {
     return user != null ? UserModel(uid: user.uid) : null;
   }
 
+  Stream<UserModel?>get user{
+    return _auth.authStateChanges().map(_userWithFirebaseUserUid);
+  }
+
+
+
   Future signInAnonymously() async {
     try {
       UserCredential result = await _auth.signInAnonymously();
