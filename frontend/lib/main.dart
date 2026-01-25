@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      // ✅ Apply overlay style from the ROOT so every screen inherits it
+      
       builder: (context, child) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: _overlayStyle,
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
       },
 
       theme: ThemeData(
-        // ✅ Also force overlay style for screens that use AppBar later
+        
         appBarTheme: const AppBarTheme(systemOverlayStyle: _overlayStyle),
       ),
 
