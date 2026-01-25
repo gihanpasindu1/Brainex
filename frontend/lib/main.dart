@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:frontend/screens/splash_screen/splash_screen.dart';
 import 'package:frontend/screens/wrapper.dart';
 
 void main() async {
@@ -45,7 +46,7 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(systemOverlayStyle: _overlayStyle),
       ),
 
-      home: Wrapper(),
+      home: const SplashScreen(),
     );
   }
 }
