@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/auth.dart';
+import 'package:frontend/screens/wrapper.dart';
 
 class Sign_In extends StatefulWidget {
   const Sign_In({super.key});
@@ -21,10 +22,16 @@ class _Sign_InState extends State<Sign_In> {
           onPressed: () async {
             final result = await _auth.signInAnonymously();
             if (result == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sign in failed')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Sign in failed')));
+              return;
             }
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => Wrapper()),
+              (route) => false,
+            );
           },
         ),
       ),

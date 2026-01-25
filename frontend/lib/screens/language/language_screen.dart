@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/authentication/authenticate.dart';
 
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
@@ -10,6 +11,11 @@ class LanguageScreen extends StatefulWidget {
 class _LanguageScreenState extends State<LanguageScreen> {
   void _onLanguageSelected(String code) {
     debugPrint("Language selected: $code");
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const Authenticate()),
+    );
   }
 
   @override

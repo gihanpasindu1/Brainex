@@ -7,7 +7,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // ✅ Force status bar + nav bar to be shown (NOT immersive)
+  
   SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.manual,
     overlays: SystemUiOverlay.values,
