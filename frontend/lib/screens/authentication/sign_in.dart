@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/auth.dart';
 import 'package:frontend/screens/wrapper.dart';
-import 'package:flutter/material.dart';
 import 'dart:ui';
 
 class LoginPage extends StatefulWidget {
@@ -40,19 +39,27 @@ class _LoginPageState extends State<LoginPage> {
 
     final result = await _auth.signInWithEmailPassword(email, password);
 
+    if (!mounted) return; // ✅ safety
     setState(() => _loading = false);
 
     if (result == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login failed. Check email/password")),
       );
+      return; // ✅ IMPORTANT: don't navigate
     }
+
+    // ✅ Login success → go back to Wrapper (Wrapper will show Home)
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => Wrapper()),
+      (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // The main background image remains the same
       body: Container(
         height: double.infinity,
         decoration: const BoxDecoration(
@@ -64,7 +71,6 @@ class _LoginPageState extends State<LoginPage> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            // The GlassCard handles the transparent container
             child: GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,13 +96,10 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 20),
 
                   _label("Password"),
-
                   _passwordField("Enter your password", _passwordController),
-
                   const SizedBox(height: 30),
 
                   _gradientButton("Login", _handleLogin),
-
                   const SizedBox(height: 20),
 
                   const Center(
@@ -107,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      print("Navigate to Register");
+                      debugPrint("Navigate to Register");
                     },
                     child: const Text(
                       "Create an Account!",
@@ -122,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
                     "Continue with Google",
                     "assets/images/icons8-google-100.png",
                     () {
-                      print("Google Button Clicked");
+                      debugPrint("Google Button Clicked");
                     },
                   ),
 
@@ -132,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                     "Continue with Apple",
                     "assets/images/apple-512.png",
                     () {
-                      print("Apple Button Clicked");
+                      debugPrint("Apple Button Clicked");
                     },
                   ),
                 ],
@@ -143,8 +146,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
-  // --- HELPER WIDGETS ---
 
   Widget _label(String text) {
     return Padding(
@@ -162,6 +163,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _inputField(String hint, TextEditingController controller) {
     return TextField(
       controller: controller,
+      keyboardType: TextInputType.emailAddress,
       style: const TextStyle(color: Colors.white),
       decoration: _inputDecoration(hint),
     );
@@ -230,7 +232,6 @@ class _LoginPageState extends State<LoginPage> {
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(12),
-
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -249,12 +250,10 @@ class _LoginPageState extends State<LoginPage> {
       hintStyle: const TextStyle(color: Colors.white30),
       filled: true,
       fillColor: const Color(0xFF14141E).withOpacity(0.6),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white38, width: 1.2),
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white, width: 1.2),
@@ -272,13 +271,9 @@ class GlassCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       decoration: BoxDecoration(
-        // --- MAIN CHANGE HERE ---
-        // Changed opacity from 0.85 to 0.3.
-        // Lower number = more transparent.
         color: const Color(0xFF1E1E2C).withOpacity(0.3),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white12),
-        // Added a slight blur effect for realism (optional)
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -287,7 +282,6 @@ class GlassCard extends StatelessWidget {
           ),
         ],
       ),
-      // Adding a Blur filter for real glass effect
       child: ClipRRect(
         borderRadius: BorderRadius.circular(0),
         child: BackdropFilter(
