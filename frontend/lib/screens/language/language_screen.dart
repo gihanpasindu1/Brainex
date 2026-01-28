@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/authentication/authenticate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
@@ -9,14 +11,39 @@ class LanguageScreen extends StatefulWidget {
 }
 
 class _LanguageScreenState extends State<LanguageScreen> {
-  void _onLanguageSelected(String code) {
+  Future<void> _onLanguageSelected(String code) async {
+
     debugPrint("Language selected: $code");
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selected_language', code);
+
+    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const Authenticate()),
     );
   }
+  @override
+  void initState() {
+    super.initState();
+    _checkSavedLanguage();
+  }
+
+  Future<void> _checkSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('selected_language');
+
+    if (saved != null && saved.isNotEmpty) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const Authenticate()),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
