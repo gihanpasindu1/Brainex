@@ -31,12 +31,17 @@ class _HomeState extends State<Home> {
     setState(() => _loadingLang = false);
   }
 
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('selected_language');
+    await _auth.signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loadingLang) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final t = LangService.instance;
@@ -45,19 +50,11 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: Text(t.t('home')),
         actions: [
-          IconButton(
-            onPressed: () async {
-              await _auth.signOut();
-            },
-            icon: const Icon(Icons.logout),
-          ),
+          IconButton(onPressed: _logout, icon: const Icon(Icons.logout)),
         ],
       ),
       body: Center(
-        child: Text(
-          t.t('home'),
-          style: const TextStyle(fontSize: 22),
-        ),
+        child: Text(t.t('home'), style: const TextStyle(fontSize: 22)),
       ),
     );
   }
