@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from .routes.chatbot import router as chatbot_router
+from dotenv import load_dotenv
+load_dotenv()
+
 
 app = FastAPI()
 
