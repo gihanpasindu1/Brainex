@@ -1,18 +1,27 @@
 import os
 from google import genai
 
+SYSTEM_PROMPT = """
+always remember u explain things to grade one student
+"""
+
 def ask_gemini(question: str) -> str:
     api_key = os.getenv("GEMINI_API_KEY")
-
     if not api_key:
-        return "GEMINI_API_KEY not found. Put it in .env file."
+        return "GEMINI_API_KEY not found."
 
     client = genai.Client(api_key=api_key)
 
+    full_prompt = f"""
+{SYSTEM_PROMPT}
+
+Student question:
+{question}
+"""
+
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=question
+        contents=full_prompt
     )
 
-    # response.text is usually the answer
-    return response.text or "Gemini returned empty answer."
+    return response.text or "No response from Gemini."
