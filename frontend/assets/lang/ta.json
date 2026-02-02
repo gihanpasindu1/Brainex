@@ -1,3 +1,16 @@
 {
-  "home": "முகப்பு"
+  "home": "முகப்பு",
+  "welcome_title": "Brainex-ற்கு வரவேற்கிறோம்",
+  "welcome_subtitle": "A/L ICT தேர்வு உதவியாளர்",
+  "email_label": "மின்னஞ்சல்",
+  "email_hint": "உங்கள் மின்னஞ்சலை உள்ளிடவும்",
+  "password_label": "கடவுச்சொல்",
+  "password_hint": "உங்கள் கடவுச்சொல்லை உள்ளிடவும்",
+  "login_btn": "உள்நுழைய",
+  "no_account": "கணக்கு இல்லையா?",
+  "create_account": "கணக்கை உருவாக்கவும்!",
+  "continue_google": "Google உடன் தொடரவும்",
+  "continue_apple": "Apple உடன் தொடரவும்",
+  "error_email_password": "மின்னஞ்சல் மற்றும் கடவுச்சொல் தேவை",
+  "error_login_failed": "உள்நுழைவு தோல்வியடைந்தது. மின்னஞ்சல்/கடவுச்சொல்லை சரிபார்க்கவும்"
 }

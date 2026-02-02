@@ -1,3 +1,16 @@
 {
-  "home": "මුල් පිටුව"
+  "home": "මුල් පිටුව",
+  "welcome_title": "Brainex වෙත සාදරයෙන් පිළිගනිමු",
+  "welcome_subtitle": "A/L ICT විභාග සහායක",
+  "email_label": "විද්‍යුත් තැපෑල",
+  "email_hint": "ඔබේ විද්‍යුත් තැපෑල ඇතුළත් කරන්න",
+  "password_label": "මුරපදය",
+  "password_hint": "ඔබේ මුරපදය ඇතුළත් කරන්න",
+  "login_btn": "පිවිසෙන්න",
+  "no_account": "ගිණුමක් නොමැතිද?",
+  "create_account": "ගිණුමක් සාදන්න!",
+  "continue_google": "Google සමඟ ඉදිරියට යන්න",
+  "continue_apple": "Apple සමඟ ඉදිරියට යන්න",
+  "error_email_password": "විද්‍යුත් තැපෑල සහ මුරපදය අවශ්‍යයි",
+  "error_login_failed": "පිවිසීම අසාර්ථකයි. විද්‍යුත් තැපෑල/මුරපදය පරීක්ෂා කරන්න"
 }

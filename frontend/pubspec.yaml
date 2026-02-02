@@ -38,6 +38,9 @@ dependencies:
   firebase_auth: ^6.1.4
   provider: ^6.1.5+1
   shared_preferences: ^2.5.4
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
