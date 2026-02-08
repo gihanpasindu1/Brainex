@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/auth.dart';
 import 'package:frontend/services/localization_service.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend/providers/locale_provider.dart';
+
+import 'package:frontend/screens/chatbot/chatbot_screen.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -13,6 +17,10 @@ class _HomeState extends State<Home> {
   final AuthServices _auth = AuthServices();
 
   Future<void> _logout() async {
+    // Clear the selected language so the user is asked again on next login
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    await localeProvider.clearLocale();
+
     await _auth.signOut();
   }
 
@@ -30,6 +38,15 @@ class _HomeState extends State<Home> {
       ),
       body: Center(
         child: Text(t('home'), style: const TextStyle(fontSize: 22)),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+          );
+        },
+        child: const Icon(Icons.chat),
       ),
     );
   }
