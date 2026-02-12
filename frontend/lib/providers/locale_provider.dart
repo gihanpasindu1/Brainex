@@ -29,4 +29,11 @@ class LocaleProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> clearLocale() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('language_code');
+    _locale = null;
+    notifyListeners();
+  }
 }

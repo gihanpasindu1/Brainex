@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/services/auth.dart';
 import 'package:frontend/screens/wrapper.dart';
 import 'dart:ui';
-
+import 'register.dart';
 import 'package:frontend/services/localization_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -118,7 +118,11 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      debugPrint("Navigate to Register");
+                      // ✅ Add this navigation code
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Register()),
+                      );
                     },
                     child: Text(
                       t("create_account"),
