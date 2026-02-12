@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:frontend/screens/wrapper.dart';
+import 'package:frontend/services/auth.dart';
 // 1. Import your localization service
 import 'package:frontend/services/localization_service.dart';
 
@@ -16,6 +18,8 @@ class _RegisterState extends State<Register> {
   final _passwordController = TextEditingController();
   bool _loading = false;
 
+  final AuthServices _auth = AuthServices();
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -24,20 +28,41 @@ class _RegisterState extends State<Register> {
   }
 
   void _handleSignUp() async {
+    final tr = AppLocalizations.of(context);
+    String t(String key) => tr?.translate(key) ?? key;
+
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t("error_email_password"))));
+      return;
+    }
+
     setState(() => _loading = true);
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+
+    // Call Firebase Registration
+    dynamic result = await _auth.registerWithEmailPassword(
+      _emailController.text,
+      _passwordController.text,
+    );
 
     if (!mounted) return;
     setState(() => _loading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Account Created! Please Login.")),
-    );
-
-    // Go back to Login after success
-    Navigator.pop(context);
+    if (result == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t("error_register_failed"))));
+    } else {
+      // Success -> Navigate to Home (via Wrapper or directly)
+      // Since Wrapper listens to auth changes, we can just pop users or pushAndRemoveUntil
+      // pushAndRemoveUntil is safer to clear back stack
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => Wrapper()),
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -88,7 +113,7 @@ class _RegisterState extends State<Register> {
                   const SizedBox(height: 30),
 
                   _gradientButton(t("btn_signup"), _handleSignUp),
-                  
+
                   const SizedBox(height: 20),
 
                   Center(
@@ -194,7 +219,10 @@ class _RegisterState extends State<Register> {
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : Text(
                 text,
@@ -222,9 +250,10 @@ class _RegisterState extends State<Register> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              icon, 
+              icon,
               height: 22,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: Colors.white),
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.image, color: Colors.white),
             ),
             const SizedBox(width: 10),
             Text(text, style: const TextStyle(color: Colors.white)),
