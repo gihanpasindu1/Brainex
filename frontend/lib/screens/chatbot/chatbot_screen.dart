@@ -163,20 +163,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const bg1 = Color.fromARGB(255, 35, 12, 99); // purple
-    const bg2 = Color.fromARGB(255, 0, 67, 155); // blue
-    const bg3 = Color.fromARGB(255, 0, 0, 0); // deep navy
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [bg1, bg2, bg3],
-            stops: [0.3, 0.6, 1.0],
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.png.png'),
+            fit: BoxFit.cover,
           ),
         ),
+
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -193,8 +188,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 Expanded(
                   child: GlassCard(
                     radius: 22,
-                    blur: 26,
-                    borderOpacity: 0.18,
+                    blur: 40,
+                    borderOpacity: 0.30,
                     animateSheen: true,
                     addInnerGlow: true,
                     padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -707,8 +702,8 @@ class _GlassCardState extends State<GlassCard>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withOpacity(0.16),
-                    Colors.white.withOpacity(0.06),
+                    Colors.white.withOpacity(0.25),
+                    Colors.white.withOpacity(0.12),
                   ],
                 ),
               ),

@@ -40,12 +40,12 @@ class BrainexHome extends StatelessWidget {
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topLeft,
-            radius: 1.25,
-            colors: [Color(0xFF2E3B8C), Color(0xFF0B0D16), Color(0xFF160A22)],
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.png.png'),
+            fit: BoxFit.cover,
           ),
         ),
+
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
