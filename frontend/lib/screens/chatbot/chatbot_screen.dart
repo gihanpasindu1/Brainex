@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/chat_message.dart';
@@ -1046,28 +1047,68 @@ class _InputBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: onMicTap,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isListening
-                    ? Colors.redAccent.withOpacity(0.2)
-                    : Colors.white.withOpacity(0.08),
-                border: Border.all(
-                  color: isListening
-                      ? Colors.redAccent
-                      : Colors.white.withOpacity(0.12),
+          // Mic + Wave animation (Row)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: onMicTap,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isListening
+                        ? Colors.redAccent.withOpacity(0.20)
+                        : Colors.white.withOpacity(0.08),
+                    border: Border.all(
+                      color: isListening
+                          ? Colors.redAccent
+                          : Colors.white.withOpacity(0.12),
+                    ),
+                    boxShadow: isListening
+                        ? [
+                            BoxShadow(
+                              color: Colors.redAccent.withOpacity(0.25),
+                              blurRadius: 14,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Icon(
+                    isListening ? Icons.mic : Icons.mic_none_rounded,
+                    size: 16,
+                    color: isListening ? Colors.redAccent : Colors.white70,
+                  ),
                 ),
               ),
-              child: Icon(
-                isListening ? Icons.mic : Icons.mic_none_rounded,
-                size: 16,
-                color: isListening ? Colors.redAccent : Colors.white70,
+
+              // Animated wave appears only while listening
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: isListening
+                    ? Padding(
+                        key: const ValueKey('wave'),
+                        padding: const EdgeInsets.only(left: 8),
+                        child: MicWave(
+                          active: true,
+                          height: 18,
+                          width: 40,
+                          bars: 6,
+                          color: Colors.redAccent,
+                        ),
+                      )
+                    : const SizedBox(
+                        key: ValueKey('nowave'),
+                        width: 0,
+                        height: 18,
+                      ),
               ),
-            ),
+            ],
           ),
           const SizedBox(width: 10),
 
@@ -1130,6 +1171,100 @@ class _InputBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// ---------------- MIC WAVE ANIMATION ----------------
+class MicWave extends StatefulWidget {
+  final bool active;
+  final double height;
+  final double width;
+  final int bars;
+  final Color color;
+
+  const MicWave({
+    super.key,
+    required this.active,
+    this.height = 18,
+    this.width = 38,
+    this.bars = 6,
+    this.color = Colors.redAccent,
+  });
+
+  @override
+  State<MicWave> createState() => _MicWaveState();
+}
+
+class _MicWaveState extends State<MicWave> with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+
+    if (widget.active) _c.repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant MicWave oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !_c.isAnimating) _c.repeat();
+    if (!widget.active && _c.isAnimating) _c.stop();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  double _barValue(double t, int i) {
+    // Different phase per bar => "moving" look
+    final phase = i * 0.55;
+    final v = (sin((t * 2 * pi) + phase) + 1) / 2; // 0..1
+    // keep some minimum height so it never disappears
+    return 0.25 + (v * 0.75); // 0.25..1.0
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final barW = (widget.width / (widget.bars * 1.8)).clamp(2.0, 5.0);
+
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (_, __) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(widget.bars, (i) {
+              final h = widget.height * _barValue(_c.value, i);
+
+              return Container(
+                width: barW,
+                height: h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: widget.color.withOpacity(0.85),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.color.withOpacity(0.25),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }
