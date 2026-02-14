@@ -230,7 +230,7 @@ class BrainexHome extends StatelessWidget {
                     crossAxisCount: 2,
                     mainAxisSpacing: 14,
                     crossAxisSpacing: 14,
-                    childAspectRatio: 1.15,
+                    childAspectRatio: 0.95,
                     children: [
                       _PremiumActionCard(
                         title: t('chatbot'),
@@ -539,16 +539,25 @@ class _PremiumActionCardState extends State<_PremiumActionCard> {
               const Spacer(),
               Text(
                 widget.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
+                  decoration: TextDecoration.none,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 widget.subtitle,
-                style: const TextStyle(fontSize: 12.5, color: Colors.white70),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.white70,
+                  decoration: TextDecoration.none,
+                ),
               ),
             ],
           ),

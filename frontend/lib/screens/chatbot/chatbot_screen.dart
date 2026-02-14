@@ -163,8 +163,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const bg1 = Color.fromARGB(255, 89, 51, 255); // purple
-    const bg2 = Color.fromARGB(255, 8, 115, 255); // blue
+    const bg1 = Color.fromARGB(255, 35, 12, 99); // purple
+    const bg2 = Color.fromARGB(255, 0, 67, 155); // blue
     const bg3 = Color.fromARGB(255, 0, 0, 0); // deep navy
 
     return Scaffold(
@@ -174,7 +174,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [bg1, bg2, bg3],
-            stops: [0.1, 0.35, 1.0],
+            stops: [0.3, 0.6, 1.0],
           ),
         ),
         child: SafeArea(
