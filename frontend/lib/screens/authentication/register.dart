@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:frontend/screens/wrapper.dart';
 import 'package:frontend/services/auth.dart';
-// 1. Import your localization service
 import 'package:frontend/services/localization_service.dart';
 
 class Register extends StatefulWidget {
@@ -14,8 +13,11 @@ class Register extends StatefulWidget {
 
 class _RegisterState extends State<Register> {
   bool _isObscured = true;
+  bool _isConfirmObscured = true; // For Confirm Password visibility
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController =
+      TextEditingController(); // Confirm Password Controller
   bool _loading = false;
 
   final AuthServices _auth = AuthServices();
@@ -24,6 +26,7 @@ class _RegisterState extends State<Register> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -31,20 +34,29 @@ class _RegisterState extends State<Register> {
     final tr = AppLocalizations.of(context);
     String t(String key) => tr?.translate(key) ?? key;
 
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    // Validation
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(t("error_email_password"))));
+      ).showSnackBar(SnackBar(content: Text(t("error_fill_all_fields"))));
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t("error_password_mismatch"))));
       return;
     }
 
     setState(() => _loading = true);
 
     // Call Firebase Registration
-    dynamic result = await _auth.registerWithEmailPassword(
-      _emailController.text,
-      _passwordController.text,
-    );
+    dynamic result = await _auth.registerWithEmailPassword(email, password);
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -55,8 +67,6 @@ class _RegisterState extends State<Register> {
       ).showSnackBar(SnackBar(content: Text(t("error_register_failed"))));
     } else {
       // Success -> Navigate to Home (via Wrapper or directly)
-      // Since Wrapper listens to auth changes, we can just pop users or pushAndRemoveUntil
-      // pushAndRemoveUntil is safer to clear back stack
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => Wrapper()),
@@ -105,11 +115,25 @@ class _RegisterState extends State<Register> {
                   const SizedBox(height: 35),
 
                   _label(t("email_label")),
-                  _inputField(t("email_hint"), _emailController),
+                  _inputField(t("email_hint"), _emailController, true),
                   const SizedBox(height: 20),
 
                   _label(t("password_label")),
-                  _passwordField(t("register_pass_hint"), _passwordController),
+                  _passwordField(
+                    t("register_pass_hint"),
+                    _passwordController,
+                    _isObscured,
+                    (val) => setState(() => _isObscured = val),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _label(t("confirm_password_label")),
+                  _passwordField(
+                    t("confirm_password_hint"),
+                    _confirmPasswordController,
+                    _isConfirmObscured,
+                    (val) => setState(() => _isConfirmObscured = val),
+                  ),
                   const SizedBox(height: 30),
 
                   _gradientButton(t("btn_signup"), _handleSignUp),
@@ -171,27 +195,36 @@ class _RegisterState extends State<Register> {
     );
   }
 
-  Widget _inputField(String hint, TextEditingController controller) {
+  Widget _inputField(
+    String hint,
+    TextEditingController controller,
+    bool isEmail,
+  ) {
     return TextField(
       controller: controller,
-      keyboardType: TextInputType.emailAddress,
+      keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
       style: const TextStyle(color: Colors.white),
       decoration: _inputDecoration(hint),
     );
   }
 
-  Widget _passwordField(String hint, TextEditingController controller) {
+  Widget _passwordField(
+    String hint,
+    TextEditingController controller,
+    bool isObscured,
+    Function(bool) onToggle,
+  ) {
     return TextField(
       controller: controller,
-      obscureText: _isObscured,
+      obscureText: isObscured,
       style: const TextStyle(color: Colors.white),
       decoration: _inputDecoration(hint).copyWith(
         suffixIcon: IconButton(
           icon: Icon(
-            _isObscured ? Icons.visibility_off : Icons.visibility,
+            isObscured ? Icons.visibility_off : Icons.visibility,
             color: Colors.white54,
           ),
-          onPressed: () => setState(() => _isObscured = !_isObscured),
+          onPressed: () => onToggle(!isObscured),
         ),
       ),
     );
@@ -268,7 +301,7 @@ class _RegisterState extends State<Register> {
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white30),
       filled: true,
-      fillColor: const Color(0xFF14141E).withOpacity(0.6),
+      fillColor: const Color(0x9914141E), // 0.6 opacity
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white38, width: 1.2),
@@ -291,12 +324,12 @@ class GlassCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2C).withOpacity(0.3),
+        color: const Color(0x4D1E1E2C), // 0.3 opacity
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: const Color(0x1A000000), // 0.1 opacity
             blurRadius: 10,
             spreadRadius: 1,
           ),

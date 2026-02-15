@@ -40,12 +40,12 @@ class BrainexHome extends StatelessWidget {
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topLeft,
-            radius: 1.25,
-            colors: [Color(0xFF2E3B8C), Color(0xFF0B0D16), Color(0xFF160A22)],
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.png.png'),
+            fit: BoxFit.cover,
           ),
         ),
+
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -230,7 +230,7 @@ class BrainexHome extends StatelessWidget {
                     crossAxisCount: 2,
                     mainAxisSpacing: 14,
                     crossAxisSpacing: 14,
-                    childAspectRatio: 1.15,
+                    childAspectRatio: 0.95,
                     children: [
                       _PremiumActionCard(
                         title: t('chatbot'),
@@ -539,16 +539,25 @@ class _PremiumActionCardState extends State<_PremiumActionCard> {
               const Spacer(),
               Text(
                 widget.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
+                  decoration: TextDecoration.none,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 widget.subtitle,
-                style: const TextStyle(fontSize: 12.5, color: Colors.white70),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.white70,
+                  decoration: TextDecoration.none,
+                ),
               ),
             ],
           ),
