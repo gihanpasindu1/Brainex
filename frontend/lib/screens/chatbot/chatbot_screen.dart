@@ -3,8 +3,11 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/chat_message.dart';
+import 'package:frontend/services/chat_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -35,8 +38,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final FocusNode _focus = FocusNode();
   final ScrollController _scroll = ScrollController();
 
+  final ChatService _chatService = ChatService();
   final SpeechToText _speechToText = SpeechToText();
   bool _speechEnabled = false;
+
   bool _isListening = false;
   bool _isTyping = false;
 
@@ -124,33 +129,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
     _scrollToBottom();
 
-    final reply = _fakeReply(text);
+    // Call backend
+    final responseMsg = await _chatService.sendMessage(text);
 
-    await Future.delayed(const Duration(milliseconds: 600)); // "thinking"
+    if (!mounted) return;
+
     setState(() {
       _isTyping = false;
-      _messages.add(ChatMessage(role: "assistant", text: reply));
+      _messages.add(responseMsg);
     });
     _scrollToBottom();
-  }
-
-  String _fakeReply(String userText) {
-    final t = userText.toLowerCase();
-
-    if (t.contains("osi")) {
-      return "OSI Model has 7 layers:\n1) Physical\n2) Data Link\n3) Network\n4) Transport\n5) Session\n6) Presentation\n7) Application\n\nWant a short note or MCQs?";
-    }
-    if (t.contains("logic gate")) {
-      return "Sure — I can list Logic Gate MCQs by topic:\n• AND/OR/NOT basics\n• NAND/NOR universality\n• Truth tables\n• Boolean simplification\n\nType: 'Start quiz logic gates'";
-    }
-    if (t.contains("sql") && t.contains("join")) {
-      return "SQL JOIN past paper set:\n• INNER/LEFT/RIGHT/FULL JOIN\n• 2018–2022 common patterns\n\nDo you want: (1) questions only or (2) answers + explanation?";
-    }
-    if (t.contains("plan")) {
-      return "Study Plan (7 days):\nDay 1: DB basics\nDay 2: SQL + JOIN\nDay 3: Normalization\nDay 4: Networks (OSI)\nDay 5: Logic gates\nDay 6: Past paper practice\nDay 7: Full mock + review";
-    }
-
-    return "Got it ✅\nI can help with:\n• Past paper questions\n• Short notes\n• Quizzes\n\nTry: “Explain Normalization with example”";
   }
 
   void _useSuggestion(String text) {
@@ -864,12 +852,19 @@ class _MessageCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              body,
-              style: TextStyle(
-                fontSize: 11.6,
-                height: 1.35,
-                color: Colors.white.withOpacity(0.80),
+            MarkdownBody(
+              data: body,
+              styleSheet: MarkdownStyleSheet(
+                p: TextStyle(
+                  fontSize: 11.6,
+                  height: 1.35,
+                  color: Colors.white.withOpacity(0.80),
+                ),
+                strong: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white.withOpacity(0.95),
+                ),
+                listBullet: TextStyle(color: Colors.white.withOpacity(0.80)),
               ),
             ),
           ],
