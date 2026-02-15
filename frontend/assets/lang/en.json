@@ -40,5 +40,17 @@
   "nav_leaderboard": "Leaderboard",
   "nav_profile": "Profile",
   "language": "Language",
-  "logout": "Logout"
+  "logout": "Logout",
+  "register_title": "Create Account",
+  "register_subtitle": "Join Brainex Today",
+  "register_pass_hint": "Create a password",
+  "confirm_password_label": "Confirm Password",
+  "confirm_password_hint": "Re-enter your password",
+  "btn_signup": "Sign Up",
+  "already_have_acc": "Already have an account?",
+  "link_login": "Login",
+  "signup_google": "Sign up with Google",
+  "signup_apple": "Sign up with Apple",
+  "error_fill_all_fields": "Please fill all fields",
+  "error_password_mismatch": "Passwords do not match"
 }

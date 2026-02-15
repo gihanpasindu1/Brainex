@@ -12,20 +12,44 @@ class Register extends StatefulWidget {
 
 class _RegisterState extends State<Register> {
   bool _isObscured = true;
+  bool _isConfirmObscured = true; // For Confirm Password visibility
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController =
+      TextEditingController(); // Confirm Password Controller
   bool _loading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _handleSignUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    final tr = AppLocalizations.of(context)!;
+
+    // Validation
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr.translate("error_fill_all_fields"))),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr.translate("error_password_mismatch"))),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
-    
+
     // Simulate API call
     await Future.delayed(const Duration(seconds: 2));
 
@@ -80,15 +104,29 @@ class _RegisterState extends State<Register> {
                   const SizedBox(height: 35),
 
                   _label(t("email_label")),
-                  _inputField(t("email_hint"), _emailController),
+                  _inputField(t("email_hint"), _emailController, true),
                   const SizedBox(height: 20),
 
                   _label(t("password_label")),
-                  _passwordField(t("register_pass_hint"), _passwordController),
+                  _passwordField(
+                    t("register_pass_hint"),
+                    _passwordController,
+                    _isObscured,
+                    (val) => setState(() => _isObscured = val),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _label(t("confirm_password_label")),
+                  _passwordField(
+                    t("confirm_password_hint"),
+                    _confirmPasswordController,
+                    _isConfirmObscured,
+                    (val) => setState(() => _isConfirmObscured = val),
+                  ),
                   const SizedBox(height: 30),
 
                   _gradientButton(t("btn_signup"), _handleSignUp),
-                  
+
                   const SizedBox(height: 20),
 
                   Center(
@@ -146,27 +184,36 @@ class _RegisterState extends State<Register> {
     );
   }
 
-  Widget _inputField(String hint, TextEditingController controller) {
+  Widget _inputField(
+    String hint,
+    TextEditingController controller,
+    bool isEmail,
+  ) {
     return TextField(
       controller: controller,
-      keyboardType: TextInputType.emailAddress,
+      keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
       style: const TextStyle(color: Colors.white),
       decoration: _inputDecoration(hint),
     );
   }
 
-  Widget _passwordField(String hint, TextEditingController controller) {
+  Widget _passwordField(
+    String hint,
+    TextEditingController controller,
+    bool isObscured,
+    Function(bool) onToggle,
+  ) {
     return TextField(
       controller: controller,
-      obscureText: _isObscured,
+      obscureText: isObscured,
       style: const TextStyle(color: Colors.white),
       decoration: _inputDecoration(hint).copyWith(
         suffixIcon: IconButton(
           icon: Icon(
-            _isObscured ? Icons.visibility_off : Icons.visibility,
+            isObscured ? Icons.visibility_off : Icons.visibility,
             color: Colors.white54,
           ),
-          onPressed: () => setState(() => _isObscured = !_isObscured),
+          onPressed: () => onToggle(!isObscured),
         ),
       ),
     );
@@ -194,7 +241,10 @@ class _RegisterState extends State<Register> {
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : Text(
                 text,
@@ -222,9 +272,10 @@ class _RegisterState extends State<Register> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              icon, 
+              icon,
               height: 22,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: Colors.white),
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.image, color: Colors.white),
             ),
             const SizedBox(width: 10),
             Text(text, style: const TextStyle(color: Colors.white)),

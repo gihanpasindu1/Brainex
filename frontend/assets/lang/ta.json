@@ -40,5 +40,17 @@
   "nav_leaderboard": "முன்னிலை",
   "nav_profile": "சுயவிவரம்",
   "language": "மொழி",
-  "logout": "வெளியேறு"
+  "logout": "வெளியேறு",
+  "register_title": "கணக்கை உருவாக்கவும்",
+  "register_subtitle": "Brainex-ல் இணையுங்கள்",
+  "register_pass_hint": "கடவுச்சொல்லை உருவாக்கவும்",
+  "confirm_password_label": "கடவுச்சொல்லை உறுதிப்படுத்தவும்",
+  "confirm_password_hint": "கடவுச்சொல்லை மீண்டும் உள்ளிடவும்",
+  "btn_signup": "பதிவு செய்யவும்",
+  "already_have_acc": "ஏற்கனவே கணக்கு உள்ளதா?",
+  "link_login": "உள்நுழைய",
+  "signup_google": "Google மூலம் பதிவு செய்யவும்",
+  "signup_apple": "Apple மூலம் பதிவு செய்யவும்",
+  "error_fill_all_fields": "எல்லா புலங்களையும் நிரப்பவும்",
+  "error_password_mismatch": "கடவுச்சொற்கள் பொருந்தவில்லை"
 }
