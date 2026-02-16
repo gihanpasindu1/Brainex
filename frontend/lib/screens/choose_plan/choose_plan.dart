@@ -22,7 +22,11 @@ class ChoosePlan extends StatelessWidget {
               children: [
                 const Text(
                   "Choose your plan",
-                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 30),
 
@@ -58,13 +62,16 @@ class ChoosePlan extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 18)),
+          Text(
+            title,
+            style: const TextStyle(color: Colors.white, fontSize: 18),
+          ),
           const SizedBox(height: 8),
           Text(desc, style: const TextStyle(color: Colors.white70)),
         ],

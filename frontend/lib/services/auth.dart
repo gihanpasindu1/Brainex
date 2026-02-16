@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:frontend/models/UserModel.dart';
+import 'package:flutter/foundation.dart';
+import 'package:frontend/models/user_model.dart';
 
 class AuthServices {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -19,7 +20,7 @@ class AuthServices {
       final User? user = result.user;
       return _userWithFirebaseUserUid(user);
     } catch (err) {
-      print(err.toString());
+      debugPrint(err.toString());
       return null;
     }
   }
@@ -37,7 +38,7 @@ class AuthServices {
       final User? user = result.user;
       return _userWithFirebaseUserUid(user);
     } catch (err) {
-      print(err.toString());
+      debugPrint(err.toString());
       return null;
     }
   }
@@ -55,7 +56,7 @@ class AuthServices {
       final User? user = result.user;
       return _userWithFirebaseUserUid(user);
     } catch (err) {
-      print(err.toString());
+      debugPrint(err.toString());
       return null;
     }
   }
@@ -64,7 +65,7 @@ class AuthServices {
     try {
       return await _auth.signOut();
     } catch (err) {
-      print(err.toString());
+      debugPrint(err.toString());
       return null;
     }
   }

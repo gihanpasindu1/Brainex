@@ -128,7 +128,7 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                   width: 260,
                   height: 260,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.18),
+                    color: Colors.black.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(140),
                   ),
                 ),
@@ -287,7 +287,7 @@ class _TopHeader extends StatelessWidget {
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.75),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                 ),
@@ -320,12 +320,15 @@ class _GlassPanel extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: const Color(0xFF0A1222).withOpacity(0.55),
+            color: const Color(0xFF0A1222).withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.28),
+                color: Colors.black.withValues(alpha: 0.35),
                 blurRadius: 18,
                 offset: const Offset(0, 10),
               ),
@@ -358,9 +361,9 @@ class _SegmentedTabs extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: const Color(0xFF0B1326).withOpacity(0.75),
+        color: const Color(0xFF0B1326).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.10)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -425,7 +428,9 @@ class _TabPill extends StatelessWidget {
           child: Text(
             text,
             style: TextStyle(
-              color: selected ? Colors.white : Colors.white.withOpacity(0.75),
+              color: selected
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.5),
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
@@ -455,9 +460,9 @@ class _SearchBar extends StatelessWidget {
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF071024).withOpacity(0.72),
+        color: const Color(0xFF071024).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.10)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -473,7 +478,7 @@ class _SearchBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.55),
+                  color: Colors.white.withValues(alpha: 0.5),
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                 ),
@@ -534,7 +539,7 @@ class _GradientActionButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 18,
               offset: const Offset(0, 10),
             ),
@@ -578,9 +583,9 @@ class _NoteCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B1326).withOpacity(0.62),
+        color: const Color(0xFF0B1326).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,13 +609,15 @@ class _NoteCard extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white.withOpacity(0.10)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
                 child: Icon(
                   Icons.mic_rounded,
-                  color: Colors.white.withOpacity(0.80),
+                  color: Colors.white.withValues(alpha: 0.8),
                   size: 16,
                 ),
               ),
@@ -622,7 +629,7 @@ class _NoteCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.70),
+              color: Colors.white.withValues(alpha: 0.7),
               fontSize: 12,
               fontWeight: FontWeight.w500,
               height: 1.35,
@@ -632,7 +639,7 @@ class _NoteCard extends StatelessWidget {
           Text(
             dateText,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.55),
+              color: Colors.white.withValues(alpha: 0.5),
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -665,9 +672,9 @@ class _BottomNav extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.35),
+              color: Colors.black.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: Colors.white.withOpacity(0.10)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -734,13 +741,13 @@ class _NavItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(22),
                 gradient: LinearGradient(
                   colors: [
-                    Colors.blueAccent.withOpacity(0.9),
-                    Colors.purpleAccent.withOpacity(0.85),
+                    Colors.blueAccent.withValues(alpha: 0.9),
+                    Colors.purpleAccent.withValues(alpha: 0.85),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blueAccent.withOpacity(0.22),
+                    color: Colors.blueAccent.withValues(alpha: 0.22),
                     blurRadius: 16,
                   ),
                 ],

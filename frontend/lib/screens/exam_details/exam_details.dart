@@ -22,7 +22,11 @@ class ExamDetails extends StatelessWidget {
               children: [
                 const Text(
                   "Exam Details",
-                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 30),
 
@@ -42,9 +46,7 @@ class ExamDetails extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                TextField(
-                  decoration: _inputDecoration("District (optional)"),
-                ),
+                TextField(decoration: _inputDecoration("District (optional)")),
                 const Spacer(),
 
                 SizedBox(
@@ -59,7 +61,9 @@ class ExamDetails extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text("Next"),
                   ),
@@ -77,7 +81,7 @@ class ExamDetails extends StatelessWidget {
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white54),
       filled: true,
-      fillColor: Colors.white.withOpacity(0.1),
+      fillColor: Colors.white.withValues(alpha: 0.1),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,

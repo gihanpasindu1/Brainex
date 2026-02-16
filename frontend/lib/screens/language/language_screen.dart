@@ -216,12 +216,12 @@ class _LanguageScreenState extends State<LanguageScreen> {
           colors: [Color(0xFF1B1E6D), Color(0xFF0F123F)],
         ),
         border: Border.all(
-          color: const Color(0xFF4F6BFF).withOpacity(0.4),
+          color: const Color(0xFF4F6BFF).withValues(alpha: 0.1),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
