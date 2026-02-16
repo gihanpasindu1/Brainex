@@ -6,6 +6,7 @@ import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
 import 'package:frontend/screens/upload_screen/upload_screen.dart';
+import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -133,10 +134,10 @@ class BrainexHome extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.06),
+                              color: Colors.white.withValues(alpha: 0.06),
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.10),
+                                color: Colors.white.withValues(alpha: 0.10),
                               ),
                             ),
                             child: Text(
@@ -258,6 +259,14 @@ class BrainexHome extends StatelessWidget {
                         icon: Icons.menu_book_rounded,
                         color: const Color(0xFF34D399),
                         subtitle: t('quick_review'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ShortNotesPage(),
+                            ),
+                          );
+                        },
                       ),
                       _PremiumActionCard(
                         title: t('ai_study_plan'),
@@ -362,12 +371,12 @@ class _GlassCard extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.white.withOpacity(0.10)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.35),
+                color: Colors.black.withValues(alpha: 0.35),
                 blurRadius: 18,
                 offset: const Offset(0, 10),
               ),
@@ -395,11 +404,11 @@ class _GlowIconButton extends StatelessWidget {
         height: 44,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.06),
-          border: Border.all(color: Colors.white.withOpacity(0.10)),
+          color: Colors.white.withValues(alpha: 0.06),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
           boxShadow: [
             BoxShadow(
-              color: Colors.blueAccent.withOpacity(0.18),
+              color: Colors.blueAccent.withValues(alpha: 0.18),
               blurRadius: 18,
               spreadRadius: 1,
             ),
@@ -420,9 +429,9 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.10)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
       ),
       child: Text(
         text,
@@ -469,7 +478,7 @@ class _StatRow extends StatelessWidget {
               decoration: BoxDecoration(
                 color: accent,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
               child: Icon(icon, color: iconColor, size: 18),
             ),
@@ -533,15 +542,17 @@ class _PremiumActionCardState extends State<_PremiumActionCard> {
                 height: 44,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  color: widget.color.withOpacity(0.18),
+                  color: widget.color.withValues(alpha: 0.18),
                   boxShadow: [
                     BoxShadow(
-                      color: widget.color.withOpacity(0.20),
+                      color: widget.color.withValues(alpha: 0.20),
                       blurRadius: 16,
                       spreadRadius: 1,
                     ),
                   ],
-                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
                 ),
                 child: Icon(widget.icon, color: widget.color),
               ),
@@ -593,9 +604,9 @@ class _PremiumBottomNav extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.35),
+              color: Colors.black.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: Colors.white.withOpacity(0.10)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -650,13 +661,13 @@ class _NavItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(22),
               gradient: LinearGradient(
                 colors: [
-                  Colors.blueAccent.withOpacity(0.9),
-                  Colors.purpleAccent.withOpacity(0.85),
+                  Colors.blueAccent.withValues(alpha: 0.9),
+                  Colors.purpleAccent.withValues(alpha: 0.85),
                 ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blueAccent.withOpacity(0.22),
+                  color: Colors.blueAccent.withValues(alpha: 0.22),
                   blurRadius: 16,
                 ),
               ],

@@ -23,29 +23,49 @@ class AuthServices {
       return null;
     }
   }
+
   // email.pw loging
-  Future<UserModel?> signInWithEmailPassword(String email, String password) async {
-  try {
-    final UserCredential result = await _auth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    final User? user = result.user;
-    return _userWithFirebaseUserUid(user);
-  } catch (err) {
-    print(err.toString());
-    return null;
-  }
-}
-
-
-  Future signOut()async{
-    try{
-      return await _auth.signOut();
-    }catch(err){
+  Future<UserModel?> signInWithEmailPassword(
+    String email,
+    String password,
+  ) async {
+    try {
+      final UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final User? user = result.user;
+      return _userWithFirebaseUserUid(user);
+    } catch (err) {
       print(err.toString());
       return null;
     }
+  }
 
+  // register with email and password
+  Future<UserModel?> registerWithEmailPassword(
+    String email,
+    String password,
+  ) async {
+    try {
+      final UserCredential result = await _auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final User? user = result.user;
+      return _userWithFirebaseUserUid(user);
+    } catch (err) {
+      print(err.toString());
+      return null;
+    }
+  }
+
+  Future signOut() async {
+    try {
+      return await _auth.signOut();
+    } catch (err) {
+      print(err.toString());
+      return null;
+    }
   }
 }
