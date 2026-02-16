@@ -40,5 +40,17 @@
   "nav_leaderboard": "පුවරුව",
   "nav_profile": "ගිණුම",
   "language": "භාෂාව",
-  "logout": "ඉවත් වන්න"
+  "logout": "ඉවත් වන්න",
+  "register_title": "ගිණුමක් සාදන්න",
+  "register_subtitle": "Brainex හා සම්බන්ධ වන්න",
+  "register_pass_hint": "මුරපදයක් සාදන්න",
+  "confirm_password_label": "මුරපදය තහවුරු කරන්න",
+  "confirm_password_hint": "ඔබේ මුරපදය නැවත ඇතුළත් කරන්න",
+  "btn_signup": "ලියාපදිංචි වන්න",
+  "already_have_acc": "දැනටමත් ගිණුමක් තිබේද?",
+  "link_login": "පිවිසෙන්න",
+  "signup_google": "Google සමඟ ලියාපදිංචි වන්න",
+  "signup_apple": "Apple සමඟ ලියාපදිංචි වන්න",
+  "error_fill_all_fields": "කරුණාකර සියලුම ක්ෂේත්‍ර පුරවන්න",
+  "error_password_mismatch": "මුරපද නොගැලපේ"
 }
