@@ -5,7 +5,7 @@ import 'package:frontend/services/auth.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
-import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
+import 'package:frontend/screens/upload_screen/upload_screen.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -31,7 +31,7 @@ class BrainexHome extends StatelessWidget {
     final localeProvider = Provider.of<LocaleProvider>(context);
 
     // Logout logic
-    Future<void> _logout() async {
+    Future<void> logout() async {
       await localeProvider.clearLocale();
       await AuthServices().signOut();
     }
@@ -101,7 +101,7 @@ class BrainexHome extends StatelessWidget {
                         _GlowIconButton(
                           icon: Icons
                               .logout, // Changed from notifications to Logout for utility
-                          onTap: _logout,
+                          onTap: logout,
                         ),
                       ],
                     ),
@@ -258,14 +258,6 @@ class BrainexHome extends StatelessWidget {
                         icon: Icons.menu_book_rounded,
                         color: const Color(0xFF34D399),
                         subtitle: t('quick_review'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ShortNotesPage(),
-                            ),
-                          );
-                        },
                       ),
                       _PremiumActionCard(
                         title: t('ai_study_plan'),
@@ -284,6 +276,14 @@ class BrainexHome extends StatelessWidget {
                         icon: Icons.emoji_events_rounded,
                         color: const Color(0xFFFDE047),
                         subtitle: t('improve_marks'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const UploadPaperScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
