@@ -1,0 +1,766 @@
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:frontend/services/localization_service.dart';
+
+class ShortNotesPage extends StatefulWidget {
+  const ShortNotesPage({super.key});
+
+  @override
+  State<ShortNotesPage> createState() => _ShortNotesPageState();
+}
+
+class _ShortNotesPageState extends State<ShortNotesPage> {
+  int selectedTab = 0; // 0 = My Notes, 1 = Predefined Notes
+  int bottomIndex = 1; // default highlight like screenshot (Plan)
+
+  late PageController _pageController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+
+  // Dummy Data for My Notes
+  final List<Map<String, String>> myNotes = [
+    {
+      "title": "Chapter 3: Thermodynamics",
+      "desc":
+          "Thermodynamics deals with heat, work and energy transfer in physical systems...",
+      "date": "Oct 12, 2023",
+    },
+    {
+      "title": "Calculus II: Integration",
+      "desc":
+          "Integration is the reverse process of differentiation, finding area under curves and accumulation...",
+      "date": "Oct 10, 2023",
+    },
+    {
+      "title": "Organic Chemistry Reactions",
+      "desc":
+          "Organic reactions describe how molecules combine, rearrange and transform into new compounds...",
+      "date": "Oct 9, 2023",
+    },
+  ];
+
+  // Dummy Data for Predefined Notes
+  final List<Map<String, String>> predefinedNotes = [
+    {
+      "title": "Physics Formula Sheet",
+      "desc":
+          "A complete list of formulas for Mechanics, Waves, and Thermodynamics...",
+      "date": "Updated: Sep 2023",
+    },
+    {
+      "title": "Math Cheat Sheet",
+      "desc":
+          "Quick reference for Algebra, Trigonometry, and Calculus identities...",
+      "date": "Updated: Aug 2023",
+    },
+    {
+      "title": "Chemistry Periodic Table",
+      "desc":
+          "High definition periodic table with atomic properties and trends...",
+      "date": "Updated: Jul 2023",
+    },
+    {
+      "title": "English Grammar Rules",
+      "desc":
+          "Comprehensive grammar guide covering tenses, voice, and speech...",
+      "date": "Updated: Jun 2023",
+    },
+  ];
+
+  @override
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: selectedTab);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Map<String, String>> get _filteredMyNotes {
+    if (_searchQuery.isEmpty) return myNotes;
+    return myNotes
+        .where(
+          (note) =>
+              note["title"]!.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ||
+              note["desc"]!.toLowerCase().contains(_searchQuery.toLowerCase()),
+        )
+        .toList();
+  }
+
+  List<Map<String, String>> get _filteredPredefinedNotes {
+    if (_searchQuery.isEmpty) return predefinedNotes;
+    return predefinedNotes
+        .where(
+          (note) =>
+              note["title"]!.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ||
+              note["desc"]!.toLowerCase().contains(_searchQuery.toLowerCase()),
+        )
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.png.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // soft dark overlay / shapes
+              Positioned(
+                right: -120,
+                top: 120,
+                child: Container(
+                  width: 260,
+                  height: 260,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(140),
+                  ),
+                ),
+              ),
+
+              Column(
+                children: [
+                  _TopHeader(
+                    title: "Short Notes",
+                    subtitle: "Brainex Short Notes Library",
+                    onBack: () => Navigator.maybePop(context),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _GlassPanel(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                        child: Column(
+                          children: [
+                            _SegmentedTabs(
+                              leftText: "My Notes",
+                              rightText: "Predefined Notes",
+                              selectedIndex: selectedTab,
+                              onChanged: (i) {
+                                setState(() => selectedTab = i);
+                                _pageController.animateToPage(
+                                  i,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+
+                            _SearchBar(
+                              controller: _searchController,
+                              hint: "Search notes by topic or keyword",
+                              onChanged: (val) =>
+                                  setState(() => _searchQuery = val),
+                            ),
+                            const SizedBox(height: 14),
+
+                            _GradientActionButton(
+                              icon: Icons.qr_code_scanner_rounded,
+                              label: "Scan New Note",
+                              onTap: () {},
+                            ),
+                            const SizedBox(height: 14),
+
+                            Expanded(
+                              child: PageView(
+                                controller: _pageController,
+                                onPageChanged: (i) =>
+                                    setState(() => selectedTab = i),
+                                children: [
+                                  // Tab 0: My Notes
+                                  ListView.builder(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    itemCount: _filteredMyNotes.length,
+                                    itemBuilder: (context, index) {
+                                      final note = _filteredMyNotes[index];
+                                      return Column(
+                                        children: [
+                                          _NoteCard(
+                                            title: note["title"]!,
+                                            desc: note["desc"]!,
+                                            dateText: note["date"]!,
+                                          ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                  // Tab 1: Predefined Notes
+                                  ListView.builder(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    itemCount: _filteredPredefinedNotes.length,
+                                    itemBuilder: (context, index) {
+                                      final note =
+                                          _filteredPredefinedNotes[index];
+                                      return Column(
+                                        children: [
+                                          _NoteCard(
+                                            title: note["title"]!,
+                                            desc: note["desc"]!,
+                                            dateText: note["date"]!,
+                                          ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      extendBody: true,
+      bottomNavigationBar: _BottomNav(
+        currentIndex: bottomIndex,
+        onChanged: (i) => setState(() => bottomIndex = i),
+      ),
+    );
+  }
+}
+
+/* ----------------------------- TOP HEADER ----------------------------- */
+
+class _TopHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onBack;
+
+  const _TopHeader({
+    required this.title,
+    required this.subtitle,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 16, 6),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onBack,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: Colors.white,
+          ),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.75),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* ----------------------------- GLASS PANEL ---------------------------- */
+
+class _GlassPanel extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
+
+  const _GlassPanel({
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A1222).withOpacity(0.55),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.28),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/* ---------------------------- SEGMENTED TABS --------------------------- */
+
+class _SegmentedTabs extends StatelessWidget {
+  final String leftText;
+  final String rightText;
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  const _SegmentedTabs({
+    required this.leftText,
+    required this.rightText,
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1326).withOpacity(0.75),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _TabPill(
+              text: leftText,
+              selected: selectedIndex == 0,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2DE2E6), Color(0xFFB13CFF)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              onTap: () => onChanged(0),
+            ),
+          ),
+          Expanded(
+            child: _TabPill(
+              text: rightText,
+              selected: selectedIndex == 1,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2DE2E6), Color(0xFFB13CFF)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              onTap: () => onChanged(1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  final String text;
+  final bool selected;
+  final Gradient gradient;
+  final VoidCallback onTap;
+
+  const _TabPill({
+    required this.text,
+    required this.selected,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: selected ? gradient : null,
+            color: selected ? null : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: selected ? Colors.white : Colors.white.withOpacity(0.75),
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/* ------------------------------ SEARCH BAR ---------------------------- */
+
+class _SearchBar extends StatelessWidget {
+  final String hint;
+  final ValueChanged<String> onChanged;
+  final TextEditingController controller;
+
+  const _SearchBar({
+    required this.hint,
+    required this.onChanged,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF071024).withOpacity(0.72),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: Colors.white.withOpacity(0.55),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2DE2E6), Color(0xFFB13CFF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.search_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* -------------------------- GRADIENT ACTION BTN ------------------------ */
+
+class _GradientActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _GradientActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2DE2E6), Color(0xFFB13CFF)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/* -------------------------------- NOTE CARD --------------------------- */
+
+class _NoteCard extends StatelessWidget {
+  final String title;
+  final String desc;
+  final String dateText;
+
+  const _NoteCard({
+    required this.title,
+    required this.desc,
+    required this.dateText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1326).withOpacity(0.62),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white.withOpacity(0.10)),
+                ),
+                child: Icon(
+                  Icons.mic_rounded,
+                  color: Colors.white.withOpacity(0.80),
+                  size: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            desc,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.70),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            dateText,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.55),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* ------------------------------ BOTTOM NAV ---------------------------- */
+
+class _BottomNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onChanged;
+
+  const _BottomNav({required this.currentIndex, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final tr = AppLocalizations.of(context);
+    String t(String key) => tr?.translate(key) ?? key;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.35),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white.withOpacity(0.10)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  icon: Icons.home_rounded,
+                  label: t('nav_home'),
+                  active: currentIndex == 0,
+                  onTap: () {
+                    onChanged(0);
+                    Navigator.maybePop(context);
+                  },
+                ),
+                _NavItem(
+                  icon: Icons.calendar_month_rounded,
+                  label: t('nav_plan'),
+                  active: currentIndex == 1,
+                  onTap: () => onChanged(1),
+                ),
+                _NavItem(
+                  icon: Icons.emoji_events_rounded,
+                  label: t('nav_leaderboard'),
+                  active: currentIndex == 2,
+                  onTap: () => onChanged(2),
+                ),
+                _NavItem(
+                  icon: Icons.person_rounded,
+                  label: t('nav_profile'),
+                  active: currentIndex == 3,
+                  onTap: () => onChanged(3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: active
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.blueAccent.withOpacity(0.9),
+                    Colors.purpleAccent.withOpacity(0.85),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blueAccent.withOpacity(0.22),
+                    blurRadius: 16,
+                  ),
+                ],
+              )
+            : null,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: active ? Colors.white : Colors.white60),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10.5,
+                color: active ? Colors.white : Colors.white60,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
