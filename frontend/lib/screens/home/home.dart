@@ -259,14 +259,6 @@ class BrainexHome extends StatelessWidget {
                         icon: Icons.menu_book_rounded,
                         color: const Color(0xFF34D399),
                         subtitle: t('quick_review'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ShortNotesPage(),
-                            ),
-                          );
-                        },
                       ),
                       _PremiumActionCard(
                         title: t('ai_study_plan'),
