@@ -19,12 +19,11 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // 📷 Camera
   Future<void> pickFromCamera() async {
     var status = await Permission.camera.request();
-
     if (status.isGranted) {
-      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+      final XFile? image =
+          await _picker.pickImage(source: ImageSource.camera);
 
       if (image != null) {
         setState(() {
@@ -36,9 +35,9 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
     }
   }
 
-  // 🖼 Gallery
   Future<void> pickFromGallery() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image =
+        await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       setState(() {
@@ -49,7 +48,6 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
     }
   }
 
-  // 📄 PDF / File Picker
   Future<void> pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -81,201 +79,349 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1E),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 🔙 Back
-              const Icon(Icons.arrow_back, color: Colors.white),
+      backgroundColor: const Color(0xFF0B0B1E),
+      body: Stack(
+        children: [
 
-              const SizedBox(height: 20),
-
-              // 🟣 Title
-              const Text(
-                "Upload Paper and Correct your MCQs",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          /// 🔥 Gradient Header
+          Container(
+            height: 300,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF7A5CFF),
+                  Color(0xFF4FACFE),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+            ),
+          ),
 
-              const SizedBox(height: 8),
-
-              const Text(
-                "Scan your answers and get instant marking + weak topic update",
-                style: TextStyle(color: Colors.white70),
+          /// 🔥 Curved Blend
+          Positioned(
+            top: 220,
+            left: 0,
+            right: 0,
+            child: ClipPath(
+              clipper: HeaderClipper(),
+              child: Container(
+                height: 120,
+                color: const Color(0xFF0B0B1E),
               ),
+            ),
+          ),
 
-              const SizedBox(height: 30),
+          /// 📱 Content
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
 
-              // 📄 Upload Box
-              DottedBorder(
-                color: Colors.white30,
-                borderType: BorderType.RRect,
-                radius: const Radius.circular(20),
-                dashPattern: const [6, 4],
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(30),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: const Color(0xFF1B1B2E),
+                  const SizedBox(height: 10),
+
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back,
+                        color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.insert_drive_file,
-                        size: 50,
-                        color: Colors.white70,
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Drop PDF / Image here",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      const SizedBox(height: 5),
-                      const Text(
-                        "Supports JPG, PNG, PDF • Max 10MB",
-                        style: TextStyle(color: Colors.white54),
-                      ),
-                      const SizedBox(height: 20),
 
-                      // Choose File Button
-                      GestureDetector(
-                        onTap: pickFile,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 30,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF4FACFE), Color(0xFF8E2DE2)],
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    "Upload Paper and Correct your MCQs",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  const Text(
+                    "Scan your answers and get instant marking + weak topic update",
+                    style: TextStyle(
+                        color: Colors.white70, fontSize: 13),
+                  ),
+
+                  const SizedBox(height: 50),
+
+                  /// 📄 Upload Box
+                  DottedBorder(
+                    borderType: BorderType.RRect,
+                    radius: const Radius.circular(25),
+                    dashPattern: const [6, 4],
+                    color: Colors.white24,
+                    child: Container(
+                      width: double.infinity,
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 35),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF141432),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Column(
+                        children: [
+
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: Colors.white24),
                             ),
-                            borderRadius: BorderRadius.circular(30),
+                            child: const Icon(
+                              Icons.insert_drive_file,
+                              size: 35,
+                              color: Colors.white70,
+                            ),
                           ),
-                          child: const Text(
-                            "Choose File",
-                            style: TextStyle(color: Colors.white),
+
+                          const SizedBox(height: 15),
+
+                          const Text(
+                            "Drop PDF / Image here",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight:
+                                    FontWeight.w500),
                           ),
-                        ),
+
+                          const SizedBox(height: 6),
+
+                          const Text(
+                            "Supports JPG, PNG, PDF • Max 10MB",
+                            style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          GestureDetector(
+                            onTap: pickFile,
+                            child: Container(
+                              padding:
+                                  const EdgeInsets.symmetric(
+                                      horizontal: 35,
+                                      vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient:
+                                    const LinearGradient(
+                                  colors: [
+                                    Color(0xFF4FACFE),
+                                    Color(0xFF8E2DE2)
+                                  ],
+                                ),
+                                borderRadius:
+                                    BorderRadius.circular(30),
+                              ),
+                              child: const Text(
+                                "Choose File",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight:
+                                        FontWeight.w500),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  /// 📷 Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSmallButton(
+                            "📷 Capture Photo",
+                            pickFromCamera),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: _buildSmallButton(
+                            "🖼 From Gallery",
+                            pickFromGallery),
                       ),
                     ],
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
-              // 📷 Camera + Gallery Row
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: pickFromCamera,
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white24),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      child: const Text(
-                        "Capture Photo",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: pickFromGallery,
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white24),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      child: const Text(
-                        "From Gallery",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
+                  if (selectedFile != null)
+                    _buildSelectedFileCard(),
+
+                  const SizedBox(height: 30),
+
+                  _buildSubmitButton(),
+
+                  const SizedBox(height: 25),
+
+                  _buildBottomInfoCard(),
+
+                  const SizedBox(height: 40),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-              const SizedBox(height: 30),
+  Widget _buildSmallButton(String text, VoidCallback onTap) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF141432),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: TextButton(
+        onPressed: onTap,
+        child: Text(
+          text,
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
 
-              // 📄 Selected Paper
-              if (selectedFile != null)
-                Container(
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B1B2E),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              fileName ?? "",
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            Text(
-                              fileSize != null ? formatSize(fileSize!) : "",
-                              style: const TextStyle(color: Colors.white54),
-                            ),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: removeFile,
-                        child: const Text(
-                          "Remove",
-                          style: TextStyle(color: Colors.redAccent),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              const SizedBox(height: 30),
-
-              // 🚀 Submit Button
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF4FACFE), Color(0xFF8E2DE2)],
-                  ),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Center(
-                  child: Text(
-                    "Submit for Marking",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+  Widget _buildSubmitButton() {
+    return GestureDetector(
+      onTap: () {
+        if (selectedFile == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text("Please select a file first")),
+          );
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF4FACFE),
+              Color(0xFF8E2DE2)
             ],
+          ),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: const Center(
+          child: Text(
+            "Submit for Marking",
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildBottomInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141432),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "After marking you will see:",
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500),
+          ),
+          SizedBox(height: 6),
+          Text(
+            "Score • Weak Topics • Mastery improvement (no XP)",
+            style:
+                TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedFileCard() {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141432),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.picture_as_pdf,
+              color: Colors.redAccent),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(fileName ?? "",
+                    style:
+                        const TextStyle(color: Colors.white)),
+                const SizedBox(height: 4),
+                Text(
+                  fileSize != null
+                      ? formatSize(fileSize!)
+                      : "",
+                  style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: removeFile,
+            child: const Text(
+              "Remove",
+              style:
+                  TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 🔥 Header Curve
+class HeaderClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+
+    path.lineTo(0, 40);
+    path.quadraticBezierTo(
+        size.width * 0.3, 0, size.width * 0.7, 40);
+    path.quadraticBezierTo(
+        size.width * 0.9, 90, size.width, 40);
+
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) =>
+      false;
 }
