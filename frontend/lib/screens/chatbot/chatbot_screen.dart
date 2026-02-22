@@ -56,7 +56,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     setState(() {});
   }
 
-  void _onSpeechResult(result) {
+  void _onSpeechResult(dynamic result) {
     setState(() {
       _controller.text = result.recognizedWords;
       // Move cursor to end
@@ -437,7 +437,7 @@ class _PressableScaleState extends State<PressableScale>
       onTap: widget.onTap,
       child: AnimatedBuilder(
         animation: _c,
-        builder: (_, __) =>
+        builder: (context, child) =>
             Transform.scale(scale: _s.value, child: widget.child),
       ),
     );
@@ -543,14 +543,14 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _c,
-      builder: (_, __) => Transform.translate(
+      builder: (context, child) => Transform.translate(
         offset: Offset(0, _y.value),
         child: Container(
           width: 7,
           height: 7,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.75),
+            color: Colors.white.withValues(alpha: 0.2),
           ),
         ),
       ),
@@ -676,7 +676,7 @@ class _GlassCardState extends State<GlassCard>
         filter: ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
         child: AnimatedBuilder(
           animation: _c,
-          builder: (_, __) {
+          builder: (context, child) {
             final t = _c.value;
             final sheenX = -1.2 + (2.4 * t);
 
@@ -684,15 +684,13 @@ class _GlassCardState extends State<GlassCard>
               padding: widget.padding,
               decoration: BoxDecoration(
                 borderRadius: r,
-                border: Border.all(
-                  color: Colors.white.withOpacity(widget.borderOpacity),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withOpacity(0.25),
-                    Colors.white.withOpacity(0.12),
+                    Colors.white.withValues(alpha: 0.05),
+                    Colors.white.withValues(alpha: 0.03),
                   ],
                 ),
               ),
@@ -709,7 +707,7 @@ class _GlassCardState extends State<GlassCard>
                               center: const Alignment(-0.6, -0.8),
                               radius: 1.2,
                               colors: [
-                                Colors.white.withOpacity(0.14),
+                                Colors.white.withValues(alpha: 0.1),
                                 Colors.transparent,
                               ],
                             ),
@@ -732,7 +730,7 @@ class _GlassCardState extends State<GlassCard>
                                 gradient: LinearGradient(
                                   colors: [
                                     Colors.transparent,
-                                    Colors.white.withOpacity(0.10),
+                                    Colors.white.withValues(alpha: 0.1),
                                     Colors.transparent,
                                   ],
                                   stops: const [0.0, 0.5, 1.0],
@@ -752,7 +750,7 @@ class _GlassCardState extends State<GlassCard>
                     child: IgnorePointer(
                       child: Container(
                         height: 1,
-                        color: Colors.white.withOpacity(0.12),
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
                   ),
@@ -791,8 +789,8 @@ class _AskAnythingCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF55D6FF).withOpacity(0.95),
-                  const Color(0xFF8A5CFF).withOpacity(0.95),
+                  const Color(0xFF55D6FF).withValues(alpha: 0.3),
+                  const Color(0xFF8A5CFF).withValues(alpha: 0.3),
                 ],
               ),
             ),
@@ -848,7 +846,7 @@ class _MessageCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 6),
@@ -858,13 +856,15 @@ class _MessageCard extends StatelessWidget {
                 p: TextStyle(
                   fontSize: 11.6,
                   height: 1.35,
-                  color: Colors.white.withOpacity(0.80),
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
                 strong: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white.withOpacity(0.95),
+                  color: Colors.white.withValues(alpha: 0.95),
                 ),
-                listBullet: TextStyle(color: Colors.white.withOpacity(0.80)),
+                listBullet: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
               ),
             ),
           ],
@@ -894,7 +894,7 @@ class _UserPill extends StatelessWidget {
           textAlign: TextAlign.left,
           style: TextStyle(
             fontSize: 11.6,
-            color: Colors.white.withOpacity(0.85),
+            color: Colors.white.withValues(alpha: 0.9),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -917,8 +917,8 @@ class _OutlinePillButton extends StatelessWidget {
         height: 34,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.white.withOpacity(0.18)),
-          color: Colors.white.withOpacity(0.06),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          color: Colors.white.withValues(alpha: 0.05),
         ),
         child: Center(
           child: Text(
@@ -953,13 +953,13 @@ class _GradientPillButton extends StatelessWidget {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              const Color(0xFF55D6FF).withOpacity(0.95),
-              const Color(0xFF8A5CFF).withOpacity(0.95),
+              const Color(0xFF55D6FF).withValues(alpha: 0.8),
+              const Color(0xFF8A5CFF).withValues(alpha: 0.9),
             ],
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 18,
               offset: const Offset(0, 6),
             ),
@@ -995,8 +995,8 @@ class _SuggestionChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.white.withOpacity(0.18)),
-          color: Colors.white.withOpacity(0.05),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          color: Colors.white.withValues(alpha: 0.05),
         ),
         child: Center(
           child: Text(
@@ -1055,17 +1055,17 @@ class _InputBar extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isListening
-                        ? Colors.redAccent.withOpacity(0.20)
-                        : Colors.white.withOpacity(0.08),
+                        ? Colors.redAccent.withValues(alpha: 0.2)
+                        : Colors.white.withValues(alpha: 0.05),
                     border: Border.all(
                       color: isListening
                           ? Colors.redAccent
-                          : Colors.white.withOpacity(0.12),
+                          : Colors.white.withValues(alpha: 0.1),
                     ),
                     boxShadow: isListening
                         ? [
                             BoxShadow(
-                              color: Colors.redAccent.withOpacity(0.25),
+                              color: Colors.redAccent.withValues(alpha: 0.3),
                               blurRadius: 14,
                               spreadRadius: 1,
                             ),
@@ -1122,7 +1122,7 @@ class _InputBar extends StatelessWidget {
                 hintText: 'Ask Brainex AI anything...',
                 hintStyle: TextStyle(
                   fontSize: 11.5,
-                  color: Colors.white.withOpacity(0.50),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
               ),
               textInputAction: TextInputAction.send,
@@ -1145,13 +1145,13 @@ class _InputBar extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF55D6FF).withOpacity(0.95),
-                      const Color(0xFF8A5CFF).withOpacity(0.95),
+                      const Color(0xFF55D6FF).withValues(alpha: 0.9),
+                      const Color(0xFF8A5CFF).withValues(alpha: 0.85),
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 18,
                       offset: const Offset(0, 6),
                     ),
@@ -1247,10 +1247,10 @@ class _MicWaveState extends State<MicWave> with SingleTickerProviderStateMixin {
                 height: h,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  color: widget.color.withOpacity(0.85),
+                  color: widget.color.withValues(alpha: 0.3),
                   boxShadow: [
                     BoxShadow(
-                      color: widget.color.withOpacity(0.25),
+                      color: widget.color.withValues(alpha: 0.2),
                       blurRadius: 10,
                       spreadRadius: 1,
                     ),

@@ -301,7 +301,7 @@ class _RegisterState extends State<Register> {
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white30),
       filled: true,
-      fillColor: const Color(0x9914141E), // 0.6 opacity
+      fillColor: const Color(0xFF14141E).withValues(alpha: 0.6), // 0.6 opacity
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white38, width: 1.2),
@@ -324,12 +324,14 @@ class GlassCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       decoration: BoxDecoration(
-        color: const Color(0x4D1E1E2C), // 0.3 opacity
+        color: const Color(0xFF1E1E2C).withValues(alpha: 0.3), // 0.3 opacity
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white12),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x1A000000), // 0.1 opacity
+            color: const Color(
+              0xFF000000,
+            ).withValues(alpha: 0.1), // 0.1 opacity
             blurRadius: 10,
             spreadRadius: 1,
           ),

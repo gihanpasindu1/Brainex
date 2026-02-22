@@ -121,7 +121,9 @@ class _LoginPageState extends State<LoginPage> {
                       // ✅ Add this navigation code
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const Register()),
+                        MaterialPageRoute(
+                          builder: (context) => const Register(),
+                        ),
                       );
                     },
                     child: Text(
@@ -261,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white30),
       filled: true,
-      fillColor: const Color(0xFF14141E).withOpacity(0.6),
+      fillColor: const Color(0xFF14141E).withValues(alpha: 0.6),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white38, width: 1.2),
@@ -283,12 +285,12 @@ class GlassCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2C).withOpacity(0.3),
+        color: const Color(0xFF1E1E2C).withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             spreadRadius: 1,
           ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:frontend/screens/wrapper.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -239,7 +238,7 @@ class _OuterCirclePainter extends CustomPainter {
 
     // Optional: Add a second pass without blur for a sharp core
     final corePaint = Paint()
-      ..color = Colors.white.withOpacity(0.8)
+      ..color = Colors.white.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
