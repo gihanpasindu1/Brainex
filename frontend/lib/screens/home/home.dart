@@ -6,6 +6,7 @@ import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
 import 'package:frontend/screens/upload_screen/upload_screen.dart';
+import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -258,6 +259,14 @@ class BrainexHome extends StatelessWidget {
                         icon: Icons.menu_book_rounded,
                         color: const Color(0xFF34D399),
                         subtitle: t('quick_review'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ShortNotesPage(),
+                            ),
+                          );
+                        },
                       ),
                       _PremiumActionCard(
                         title: t('ai_study_plan'),
@@ -681,3 +690,4 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+//test comment
