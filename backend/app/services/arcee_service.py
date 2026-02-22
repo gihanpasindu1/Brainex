@@ -9,11 +9,11 @@ load_dotenv()
 # CONFIG
 # ----------------------------------
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "<OPENROUTER_API_KEY>"
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
+    base_url="https://models.inference.ai.azure.com",
+    api_key=GITHUB_TOKEN,
 )
 
 # ----------------------------------
@@ -126,13 +126,12 @@ Example: Python Basics, Python Functions
 
     try:
         completion = client.chat.completions.create(
-            model="openrouter/aurora-alpha", # Fast model for classification
+            model="gpt-4o-mini", # Fast model for classification
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Question: {question}"},
             ],
             temperature=0.1,
-            extra_body={"reasoning": {"enabled": True}},
             stream=True
         )
 
@@ -240,10 +239,9 @@ PDF TEXT (optional):
     messages.append({"role": "user", "content": user_content})
 
     completion = client.chat.completions.create(
-        model="openrouter/aurora-alpha",
+        model="gpt-4o-mini",
         messages=messages,
         temperature=0.2,
-        extra_body={"reasoning": {"enabled": True}},
         stream=True
     )
 
