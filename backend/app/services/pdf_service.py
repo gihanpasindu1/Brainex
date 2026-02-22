@@ -15,7 +15,9 @@ def extract_pdf_text(file_path: str) -> str:
         raise FileNotFoundError(f"PDF file not found at: {file_path}")
     
     text_content = []
+
     try:
+        
         reader = pypdf.PdfReader(file_path)
         for page in reader.pages:
             text = page.extract_text()
