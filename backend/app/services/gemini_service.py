@@ -1,7 +1,36 @@
+import os
+from google import genai
 import json
 from google import genai
 from google.genai import types
 from app.core.config import settings
+
+
+SYSTEM_PROMPT = """
+always remember u explain things to grade one student
+"""
+
+def ask_gemini(question: str) -> str:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return "GEMINI_API_KEY not found."
+
+    client = genai.Client(api_key=api_key)
+
+    full_prompt = f"""
+{SYSTEM_PROMPT}
+
+Student question:
+{question}
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=full_prompt
+    )
+
+    return response.text or "No response from Gemini."
+
 
 def _extract_json(text: str) -> dict:
     # Gemini sometimes returns extra text; safely extract JSON object
@@ -13,7 +42,7 @@ def _extract_json(text: str) -> dict:
         if start == -1 or end == -1 or end <= start:
             raise ValueError("Gemini did not return JSON.")
         return json.loads(text[start:end+1])
-
+    
 def generate_mcqs_with_gemini(context: str, topic: str, grade: str, term: str | None, difficulty: str, mcq_count: int) -> list[dict]:
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY missing in .env")
@@ -64,3 +93,4 @@ Context (use only this):
 
     data = _extract_json(resp.text)
     return data["questions"]
+
