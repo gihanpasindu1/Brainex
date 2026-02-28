@@ -63,6 +63,8 @@ Rules:
 - 4 options A,B,C,D
 - Only ONE correct answer
 - Return ONLY valid JSON (no markdown, no explanation outside JSON)
+- STRICT RULE: Do NOT use ANY double quotes (") inside the question text, options, or explanations. Use single quotes (') instead.
+- STRICT RULE: Do NOT include literal newlines inside strings. If you need a newline, use \\n.
 
 JSON format:
 {{

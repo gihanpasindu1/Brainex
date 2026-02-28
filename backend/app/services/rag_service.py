@@ -212,10 +212,19 @@ async def generate_mcqs(
 
     bank_texts = await _bank_question_texts(db_query)
 
-    prompt = f"""
+    cleaned = []
+    batch_size = 8
+
+    # 1. Generate new questions from syllabus context
+    remaining_gen = gen_count
+    
+    while remaining_gen > 0:
+        current_batch = min(batch_size, remaining_gen)
+        
+        prompt = f"""
 You are a Sri Lankan A/L ICT MCQ paper setter.
 
-Generate {gen_count} NEW MCQs.
+Generate {current_batch} NEW MCQs.
 Syllabus Units to cover:
 {topic_str}
 
@@ -231,8 +240,8 @@ Rules:
 - Create NEW questions strictly based on the provided context (change scenarios/numbers/examples).
 - Distribute questions evenly across the listed Syllabus Units.
 - Output ONLY JSON (no markdown, no extra text)
-- VERY IMPORTANT: Escape all double quotes inside strings properly using \". Do not use unescaped " marks inside questions or option strings, otherwise the JSON will break!
-- IMPORTANT: DO NOT use any unescaped special characters, Python dictionaries, JSON brackets `{{` `}}` or arrays `[` `]` inside your actual question text or options. Represent code snippets using single quotes.
+- STRICT RULE: Do NOT use ANY double quotes (") inside the question text, options, or explanations. Use single quotes (') instead.
+- STRICT RULE: Do NOT include literal newlines inside strings. If you need a newline, use \\n.
 
 JSON format:
 {{
@@ -252,8 +261,6 @@ Context (use only this):
 {context}
 """.strip()
 
-    cleaned = []
-    if gen_count > 0:
         try:
             raw = _gemini_generate(prompt)
             data = _extract_json(raw)
@@ -261,42 +268,74 @@ Context (use only this):
 
             for q_obj in questions:
                 qt = (q_obj.get("question") or "").strip()
-                if not qt:
-                    continue
-                if qt.lower() in bank_texts:
-                    continue
-                if q_obj.get("correct_answer") in ["A", "B", "C", "D"]:
-                    cleaned.append(q_obj)
-
-            missing = gen_count - len(cleaned)
-            if missing > 0:
-                extra = await _fallback_from_bank(db_query, missing, target_topics[0] if target_topics else "General")
-                cleaned.extend(extra)
-
-        except Exception as e:
-            logger.exception("Gemini failed, fallback used. Error=%s", str(e))
-            cleaned.extend(await _fallback_from_bank(db_query, gen_count, target_topics[0] if target_topics else "General"))
-
-    if bank_count > 0:
-        bank_questions = await _fallback_from_bank(db_query, bank_count, target_topics[0] if target_topics else "General")
-        cleaned.extend(bank_questions)
-
-    # FINAL FAILSAFE: If the MCQ bank didn't have enough questions to fulfill bank_count,
-    # we ask Gemini to dynamically generate the absolute missing difference so we don't return []!
-    final_missing = mcq_count - len(cleaned)
-    if final_missing > 0:
-        prompt_fallback = prompt.replace(f"Generate {gen_count} NEW MCQs.", f"Generate {final_missing} NEW MCQs.")
-        try:
-            raw = _gemini_generate(prompt_fallback)
-            data = _extract_json(raw)
-            for q_obj in data.get("questions", []):
-                qt = (q_obj.get("question") or "").strip()
                 if not qt or qt.lower() in bank_texts:
                     continue
                 if q_obj.get("correct_answer") in ["A", "B", "C", "D"]:
                     cleaned.append(q_obj)
         except Exception as e:
-            logger.exception("Final Gemini fallback failed. Error=%s", str(e))
+            logger.exception("Gemini NEW generation batch failed. Error=%s", str(e))
+            
+        remaining_gen -= current_batch
+
+    # 2. Paraphrase bank questions
+    if bank_count > 0:
+        bank_questions = await _fallback_from_bank(db_query, bank_count, target_topics[0] if target_topics else "General")
+        
+        for i in range(0, len(bank_questions), batch_size):
+            batch = bank_questions[i:i + batch_size]
+            batch_text = json.dumps(batch, indent=2)
+            
+            prompt_paraphrase = f"""
+You are a Sri Lankan A/L ICT MCQ paper setter.
+Modify the following existing MCQs to ask slightly different scenarios or change their wording, but test the EXACT SAME concept at the same difficulty.
+
+Grade: {grade}
+Difficulty: {difficulty}
+
+Rules:
+- Provide 4 options A, B, C, D for each question
+- The question should look fresh, even if the underlying logic is the same
+- Return ONLY valid JSON
+- STRICT RULE: Do NOT use ANY double quotes (") inside the question text, options, or explanations. Use single quotes (') instead.
+- STRICT RULE: Do NOT include literal newlines inside strings. If you need a newline, use \\n.
+
+Here are the {len(batch)} MCQs to modify:
+{batch_text}
+
+JSON format required:
+{{
+  "questions": [
+    {{
+      "question": "re-worded question text...",
+      "options": {{"A":"...","B":"...","C":"...","D":"..."}},
+      "correct_answer": "Corresponding correct option letter",
+      "explanation": "updated explanation",
+      "topic": "topic from original",
+      "difficulty": "{difficulty}"
+    }}
+  ]
+}}
+""".strip()
+
+            try:
+                raw = _gemini_generate(prompt_paraphrase)
+                data = _extract_json(raw)
+                for q_obj in data.get("questions", []):
+                    qt = (q_obj.get("question") or "").strip()
+                    if not qt:
+                        continue
+                    if q_obj.get("correct_answer") in ["A", "B", "C", "D"]:
+                        cleaned.append(q_obj)
+            except Exception as e:
+                logger.exception("Gemini paraphrase batch failed. Error=%s", str(e))
+                # Fallback to appending original if model fails
+                cleaned.extend(batch)
+
+    # FINAL FAILSAFE: Pad missing questions with DB fallback
+    final_missing = mcq_count - len(cleaned)
+    if final_missing > 0:
+        extra = await _fallback_from_bank(db_query, final_missing, target_topics[0] if target_topics else "General")
+        cleaned.extend(extra)
 
     random.shuffle(cleaned)
     return cleaned[:mcq_count]
