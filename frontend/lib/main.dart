@@ -8,7 +8,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  
   SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.manual,
     overlays: SystemUiOverlay.values,
@@ -33,7 +32,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      
       builder: (context, child) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: _overlayStyle,
@@ -42,7 +40,6 @@ class MyApp extends StatelessWidget {
       },
 
       theme: ThemeData(
-        
         appBarTheme: const AppBarTheme(systemOverlayStyle: _overlayStyle),
       ),
 
