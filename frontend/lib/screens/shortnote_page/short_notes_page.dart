@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/services/localization_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class ShortNotesPage extends StatefulWidget {
   const ShortNotesPage({super.key});
@@ -16,6 +19,9 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
   late PageController _pageController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+
+  final ImagePicker _picker = ImagePicker();
+  final TextRecognizer _textRecognizer = TextRecognizer();
 
   // Dummy Data for My Notes
   final List<Map<String, String>> myNotes = [
@@ -68,7 +74,6 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
   ];
 
   @override
-  @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: selectedTab);
@@ -76,6 +81,7 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
 
   @override
   void dispose() {
+    _textRecognizer.close();
     _pageController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -105,6 +111,114 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
               note["desc"]!.toLowerCase().contains(_searchQuery.toLowerCase()),
         )
         .toList();
+  }
+
+  Future<void> _scanNote(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(source: source);
+
+      if (image == null) return;
+
+      final inputImage = InputImage.fromFile(File(image.path));
+      final RecognizedText recognizedText = await _textRecognizer.processImage(
+        inputImage,
+      );
+
+      final extractedText = recognizedText.text;
+
+      if (extractedText.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("No text detected.")));
+        return;
+      }
+
+      _showEditDialog(extractedText);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error scanning: $e")));
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0B1326),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: Colors.white,
+                ),
+                title: const Text(
+                  'Camera',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _scanNote(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.photo_library_rounded,
+                  color: Colors.white,
+                ),
+                title: const Text(
+                  'Gallery',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _scanNote(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditDialog(String text) {
+    final controller = TextEditingController(text: text);
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Edit Scanned Note"),
+        content: TextField(controller: controller, maxLines: 8),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                myNotes.insert(0, {
+                  "title": "Scanned Note",
+                  "desc": controller.text,
+                  "date": DateTime.now().toString().split(' ')[0],
+                });
+              });
+              Navigator.pop(context);
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -176,7 +290,7 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                             _GradientActionButton(
                               icon: Icons.qr_code_scanner_rounded,
                               label: "Scan New Note",
-                              onTap: () {},
+                              onTap: _showImageSourceDialog,
                             ),
                             const SizedBox(height: 14),
 

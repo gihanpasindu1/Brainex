@@ -7,6 +7,7 @@ import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
 import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_1.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -273,6 +274,15 @@ class BrainexHome extends StatelessWidget {
                         icon: Icons.calendar_today_rounded,
                         color: const Color(0xFFF59E0B),
                         subtitle: t('daily_schedule'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const WeeklyActivitiesPage(),
+                            ),
+                          );
+                        },
                       ),
                       _PremiumActionCard(
                         title: t('active_challenge'),
