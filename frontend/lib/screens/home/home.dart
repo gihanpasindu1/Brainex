@@ -9,7 +9,7 @@ import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 import 'package:frontend/widgets/premium_bottom_nav.dart';
 import 'package:frontend/screens/profile screen/profile_screen.dart';
-import 'package:frontend/screens/ai_studyplan/ai_study_plan_1.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -281,7 +281,7 @@ class BrainexHome extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  const WeeklyActivitiesPage(),
+                                  const AIStudyPlanPage(),
                             ),
                           );
                         },
