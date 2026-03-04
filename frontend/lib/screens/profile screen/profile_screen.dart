@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/widgets/premium_bottom_nav.dart';
 import 'package:frontend/screens/home/home.dart';
@@ -10,12 +9,13 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
+      backgroundColor: const Color(0xFF0D1026), // Fallback base color
       body: Container(
+        width: double.infinity,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF6A5AE0), Color(0xFF1C1F4A), Color(0xFF0D1026)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.png.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: SafeArea(
@@ -24,27 +24,65 @@ class ProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  SizedBox(height: 20),
-                  Text(
-                    "Profile",
+                children: [
+                  const SizedBox(height: 10),
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Profile",
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.settings_outlined,
+                          color: Colors.white70,
+                        ),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+                  const _UserCard(),
+                  const SizedBox(height: 20),
+                  const _StatsCard(),
+                  const SizedBox(height: 25),
+
+                  // Badges Title
+                  const Text(
+                    "Badges",
                     style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      fontSize: 16,
+                      color: Colors.white60,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: 25),
-                  _UserCard(),
-                  SizedBox(height: 25),
-                  _StatsCard(),
-                  SizedBox(height: 30),
-                  _GlobalLeagueSection(),
-                  SizedBox(height: 25),
-                  _MasterySection(),
-                  SizedBox(height: 30),
-                  _MoreSection(),
-                  SizedBox(height: 100),
+                  const SizedBox(height: 10),
+
+                  const _GlobalLeagueSection(),
+                  const SizedBox(height: 15),
+                  const _MasterySection(),
+                  const SizedBox(height: 25),
+
+                  // More Title
+                  const Text(
+                    "More",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white60,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  const _MoreSection(),
+                  const SizedBox(height: 100), // Space for bottom nav
                 ],
               ),
             ),
@@ -67,30 +105,38 @@ class ProfileScreen extends StatelessWidget {
 }
 
 //////////////////////////////////////////////////////////////
-/// GLASS CONTAINER
+/// BASE DARK CARD REUSABLE WIDGET
 //////////////////////////////////////////////////////////////
-
-class GlassContainer extends StatelessWidget {
+class DarkCard extends StatelessWidget {
   final Widget child;
+  final EdgeInsetsGeometry padding;
 
-  const GlassContainer({super.key, required this.child});
+  const DarkCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: Colors.white.withOpacity(0.05),
-            border: Border.all(color: Colors.white.withOpacity(0.15)),
-          ),
-          child: child,
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: const Color(0xFF16193A), // Dark solid color matching Figma
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
+      child: child,
     );
   }
 }
@@ -98,32 +144,46 @@ class GlassContainer extends StatelessWidget {
 //////////////////////////////////////////////////////////////
 /// USER CARD
 //////////////////////////////////////////////////////////////
-
 class _UserCard extends StatelessWidget {
   const _UserCard();
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
+    return DarkCard(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Glowing Avatar Ring
           Container(
-            width: 70,
-            height: 70,
+            width: 76,
+            height: 76,
+            padding: const EdgeInsets.all(3), // Border width
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [Colors.cyan, Colors.purple],
+                colors: [
+                  Color(0xFF00E5FF),
+                  Color(0xFFB388FF),
+                ], // Cyan to Purple
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-            child: const Icon(Icons.person, color: Colors.white, size: 35),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF16193A),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person, color: Colors.white38, size: 40),
+            ),
           ),
-          const SizedBox(width: 18),
-          const Expanded(
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   "You",
                   style: TextStyle(
                     fontSize: 20,
@@ -131,29 +191,60 @@ class _UserCard extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 6),
-                Text(
+                const SizedBox(height: 4),
+                const Text(
                   "A/L ICT • 2026 Batch",
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Gold League Badge
+                Row(
+                  children: [
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFC107), // Gold
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      "Gold League",
+                      style: TextStyle(
+                        color: Color(0xFFFFC107),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-
-          /// Lowered Edit Button
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  colors: [Colors.cyan, Colors.purple],
-                ),
+          // Edit Button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF40C4FF),
+                  Color(0xFF8C9EFF),
+                ], // Cyan to Purple tint
               ),
-              child:
-                  const Text("Edit", style: TextStyle(color: Colors.white)),
+            ),
+            child: const Text(
+              "Edit",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -165,21 +256,78 @@ class _UserCard extends StatelessWidget {
 //////////////////////////////////////////////////////////////
 /// STATS CARD
 //////////////////////////////////////////////////////////////
-
 class _StatsCard extends StatelessWidget {
   const _StatsCard();
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _StatItem("🔥", "5 days", "Streak"),
-          _StatItem("📄", "14", "Papers"),
-          _StatItem("🎯", "78%", "Accuracy"),
-        ],
+    return DarkCard(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      child: IntrinsicHeight(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            const _StatItem("Streak", "🔥", "5 days", Colors.white),
+            VerticalDivider(
+              color: Colors.white.withValues(alpha: 0.1),
+              thickness: 1,
+            ),
+            const _StatItem("Papers", "📝", "14", Colors.white),
+            VerticalDivider(
+              color: Colors.white.withValues(alpha: 0.1),
+              thickness: 1,
+            ),
+            const _StatItem(
+              "Accuracy",
+              "🎯",
+              "78%",
+              Color(0xFF69F0AE),
+            ), // Slightly green text
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String emoji;
+  final String value;
+  final Color valueColor;
+
+  const _StatItem(this.label, this.emoji, this.value, this.valueColor);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 6),
+            Text(
+              value,
+              style: TextStyle(
+                color: valueColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -187,42 +335,57 @@ class _StatsCard extends StatelessWidget {
 //////////////////////////////////////////////////////////////
 /// GLOBAL LEAGUE SECTION
 //////////////////////////////////////////////////////////////
-
 class _GlobalLeagueSection extends StatelessWidget {
   const _GlobalLeagueSection();
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
+    return DarkCard(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 "Global League Badges (Weekly)",
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
-              Text(
-                "View All",
-                style: TextStyle(color: Colors.cyan),
-              )
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Text(
+                  "View All",
+                  style: TextStyle(
+                    color: Color(0xFF40C4FF), // Cyan
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          const SizedBox(height: 18),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _BadgeBox(Icons.psychology),
-              _BadgeBox(Icons.emoji_events),
-              _BadgeBox(Icons.handshake),
-              _BadgeBox(Icons.hourglass_top),
+              _BadgeBox(Icons.psychology, Colors.purpleAccent),
+              _BadgeBox(Icons.emoji_events, Colors.cyanAccent),
+              _BadgeBox(Icons.draw, Colors.cyanAccent),
+              _BadgeBox(Icons.hourglass_bottom, Colors.orangeAccent),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -231,7 +394,9 @@ class _GlobalLeagueSection extends StatelessWidget {
 
 class _BadgeBox extends StatelessWidget {
   final IconData icon;
-  const _BadgeBox(this.icon);
+  final Color neonColor;
+
+  const _BadgeBox(this.icon, this.neonColor);
 
   @override
   Widget build(BuildContext context) {
@@ -239,21 +404,19 @@ class _BadgeBox extends StatelessWidget {
       width: 65,
       height: 65,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          colors: [
-            Colors.purple.withOpacity(0.3),
-            Colors.blue.withOpacity(0.3),
-          ],
-        ),
+        color: const Color(0xFF0D1026), // Darker inner bg
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: neonColor, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.cyan.withOpacity(0.4),
-            blurRadius: 20,
-          )
+            color: neonColor.withValues(alpha: 0.2),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
         ],
       ),
-      child: Icon(icon, color: Colors.white),
+      // Depending on your actual design, you might use image assets here instead of Icons
+      child: Icon(icon, color: neonColor, size: 30),
     );
   }
 }
@@ -261,95 +424,177 @@ class _BadgeBox extends StatelessWidget {
 //////////////////////////////////////////////////////////////
 /// MASTERY SECTION
 //////////////////////////////////////////////////////////////
-
 class _MasterySection extends StatelessWidget {
   const _MasterySection();
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
+    return DarkCard(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 "Mastery Badges (Unlock only at 100%)",
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 13,
                 ),
               ),
-              Text(
-                "View All",
-                style: TextStyle(color: Colors.cyan),
-              )
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Text(
+                  "View All",
+                  style: TextStyle(
+                    color: Color(0xFF40C4FF), // Cyan
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 16),
           Row(
             children: [
+              // Locked Badge Card
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    color: Colors.white.withOpacity(0.05),
-                    border: Border.all(color: Colors.white24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 16,
                   ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D1026),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: const Row(
                     children: [
-                      Icon(Icons.lock, color: Colors.white70),
-                      SizedBox(height: 8),
-                      Text(
-                        "SQL Grandmaster",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold),
+                      Icon(Icons.lock, color: Colors.white38, size: 28),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "SQL Grandmaster",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "100% required",
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      Text("100% required",
-                          style: TextStyle(color: Colors.white54)),
                     ],
                   ),
                 ),
               ),
-              SizedBox(width: 15),
+              const SizedBox(width: 12),
+
+              // Unlocked Badge Card (Glowing gradient border simulation)
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(15),
+                  padding: const EdgeInsets.all(
+                    1.5,
+                  ), // Gradient border thickness
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    gradient: LinearGradient(
-                      colors: [Colors.purple, Colors.cyan],
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF00E5FF),
+                        Color(0xFFB388FF),
+                      ], // Cyan to purple
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.cyan,
-                        blurRadius: 20,
+                        color: const Color(0xFFB388FF).withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        spreadRadius: 1,
                       ),
                     ],
                   ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.flash_on, color: Colors.white),
-                      SizedBox(height: 8),
-                      Text(
-                        "Logic Legend",
-                        style: TextStyle(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 14.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D1026),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Row(
+                      children: [
+                        // Lightning Icon Circle
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF40C4FF), Color(0xFFB388FF)],
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.flash_on,
                             color: Colors.white,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      Text("100% achieved",
-                          style: TextStyle(color: Colors.white70)),
-                    ],
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Logic Legend",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                "100% achieved",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -359,17 +604,28 @@ class _MasterySection extends StatelessWidget {
 //////////////////////////////////////////////////////////////
 /// MORE SECTION
 //////////////////////////////////////////////////////////////
-
 class _MoreSection extends StatelessWidget {
   const _MoreSection();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: const [
-        _MoreTile(Icons.info, "About Brainex"),
-        SizedBox(height: 15),
-        _MoreTile(Icons.help, "Help & Support"),
+        Expanded(
+          child: _MoreTile(
+            icon: Icons.info_outline,
+            iconColor: Color(0xFF40C4FF),
+            text: "About Brainex",
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: _MoreTile(
+            icon: Icons.help_outline,
+            iconColor: Colors.redAccent,
+            text: "Help & Support",
+          ),
+        ),
       ],
     );
   }
@@ -377,59 +633,36 @@ class _MoreSection extends StatelessWidget {
 
 class _MoreTile extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String text;
-  const _MoreTile(this.icon, this.text);
+
+  const _MoreTile({
+    required this.icon,
+    required this.iconColor,
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
+    return DarkCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white),
-          const SizedBox(width: 12),
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: 8),
           Expanded(
-            child:
-                Text(text, style: const TextStyle(color: Colors.white)),
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          const Icon(Icons.arrow_forward_ios,
-              color: Colors.white54, size: 16),
+          const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 12),
         ],
       ),
-    );
-  }
-}
-
-//////////////////////////////////////////////////////////////
-/// STAT ITEM
-//////////////////////////////////////////////////////////////
-
-class _StatItem extends StatelessWidget {
-  final String emoji;
-  final String value;
-  final String label;
-
-  const _StatItem(this.emoji, this.value, this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 20)),
-        const SizedBox(height: 5),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style:
-              const TextStyle(color: Colors.white54, fontSize: 12),
-        ),
-      ],
     );
   }
 }
