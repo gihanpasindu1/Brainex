@@ -22,8 +22,7 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
   Future<void> pickFromCamera() async {
     var status = await Permission.camera.request();
     if (status.isGranted) {
-      final XFile? image =
-          await _picker.pickImage(source: ImageSource.camera);
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
 
       if (image != null) {
         setState(() {
@@ -36,8 +35,7 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
   }
 
   Future<void> pickFromGallery() async {
-    final XFile? image =
-        await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       setState(() {
@@ -80,198 +78,150 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B1E),
-      body: Stack(
-        children: [
-
-          /// 🔥 Gradient Header
-          Container(
-            height: 300,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF7A5CFF),
-                  Color(0xFF4FACFE),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.png.png'),
+            fit: BoxFit.cover,
           ),
-
-          /// 🔥 Curved Blend
-          Positioned(
-            top: 220,
-            left: 0,
-            right: 0,
-            child: ClipPath(
-              clipper: HeaderClipper(),
-              child: Container(
-                height: 120,
-                color: const Color(0xFF0B0B1E),
-              ),
-            ),
-          ),
-
-          /// 📱 Content
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  const SizedBox(height: 10),
-
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back,
-                        color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  const Text(
-                    "Upload Paper and Correct your MCQs",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+        ),
+        child: Stack(
+          children: [
+            /// 📱 Content
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Scan your answers and get instant marking + weak topic update",
-                    style: TextStyle(
-                        color: Colors.white70, fontSize: 13),
-                  ),
-
-                  const SizedBox(height: 50),
-
-                  /// 📄 Upload Box
-                  DottedBorder(
-                    borderType: BorderType.RRect,
-                    radius: const Radius.circular(25),
-                    dashPattern: const [6, 4],
-                    color: Colors.white24,
-                    child: Container(
-                      width: double.infinity,
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 35),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF141432),
-                        borderRadius: BorderRadius.circular(25),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Upload Paper and Correct your MCQs",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                      child: Column(
-                        children: [
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Scan your answers and get instant marking + weak topic update",
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    const SizedBox(height: 50),
 
-                          Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: Colors.white24),
-                            ),
-                            child: const Icon(
-                              Icons.insert_drive_file,
-                              size: 35,
-                              color: Colors.white70,
-                            ),
-                          ),
-
-                          const SizedBox(height: 15),
-
-                          const Text(
-                            "Drop PDF / Image here",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight:
-                                    FontWeight.w500),
-                          ),
-
-                          const SizedBox(height: 6),
-
-                          const Text(
-                            "Supports JPG, PNG, PDF • Max 10MB",
-                            style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          GestureDetector(
-                            onTap: pickFile,
-                            child: Container(
-                              padding:
-                                  const EdgeInsets.symmetric(
-                                      horizontal: 35,
-                                      vertical: 12),
+                    /// 📄 Upload Box
+                    DottedBorder(
+                      borderType: BorderType.RRect,
+                      radius: const Radius.circular(25),
+                      dashPattern: const [6, 4],
+                      color: Colors.white24,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 35),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF141432),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(18),
                               decoration: BoxDecoration(
-                                gradient:
-                                    const LinearGradient(
-                                  colors: [
-                                    Color(0xFF4FACFE),
-                                    Color(0xFF8E2DE2)
-                                  ],
-                                ),
-                                borderRadius:
-                                    BorderRadius.circular(30),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white24),
                               ),
-                              child: const Text(
-                                "Choose File",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight:
-                                        FontWeight.w500),
+                              child: const Icon(
+                                Icons.insert_drive_file,
+                                size: 35,
+                                color: Colors.white70,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 15),
+                            const Text(
+                              "Drop PDF / Image here",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              "Supports JPG, PNG, PDF • Max 10MB",
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            GestureDetector(
+                              onTap: pickFile,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 35,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF4FACFE),
+                                      Color(0xFF8E2DE2),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Text(
+                                  "Choose File",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 25),
 
-                  const SizedBox(height: 25),
-
-                  /// 📷 Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSmallButton(
+                    /// 📷 Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildSmallButton(
                             "📷 Capture Photo",
-                            pickFromCamera),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: _buildSmallButton(
+                            pickFromCamera,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: _buildSmallButton(
                             "🖼 From Gallery",
-                            pickFromGallery),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  if (selectedFile != null)
-                    _buildSelectedFileCard(),
-
-                  const SizedBox(height: 30),
-
-                  _buildSubmitButton(),
-
-                  const SizedBox(height: 25),
-
-                  _buildBottomInfoCard(),
-
-                  const SizedBox(height: 40),
-                ],
+                            pickFromGallery,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+                    if (selectedFile != null) _buildSelectedFileCard(),
+                    const SizedBox(height: 30),
+                    _buildSubmitButton(),
+                    const SizedBox(height: 25),
+                    _buildBottomInfoCard(),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -285,10 +235,7 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
       ),
       child: TextButton(
         onPressed: onTap,
-        child: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
-        ),
+        child: Text(text, style: const TextStyle(color: Colors.white)),
       ),
     );
   }
@@ -298,8 +245,7 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
       onTap: () {
         if (selectedFile == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text("Please select a file first")),
+            const SnackBar(content: Text("Please select a file first")),
           );
         }
       },
@@ -308,19 +254,14 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFF4FACFE),
-              Color(0xFF8E2DE2)
-            ],
+            colors: [Color(0xFF4FACFE), Color(0xFF8E2DE2)],
           ),
           borderRadius: BorderRadius.circular(30),
         ),
         child: const Center(
           child: Text(
             "Submit for Marking",
-            style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -340,15 +281,12 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
         children: [
           Text(
             "After marking you will see:",
-            style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
           ),
           SizedBox(height: 6),
           Text(
             "Score • Weak Topics • Mastery improvement (no XP)",
-            style:
-                TextStyle(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],
       ),
@@ -365,25 +303,20 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.picture_as_pdf,
-              color: Colors.redAccent),
+          const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(fileName ?? "",
-                    style:
-                        const TextStyle(color: Colors.white)),
+                Text(
+                  fileName ?? "",
+                  style: const TextStyle(color: Colors.white),
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  fileSize != null
-                      ? formatSize(fileSize!)
-                      : "",
-                  style: const TextStyle(
-                      color: Colors.white54,
-                      fontSize: 12),
+                  fileSize != null ? formatSize(fileSize!) : "",
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
             ),
@@ -392,36 +325,11 @@ class _UploadPaperScreenState extends State<UploadPaperScreen> {
             onTap: removeFile,
             child: const Text(
               "Remove",
-              style:
-                  TextStyle(color: Colors.redAccent),
+              style: TextStyle(color: Colors.redAccent),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-/// 🔥 Header Curve
-class HeaderClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    Path path = Path();
-
-    path.lineTo(0, 40);
-    path.quadraticBezierTo(
-        size.width * 0.3, 0, size.width * 0.7, 40);
-    path.quadraticBezierTo(
-        size.width * 0.9, 90, size.width, 40);
-
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) =>
-      false;
 }

@@ -7,6 +7,8 @@ import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
 import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
+import 'package:frontend/widgets/premium_bottom_nav.dart';
+import 'package:frontend/screens/profile screen/profile_screen.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_1.dart';
 
 class Home extends StatelessWidget {
@@ -314,7 +316,17 @@ class BrainexHome extends StatelessWidget {
       ),
 
       // Premium bottom nav
-      bottomNavigationBar: const _PremiumBottomNav(),
+      bottomNavigationBar: PremiumBottomNav(
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          }
+        },
+      ),
     );
   }
 
@@ -596,7 +608,6 @@ class _PremiumActionCardState extends State<_PremiumActionCard> {
     );
   }
 }
-
 class _PremiumBottomNav extends StatelessWidget {
   const _PremiumBottomNav();
 
@@ -700,4 +711,5 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+
 //test comment
