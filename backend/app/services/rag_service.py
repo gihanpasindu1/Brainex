@@ -176,6 +176,78 @@ async def _fallback_from_bank(query: dict, mcq_count: int, default_topic: str) -
         return []
     return bank[:mcq_count] if len(bank) >= mcq_count else (bank * (mcq_count // len(bank) + 1))[:mcq_count]
 
+
+async def _paraphrase_questions(batch: List[dict], grade: str, difficulty: str, batch_size: int = 8) -> List[dict]:
+    """Send a batch of raw DB questions to Gemini and return rephrased versions.
+    The original DB explanation is stripped before sending so Gemini must write a fresh one.
+    Returns only successfully rephrased questions (never the raw originals)."""
+    result = []
+    for i in range(0, len(batch), batch_size):
+        chunk = batch[i:i + batch_size]
+
+        # Strip the original DB explanation so Gemini CANNOT copy it — it must write its own
+        chunk_for_gemini = [
+            {k: v for k, v in q.items() if k != "explanation"} for q in chunk
+        ]
+        batch_text = json.dumps(chunk_for_gemini, indent=2)
+
+        prompt_paraphrase = f"""
+You are a Sri Lankan A/L ICT MCQ paper setter.
+You are given {len(chunk)} existing MCQ questions from a question bank.
+Your task is to REWRITE each question in a completely different way — change the scenario, wording, and examples — while still testing the EXACT SAME concept at the same difficulty level.
+
+Grade: {grade}
+Difficulty: {difficulty}
+
+QUESTION REWRITING RULES:
+- NEVER copy the original question text. Rewrite it entirely with a new scenario or angle.
+- Keep exactly 4 options A, B, C, D. The correct answer letter may change if you reorder options.
+- The rewritten question must feel like a brand new question to a student.
+
+EXPLANATION RULES (critical — this is the most important part):
+- Write a completely NEW, detailed explanation from scratch. There is no original explanation provided.
+- The explanation MUST clearly state WHY the correct answer is right, using the underlying ICT concept or logic.
+- The explanation MUST briefly mention WHY each of the other 3 wrong options is incorrect.
+- Write 3 to 5 clear sentences that would genuinely help a Grade {grade} Sri Lankan A/L ICT student understand the concept.
+- Use simple, accurate English. Avoid vague phrases like 'it is correct because it is correct'.
+
+OUTPUT RULES:
+- Return ONLY valid JSON — no markdown, no extra text.
+- STRICT RULE: Do NOT use ANY double quotes (") inside question text, options, or explanations. Use single quotes (') instead.
+- STRICT RULE: Do NOT include literal newlines inside strings. Use \\n if needed.
+
+Original questions to REWRITE (no explanations provided — you must generate them):
+{batch_text}
+
+Required JSON output format:
+{{
+  "questions": [
+    {{
+      "question": "completely rewritten question text...",
+      "options": {{"A":"...","B":"...","C":"...","D":"..."}},
+      "correct_answer": "Correct option letter (A/B/C/D)",
+      "explanation": "WHY the correct answer is right (concept/logic). WHY option X is wrong. WHY option Y is wrong. WHY option Z is wrong. 3-5 sentences total.",
+      "topic": "topic from the original question",
+      "difficulty": "{difficulty}"
+    }}
+  ]
+}}
+""".strip()
+
+        try:
+            raw = _gemini_generate(prompt_paraphrase)
+            data = _extract_json(raw)
+            for q_obj in data.get("questions", []):
+                qt = (q_obj.get("question") or "").strip()
+                if not qt:
+                    continue
+                if q_obj.get("correct_answer") in ["A", "B", "C", "D"]:
+                    result.append(q_obj)
+        except Exception as e:
+            logger.exception("Gemini paraphrase batch failed (chunk %d). Error=%s", i, str(e))
+            # Do NOT fall back to raw questions — skip this batch
+    return result
+
 def _gemini_generate(prompt: str) -> str:
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY missing.")
@@ -277,65 +349,19 @@ Context (use only this):
             
         remaining_gen -= current_batch
 
-    # 2. Paraphrase bank questions
+    # 2. Paraphrase bank questions — Gemini rewrites them, never passed raw
     if bank_count > 0:
         bank_questions = await _fallback_from_bank(db_query, bank_count, target_topics[0] if target_topics else "General")
-        
-        for i in range(0, len(bank_questions), batch_size):
-            batch = bank_questions[i:i + batch_size]
-            batch_text = json.dumps(batch, indent=2)
-            
-            prompt_paraphrase = f"""
-You are a Sri Lankan A/L ICT MCQ paper setter.
-Modify the following existing MCQs to ask slightly different scenarios or change their wording, but test the EXACT SAME concept at the same difficulty.
+        paraphrased = await _paraphrase_questions(bank_questions, grade, difficulty, batch_size)
+        cleaned.extend(paraphrased)
 
-Grade: {grade}
-Difficulty: {difficulty}
-
-Rules:
-- Provide 4 options A, B, C, D for each question
-- The question should look fresh, even if the underlying logic is the same
-- Return ONLY valid JSON
-- STRICT RULE: Do NOT use ANY double quotes (") inside the question text, options, or explanations. Use single quotes (') instead.
-- STRICT RULE: Do NOT include literal newlines inside strings. If you need a newline, use \\n.
-
-Here are the {len(batch)} MCQs to modify:
-{batch_text}
-
-JSON format required:
-{{
-  "questions": [
-    {{
-      "question": "re-worded question text...",
-      "options": {{"A":"...","B":"...","C":"...","D":"..."}},
-      "correct_answer": "Corresponding correct option letter",
-      "explanation": "updated explanation",
-      "topic": "topic from original",
-      "difficulty": "{difficulty}"
-    }}
-  ]
-}}
-""".strip()
-
-            try:
-                raw = _gemini_generate(prompt_paraphrase)
-                data = _extract_json(raw)
-                for q_obj in data.get("questions", []):
-                    qt = (q_obj.get("question") or "").strip()
-                    if not qt:
-                        continue
-                    if q_obj.get("correct_answer") in ["A", "B", "C", "D"]:
-                        cleaned.append(q_obj)
-            except Exception as e:
-                logger.exception("Gemini paraphrase batch failed. Error=%s", str(e))
-                # Fallback to appending original if model fails
-                cleaned.extend(batch)
-
-    # FINAL FAILSAFE: Pad missing questions with DB fallback
+    # FINAL FAILSAFE: If still short, fetch more from DB and rephrase through Gemini
     final_missing = mcq_count - len(cleaned)
     if final_missing > 0:
-        extra = await _fallback_from_bank(db_query, final_missing, target_topics[0] if target_topics else "General")
-        cleaned.extend(extra)
+        logger.warning("Still short by %d questions — fetching extra from DB and rephrasing.", final_missing)
+        extra_raw = await _fallback_from_bank(db_query, final_missing * 2, target_topics[0] if target_topics else "General")
+        extra_paraphrased = await _paraphrase_questions(extra_raw, grade, difficulty, batch_size)
+        cleaned.extend(extra_paraphrased)
 
     random.shuffle(cleaned)
     return cleaned[:mcq_count]
