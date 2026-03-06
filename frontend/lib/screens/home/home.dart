@@ -280,8 +280,7 @@ class BrainexHome extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const AIStudyPlanPage(),
+                              builder: (context) => const AIStudyPlanPage(),
                             ),
                           );
                         },
@@ -319,7 +318,12 @@ class BrainexHome extends StatelessWidget {
       bottomNavigationBar: PremiumBottomNav(
         currentIndex: 0,
         onTap: (index) {
-          if (index == 3) {
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AIStudyPlanPage()),
+            );
+          } else if (index == 3) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
@@ -608,6 +612,7 @@ class _PremiumActionCardState extends State<_PremiumActionCard> {
     );
   }
 }
+
 class _PremiumBottomNav extends StatelessWidget {
   const _PremiumBottomNav();
 
