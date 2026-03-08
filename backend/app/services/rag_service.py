@@ -180,6 +180,48 @@ async def _retrieve_pdf_context(pdfs: List[str], max_chars: int = 15000) -> str:
     combined = "\n\n".join(text_chunks)
     return combined[:max_chars]
 
+async def _retrieve_teacher_guide_context(target_topics: List[str], max_chars: int = 15000) -> str:
+    if not target_topics:
+        return ""
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        logger.warning("pypdf not installed, skipping Teacher Guide context.")
+        return ""
+
+    teacher_guide_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "teacher_guides"))
+    text_chunks = []
+    
+    grade_dirs = ["grade12_teacher_guide.pdf", "grade13_teacher_guide.pdf"]
+    
+    for topic in target_topics:
+        safe_topic_name = topic.replace(":", "") + ".pdf"
+        
+        pdf_path = None
+        for g_dir in grade_dirs:
+            potential_path = os.path.join(teacher_guide_dir, g_dir, safe_topic_name)
+            if os.path.exists(potential_path):
+                pdf_path = potential_path
+                break
+                
+        if not pdf_path:
+            continue
+            
+        try:
+            reader = PdfReader(pdf_path)
+            pages = list(range(len(reader.pages)))
+            random.shuffle(pages)
+            for p_num in pages[:2]:
+                t =  reader.pages[p_num].extract_text()
+                if t:
+                    text_chunks.append(t)
+        except Exception as e:
+            logger.error(f"Error reading Teacher Guide for {topic}: {e}")
+            
+    random.shuffle(text_chunks)
+    combined = "\n\n".join(text_chunks)
+    return combined[:max_chars]
+
 async def _retrieve_db_context(query: dict, limit: int = 40) -> str:
     chunks = []
     cursor = syllabus_chunks_col.find(query).limit(limit)
@@ -190,11 +232,12 @@ async def _retrieve_db_context(query: dict, limit: int = 40) -> str:
     random.shuffle(chunks)
     return "\n\n".join(chunks)
 
-async def _retrieve_context(query: dict, target_pdfs: List[str]) -> str:
+async def _retrieve_context(query: dict, target_pdfs: List[str], target_topics: List[str] = None) -> str:
     pdf_text = await _retrieve_pdf_context(target_pdfs)
+    guide_text = await _retrieve_teacher_guide_context(target_topics or [])
     db_text = await _retrieve_db_context(query)
     
-    combined = f"{pdf_text}\n\n{db_text}"
+    combined = f"{pdf_text}\n\n{guide_text}\n\n{db_text}"
     return combined.strip()
 
 async def _bank_question_texts(query: dict) -> set[str]:
@@ -419,7 +462,7 @@ async def generate_mcqs(
     default_topic = target_topics[0] if target_topics else "General"
 
     # Shared context retrieved once — used by all per-topic Gemini calls
-    context = await _retrieve_context(db_query, target_pdfs)
+    context = await _retrieve_context(db_query, target_pdfs, target_topics)
     bank_texts = await _bank_question_texts(db_query)
     batch_size = 8
 
