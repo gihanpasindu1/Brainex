@@ -578,7 +578,11 @@ class _TopBar extends StatelessWidget {
       children: [
         IconButton(
           onPressed: onBack,
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: Colors.white,
+          ),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints.tightFor(width: 36, height: 36),
         ),
