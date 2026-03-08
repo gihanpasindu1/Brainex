@@ -235,9 +235,8 @@ async def _retrieve_db_context(query: dict, limit: int = 40) -> str:
 async def _retrieve_context(query: dict, target_pdfs: List[str], target_topics: List[str] = None) -> str:
     pdf_text = await _retrieve_pdf_context(target_pdfs)
     guide_text = await _retrieve_teacher_guide_context(target_topics or [])
-    db_text = await _retrieve_db_context(query)
     
-    combined = f"{pdf_text}\n\n{guide_text}\n\n{db_text}"
+    combined = f"{pdf_text}\n\n{guide_text}"
     return combined.strip()
 
 async def _bank_question_texts(query: dict) -> set[str]:
