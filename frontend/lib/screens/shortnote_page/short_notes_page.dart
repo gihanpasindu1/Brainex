@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:frontend/services/localization_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:frontend/widgets/premium_bottom_nav.dart';
+import 'package:frontend/screens/profile screen/profile_screen.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
 
 class ShortNotesPage extends StatefulWidget {
   const ShortNotesPage({super.key});
@@ -14,7 +16,7 @@ class ShortNotesPage extends StatefulWidget {
 
 class _ShortNotesPageState extends State<ShortNotesPage> {
   int selectedTab = 0; // 0 = My Notes, 1 = Predefined Notes
-  int bottomIndex = 1; // default highlight like screenshot (Plan)
+  int bottomIndex = -1; // -1 = nothing highlighted
 
   late PageController _pageController;
   final TextEditingController _searchController = TextEditingController();
@@ -352,9 +354,24 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
         ),
       ),
       extendBody: true,
-      bottomNavigationBar: _BottomNav(
+      bottomNavigationBar: PremiumBottomNav(
         currentIndex: bottomIndex,
-        onChanged: (i) => setState(() => bottomIndex = i),
+        onTap: (index) {
+          setState(() => bottomIndex = index);
+          if (index == 0) {
+            Navigator.maybePop(context);
+          } else if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AIStudyPlanPage()),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          }
+        },
       ),
     );
   }
@@ -759,128 +776,6 @@ class _NoteCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/* ------------------------------ BOTTOM NAV ---------------------------- */
-
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onChanged;
-
-  const _BottomNav({required this.currentIndex, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final tr = AppLocalizations.of(context);
-    String t(String key) => tr?.translate(key) ?? key;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: t('nav_home'),
-                  active: currentIndex == 0,
-                  onTap: () {
-                    onChanged(0);
-                    Navigator.maybePop(context);
-                  },
-                ),
-                _NavItem(
-                  icon: Icons.calendar_month_rounded,
-                  label: t('nav_plan'),
-                  active: currentIndex == 1,
-                  onTap: () => onChanged(1),
-                ),
-                _NavItem(
-                  icon: Icons.emoji_events_rounded,
-                  label: t('nav_leaderboard'),
-                  active: currentIndex == 2,
-                  onTap: () => onChanged(2),
-                ),
-                _NavItem(
-                  icon: Icons.person_rounded,
-                  label: t('nav_profile'),
-                  active: currentIndex == 3,
-                  onTap: () => onChanged(3),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: active
-            ? BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blueAccent.withValues(alpha: 0.9),
-                    Colors.purpleAccent.withValues(alpha: 0.85),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blueAccent.withValues(alpha: 0.22),
-                    blurRadius: 16,
-                  ),
-                ],
-              )
-            : null,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: active ? Colors.white : Colors.white60),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10.5,
-                color: active ? Colors.white : Colors.white60,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
