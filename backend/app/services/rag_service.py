@@ -131,11 +131,24 @@ def _get_query_and_topics(grade: str, paper_type: str, term: Optional[str], spec
             target_topics = SYLLABUS_MAP.get(grade, {}).get(term, [])
             if grade == "13":
                 target_pdfs = PDF_MAP["13"].get(term, [])
-            
+
     if specific_topic:
         import re
         q["topic"] = {"$regex": re.escape(specific_topic), "$options": "i"}
         target_topics = [specific_topic]
+        
+        # If it's a specific topic (Subject wise paper), fetch the correct PDF for it
+        if grade in PDF_MAP:
+            # Search all terms in grade PDF mapping to find the matching module
+            for term_name, term_pdfs in PDF_MAP[grade].items():
+                if term_name in SYLLABUS_MAP.get(grade, {}):
+                    term_topics = SYLLABUS_MAP[grade][term_name]
+                    if specific_topic in term_topics:
+                        # Find index of topic to guess corresponding PDF
+                        topic_idx = term_topics.index(specific_topic)
+                        if topic_idx < len(term_pdfs):
+                            target_pdfs = [term_pdfs[topic_idx]]
+                            break
 
     return q, target_topics, target_pdfs
 
@@ -249,12 +262,12 @@ async def _bank_question_texts(query: dict) -> set[str]:
     return texts
 
 async def _count_bank_questions(query: dict) -> int:
-    """Return how many VALID (A/B/C/D answer) questions exist in the MCQ bank for this query."""
+    """Return how many VALID (A/B/C/D/E answer) questions exist in the MCQ bank for this query."""
     count = 0
     cursor = mcq_bank_col.find(query, {"answer": 1, "correct_answer": 1}).limit(5000)
     async for m in cursor:
         ans = m.get("answer") or m.get("correct_answer")
-        if ans in ["A", "B", "C", "D"]:
+        if ans in ["A", "B", "C", "D", "E"]:
             count += 1
     return count
 
@@ -270,7 +283,7 @@ async def _safe_sample_bank(query: dict, needed: int, default_topic: str) -> Lis
     cursor = mcq_bank_col.find(query).limit(5000)
     async for m in cursor:
         ans = m.get("answer") or m.get("correct_answer")
-        if ans not in ["A", "B", "C", "D"]:
+        if ans not in ["A", "B", "C", "D", "E"]:
             continue
         bank.append({
             "question": m["question"],
@@ -310,20 +323,22 @@ Difficulty: {difficulty}
 
 QUESTION REWRITING RULES:
 - NEVER copy the original question text. Rewrite it entirely with a new scenario or angle.
-- Keep exactly 4 options A, B, C, D. The correct answer letter may change if you reorder options.
+- Keep exactly 5 options A, B, C, D, E. The correct answer letter may change if you reorder options.
 - The rewritten question must feel like a brand new question to a student.
 
 EXPLANATION RULES (critical — this is the most important part):
 - Write a completely NEW, detailed explanation from scratch. There is no original explanation provided.
 - The explanation MUST clearly state WHY the correct answer is right, using the underlying ICT concept or logic.
-- The explanation MUST briefly mention WHY each of the other 3 wrong options is incorrect.
+- The explanation MUST briefly mention WHY each of the other 4 wrong options is incorrect.
 - Write 3 to 5 clear sentences that would genuinely help a Grade {grade} Sri Lankan A/L ICT student understand the concept.
 - Use simple, accurate English. Avoid vague phrases like 'it is correct because it is correct'.
 
 OUTPUT RULES:
-- Return ONLY valid JSON — no markdown, no extra text.
-- STRICT RULE: Do NOT use ANY double quotes (") inside question text, options, or explanations. Use single quotes (') instead.
-- STRICT RULE: Do NOT include literal newlines inside strings. Use \\n if needed.
+- Return ONLY valid JSON.
+- IMPORTANT JSON RULES:
+  1. ALL keys and string values MUST be enclosed in double quotes (").
+  2. Do NOT use unescaped double quotes inside strings. If you must use a quote inside a question or explanation, use a single quote (').
+  3. Do NOT include literal newlines in strings. Use the exact characters \\n if you need a newline.
 
 Original questions to REWRITE (no explanations provided — you must generate them):
 {batch_text}
@@ -333,8 +348,8 @@ Required JSON output format:
   "questions": [
     {{
       "question": "completely rewritten question text...",
-      "options": {{"A":"...","B":"...","C":"...","D":"..."}},
-      "correct_answer": "Correct option letter (A/B/C/D)",
+      "options": {{"A":"...","B":"...","C":"...","D":"...","E":"..."}},
+      "correct_answer": "Correct option letter (A/B/C/D/E)",
       "explanation": "WHY the correct answer is right (concept/logic). WHY option X is wrong. WHY option Y is wrong. WHY option Z is wrong. 3-5 sentences total.",
       "topic": "topic from the original question",
       "difficulty": "{difficulty}"
@@ -344,34 +359,40 @@ Required JSON output format:
 """.strip()
 
         try:
-            raw = _gemini_generate(prompt_paraphrase)
+            raw = await _gemini_generate(prompt_paraphrase)
             data = _extract_json(raw)
             for q_obj in data.get("questions", []):
                 qt = (q_obj.get("question") or "").strip()
                 if not qt:
                     continue
-                if q_obj.get("correct_answer") in ["A", "B", "C", "D"]:
+                if q_obj.get("correct_answer") in ["A", "B", "C", "D", "E"]:
                     result.append(q_obj)
         except Exception as e:
             logger.exception("Gemini paraphrase batch failed (chunk %d). Error=%s", i, str(e))
             # Do NOT fall back to raw questions — skip this batch
     return result
 
-def _gemini_generate(prompt: str) -> str:
+import asyncio
+
+async def _gemini_generate(prompt: str) -> str:
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY missing.")
     from google import genai
     from google.genai import types
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
-    resp = client.models.generate_content(
-        model="gemini-3.1-pro-preview",
-        contents=types.Part.from_text(text=prompt),
-        config=types.GenerateContentConfig(
-            temperature=0.6,
-            max_output_tokens=3000,
-            response_mime_type="application/json",
-        ),
-    )
+    
+    def _run():
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        return client.models.generate_content(
+            model="gemini-3.1-pro-preview",
+            contents=types.Part.from_text(text=prompt),
+            config=types.GenerateContentConfig(
+                temperature=0.6,
+                max_output_tokens=8192,
+                response_mime_type="application/json",
+            ),
+        )
+        
+    resp = await asyncio.to_thread(_run)
     return resp.text or ""
 
 
@@ -391,9 +412,12 @@ async def _gemini_generate_for_topic(
     Enforces the topic label on every returned question.
     """
     result: List[dict] = []
-    remaining = count
-    while remaining > 0:
-        current_batch = min(batch_size, remaining)
+    attempts = 0
+    max_attempts = max(3, (count // batch_size + 1) * 3)
+    
+    while len(result) < count and attempts < max_attempts:
+        current_batch = min(batch_size, count - len(result))
+        attempts += 1
         prompt = f"""
 You are a Sri Lankan A/L ICT MCQ paper setter.
 
@@ -407,19 +431,21 @@ Difficulty: {difficulty}
 
 Rules:
 - Every question MUST be about the topic "{topic}" — no other topics.
-- 4 options A, B, C, D. Only ONE correct answer.
+- 5 options A, B, C, D, E. Only ONE correct answer.
 - Do NOT copy any question verbatim from past papers or question banks.
 - Create NEW questions strictly based on the provided context.
-- Output ONLY JSON (no markdown, no extra text).
-- STRICT RULE: Do NOT use ANY double quotes (") inside question text, options, or explanations. Use single quotes (') instead.
-- STRICT RULE: Do NOT include literal newlines inside strings. Use \\n if needed.
+- Output ONLY valid JSON.
+- IMPORTANT JSON RULES:
+  1. ALL keys and string values MUST be enclosed in double quotes (").
+  2. Do NOT use unescaped double quotes inside strings. If you must use a quote inside a question or explanation, use a single quote (').
+  3. Do NOT include literal newlines in strings. Use the exact characters \\n if you need a newline.
 
 JSON format:
 {{
   "questions": [
     {{
       "question": "...",
-      "options": {{"A":"...","B":"...","C":"...","D":"..."}},
+      "options": {{"A":"...","B":"...","C":"...","D":"...","E":"..."}},
       "correct_answer": "A",
       "explanation": "short explanation",
       "topic": "{topic}",
@@ -432,19 +458,24 @@ Context (use only this):
 {context}
 """.strip()
         try:
-            raw = _gemini_generate(prompt)
+            raw = await _gemini_generate(prompt)
             data = _extract_json(raw)
             for q_obj in data.get("questions", []):
                 qt = (q_obj.get("question") or "").strip()
                 if not qt or qt.lower() in bank_texts:
                     continue
-                if q_obj.get("correct_answer") in ["A", "B", "C", "D"]:
+                if q_obj.get("correct_answer") in ["A", "B", "C", "D", "E"]:
                     q_obj["topic"] = topic  # enforce correct topic label
                     result.append(q_obj)
+                    if len(result) >= count:
+                        break
         except Exception as e:
             logger.exception("Gemini topic generation failed for '%s'. Error=%s", topic, str(e))
-        remaining -= current_batch
-    return result
+            
+    if len(result) < count:
+        logger.warning("Failed to generate sufficient questions for topic '%s'. Missing: %d", topic, count - len(result))
+
+    return result[:count]
 
 
 async def generate_mcqs(
@@ -547,6 +578,16 @@ async def generate_mcqs(
                 difficulty, context, bank_texts, batch_size,
             )
             topic_questions.extend(extra_qs)
+
+        # Topic-level failsafe: if generated + paraphrased fell short
+        topic_shortfall = topic_count - len(topic_questions)
+        if topic_shortfall > 0:
+            logger.warning("Topic '%s' short by %d. Filling with Gemini.", topic_name, topic_shortfall)
+            topic_failsafe_qs = await _gemini_generate_for_topic(
+                topic_name, topic_shortfall, grade, paper_type, term,
+                difficulty, context, bank_texts, batch_size,
+            )
+            topic_questions.extend(topic_failsafe_qs)
 
         # Collect exactly topic_count questions for this topic
         all_questions.extend(topic_questions[:topic_count])
