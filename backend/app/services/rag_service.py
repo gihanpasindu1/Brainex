@@ -54,6 +54,60 @@ PDF_MAP = {
     }
 }
 
+# ---------------------------------------------------------------------------
+# TOPIC WEIGHTAGE TABLE  (source: official A/L ICT final exam weight table)
+# Keys must match the unit strings used in SYLLABUS_MAP exactly.
+# Weights do NOT need to sum to 100 — they are normalised at runtime.
+# ---------------------------------------------------------------------------
+TOPIC_WEIGHTS: dict[str, int] = {
+    "Unit 1: Basic Concepts of ICT":          5,
+    "Unit 2: Introduction to Computer":       4,
+    "Unit 3: Data Representation":             6,
+    "Unit 4: Digital Circuits":                8,
+    "Unit 5: Operating Systems":               7,
+    "Unit 6: Data Communication & Networking": 10,
+    "Unit 7: System Analysis & Design":        20,
+    "Unit 8: Database Management":             12,
+    "Unit 9: Programming":                     25,
+    "Unit 10: Web Development":                18,
+    "Unit 11: Internet of Things (IoT)":       5,
+    "Unit 12: ICT in Business":                3,
+    "Unit 13: New Trends in ICT":              4,
+}
+
+
+def _compute_topic_distribution(topics: List[str], total: int) -> dict:
+    """
+    Distribute `total` questions across `topics` proportionally by TOPIC_WEIGHTS.
+    Uses the largest-remainder (Hamilton) method so the sum equals `total` exactly.
+    Topics absent from TOPIC_WEIGHTS receive equal weight = 1 (uniform fallback).
+    """
+    if not topics or total <= 0:
+        return {}
+
+    weights = {t: TOPIC_WEIGHTS.get(t, 1) for t in topics}
+    total_weight = sum(weights.values())
+
+    dist: dict[str, int] = {}
+    allocated = 0
+    remainders: list[tuple[float, str]] = []
+
+    for topic, w in weights.items():
+        exact = (w / total_weight) * total
+        floor_val = int(exact)
+        dist[topic] = floor_val
+        allocated += floor_val
+        remainders.append((exact - floor_val, topic))
+
+    # Award leftover slots to topics with the largest fractional remainders
+    leftover = total - allocated
+    remainders.sort(key=lambda x: -x[0])
+    for i in range(leftover):
+        dist[remainders[i % len(remainders)][1]] += 1
+
+    return dist
+
+
 def _get_query_and_topics(grade: str, paper_type: str, term: Optional[str], specific_topic: Optional[str]):
     q = {}
     target_topics = []
@@ -152,12 +206,26 @@ async def _bank_question_texts(query: dict) -> set[str]:
             texts.add(t)
     return texts
 
-async def _fallback_from_bank(query: dict, mcq_count: int, default_topic: str) -> List[dict]:
-    if mcq_count <= 0:
-        return []
+async def _count_bank_questions(query: dict) -> int:
+    """Return how many VALID (A/B/C/D answer) questions exist in the MCQ bank for this query."""
+    count = 0
+    cursor = mcq_bank_col.find(query, {"answer": 1, "correct_answer": 1}).limit(5000)
+    async for m in cursor:
+        ans = m.get("answer") or m.get("correct_answer")
+        if ans in ["A", "B", "C", "D"]:
+            count += 1
+    return count
 
-    bank = []
-    cursor = mcq_bank_col.find(query).limit(1000)
+
+async def _safe_sample_bank(query: dict, needed: int, default_topic: str) -> List[dict]:
+    """
+    Fetch UP TO `needed` UNIQUE questions from the MCQ bank.
+    Unlike the old fallback, we NEVER duplicate raw questions — a unique bank question is
+    only ever sent to Gemini once per paper.  If the bank has fewer than `needed`, we just
+    return what's available and let the caller shift the deficit to Gemini generation.
+    """
+    bank: List[dict] = []
+    cursor = mcq_bank_col.find(query).limit(5000)
     async for m in cursor:
         ans = m.get("answer") or m.get("correct_answer")
         if ans not in ["A", "B", "C", "D"]:
@@ -172,9 +240,8 @@ async def _fallback_from_bank(query: dict, mcq_count: int, default_topic: str) -
         })
 
     random.shuffle(bank)
-    if not bank:
-        return []
-    return bank[:mcq_count] if len(bank) >= mcq_count else (bank * (mcq_count // len(bank) + 1))[:mcq_count]
+    # Return at most `needed` — never duplicate
+    return bank[:needed]
 
 
 async def _paraphrase_questions(batch: List[dict], grade: str, difficulty: str, batch_size: int = 8) -> List[dict]:
@@ -265,40 +332,31 @@ def _gemini_generate(prompt: str) -> str:
     )
     return resp.text or ""
 
-async def generate_mcqs(
+
+async def _gemini_generate_for_topic(
+    topic: str,
+    count: int,
     grade: str,
     paper_type: str,
     term: Optional[str],
     difficulty: str,
-    mcq_count: int,
-    topic: Optional[str] = None,
+    context: str,
+    bank_texts: set,
+    batch_size: int = 8,
 ) -> List[dict]:
-
-    gen_count = int(mcq_count * 0.4)
-    bank_count = mcq_count - gen_count
-
-    db_query, target_topics, target_pdfs = _get_query_and_topics(grade, paper_type, term, topic)
-    topic_str = ", ".join(target_topics) if target_topics else "General IT Syllabus"
-
-    context = await _retrieve_context(db_query, target_pdfs)
-
-    bank_texts = await _bank_question_texts(db_query)
-
-    cleaned = []
-    batch_size = 8
-
-    # 1. Generate new questions from syllabus context
-    remaining_gen = gen_count
-    
-    while remaining_gen > 0:
-        current_batch = min(batch_size, remaining_gen)
-        
+    """
+    Use Gemini to generate `count` fresh MCQs strictly for one specific topic.
+    Enforces the topic label on every returned question.
+    """
+    result: List[dict] = []
+    remaining = count
+    while remaining > 0:
+        current_batch = min(batch_size, remaining)
         prompt = f"""
 You are a Sri Lankan A/L ICT MCQ paper setter.
 
-Generate {current_batch} NEW MCQs.
-Syllabus Units to cover:
-{topic_str}
+Generate {current_batch} NEW MCQs for ONLY the following topic:
+Topic: {topic}
 
 Grade: {grade}
 Paper Type: {paper_type}
@@ -306,14 +364,13 @@ Term: {term if term else "Final/Full syllabus"}
 Difficulty: {difficulty}
 
 Rules:
-- 4 options A,B,C,D
-- Only ONE correct answer
-- Do NOT copy any question verbatim from a question bank or past papers.
-- Create NEW questions strictly based on the provided context (change scenarios/numbers/examples).
-- Distribute questions evenly across the listed Syllabus Units.
-- Output ONLY JSON (no markdown, no extra text)
-- STRICT RULE: Do NOT use ANY double quotes (") inside the question text, options, or explanations. Use single quotes (') instead.
-- STRICT RULE: Do NOT include literal newlines inside strings. If you need a newline, use \\n.
+- Every question MUST be about the topic "{topic}" — no other topics.
+- 4 options A, B, C, D. Only ONE correct answer.
+- Do NOT copy any question verbatim from past papers or question banks.
+- Create NEW questions strictly based on the provided context.
+- Output ONLY JSON (no markdown, no extra text).
+- STRICT RULE: Do NOT use ANY double quotes (") inside question text, options, or explanations. Use single quotes (') instead.
+- STRICT RULE: Do NOT include literal newlines inside strings. Use \\n if needed.
 
 JSON format:
 {{
@@ -323,7 +380,7 @@ JSON format:
       "options": {{"A":"...","B":"...","C":"...","D":"..."}},
       "correct_answer": "A",
       "explanation": "short explanation",
-      "topic": "Put the actual Unit name here",
+      "topic": "{topic}",
       "difficulty": "{difficulty}"
     }}
   ]
@@ -332,36 +389,142 @@ JSON format:
 Context (use only this):
 {context}
 """.strip()
-
         try:
             raw = _gemini_generate(prompt)
             data = _extract_json(raw)
-            questions = data.get("questions", [])
-
-            for q_obj in questions:
+            for q_obj in data.get("questions", []):
                 qt = (q_obj.get("question") or "").strip()
                 if not qt or qt.lower() in bank_texts:
                     continue
                 if q_obj.get("correct_answer") in ["A", "B", "C", "D"]:
-                    cleaned.append(q_obj)
+                    q_obj["topic"] = topic  # enforce correct topic label
+                    result.append(q_obj)
         except Exception as e:
-            logger.exception("Gemini NEW generation batch failed. Error=%s", str(e))
-            
-        remaining_gen -= current_batch
+            logger.exception("Gemini topic generation failed for '%s'. Error=%s", topic, str(e))
+        remaining -= current_batch
+    return result
 
-    # 2. Paraphrase bank questions — Gemini rewrites them, never passed raw
-    if bank_count > 0:
-        bank_questions = await _fallback_from_bank(db_query, bank_count, target_topics[0] if target_topics else "General")
-        paraphrased = await _paraphrase_questions(bank_questions, grade, difficulty, batch_size)
-        cleaned.extend(paraphrased)
 
-    # FINAL FAILSAFE: If still short, fetch more from DB and rephrase through Gemini
-    final_missing = mcq_count - len(cleaned)
+async def generate_mcqs(
+    grade: str,
+    paper_type: str,
+    term: Optional[str],
+    difficulty: str,
+    mcq_count: int,
+    topic: Optional[str] = None,
+) -> List[dict]:
+    import re
+
+    db_query, target_topics, target_pdfs = _get_query_and_topics(grade, paper_type, term, topic)
+    default_topic = target_topics[0] if target_topics else "General"
+
+    # Shared context retrieved once — used by all per-topic Gemini calls
+    context = await _retrieve_context(db_query, target_pdfs)
+    bank_texts = await _bank_question_texts(db_query)
+    batch_size = 8
+
+    # ------------------------------------------------------------------ #
+    # WEIGHTED DISTRIBUTION                                                #
+    # Compute how many questions each topic should contribute based on     #
+    # the official A/L ICT exam weightage table (TOPIC_WEIGHTS).          #
+    # For Term papers this normalises weights across only the active       #
+    # term's topics.  For Final papers it uses all active topics.         #
+    # ------------------------------------------------------------------ #
+    topic_distribution = _compute_topic_distribution(target_topics, mcq_count)
+    logger.info(
+        "Weighted distribution for Grade=%s %s term=%s (%d Qs): %s",
+        grade, paper_type, term or "Final", mcq_count, topic_distribution,
+    )
+
+    all_questions: List[dict] = []
+
+    # ------------------------------------------------------------------ #
+    # PER-TOPIC GENERATION                                                 #
+    # For each topic: adaptive 3-tier bank check → Gemini/bank split      #
+    # ------------------------------------------------------------------ #
+    for topic_name, topic_count in topic_distribution.items():
+        if topic_count == 0:
+            continue
+
+        # Topic-scoped MongoDB query so bank sampling/counting is precise
+        topic_query = {
+            **db_query,
+            "topic": {"$regex": re.escape(topic_name), "$options": "i"},
+        }
+
+        # Compute ideal split quotas for this individual topic
+        base_gen  = max(1, int(topic_count * 0.4))
+        base_bank = topic_count - base_gen
+
+        available_in_bank = await _count_bank_questions(topic_query)
+
+        if available_in_bank == 0:
+            # Tier 3: no bank questions for this topic — Gemini generates all
+            gen_count    = topic_count
+            bank_count   = 0
+            gemini_extra = 0
+            logger.info("Topic '%s': bank empty → Gemini generates all %d.", topic_name, gen_count)
+        elif available_in_bank < base_bank:
+            # Tier 2: bank too small — use what exists, shift shortfall to Gemini
+            bank_count   = available_in_bank
+            gemini_extra = base_bank - available_in_bank
+            gen_count    = base_gen
+            logger.info(
+                "Topic '%s': bank has %d (need %d) → shifting %d to Gemini.",
+                topic_name, available_in_bank, base_bank, gemini_extra,
+            )
+        else:
+            # Tier 1: bank has enough — standard 40/60 split
+            gen_count    = base_gen
+            bank_count   = base_bank
+            gemini_extra = 0
+            logger.info(
+                "Topic '%s': bank ok (%d avail) → standard 40/60 split.",
+                topic_name, available_in_bank,
+            )
+
+        topic_questions: List[dict] = []
+
+        # Step 1 — Fresh Gemini questions for this topic
+        gemini_qs = await _gemini_generate_for_topic(
+            topic_name, gen_count, grade, paper_type, term,
+            difficulty, context, bank_texts, batch_size,
+        )
+        topic_questions.extend(gemini_qs)
+
+        # Step 2a — Paraphrase unique bank questions for this topic
+        if bank_count > 0:
+            bank_qs = await _safe_sample_bank(topic_query, bank_count, topic_name)
+            paraphrased = await _paraphrase_questions(bank_qs, grade, difficulty, batch_size)
+            topic_questions.extend(paraphrased)
+
+        # Step 2b — Fill bank shortfall with extra Gemini (Tier 2 / Tier 3)
+        if gemini_extra > 0:
+            extra_qs = await _gemini_generate_for_topic(
+                topic_name, gemini_extra, grade, paper_type, term,
+                difficulty, context, bank_texts, batch_size,
+            )
+            topic_questions.extend(extra_qs)
+
+        # Collect exactly topic_count questions for this topic
+        all_questions.extend(topic_questions[:topic_count])
+
+    # ------------------------------------------------------------------ #
+    # FINAL FAILSAFE — Gemini fills any residual shortage                 #
+    # (happens when Gemini yields fewer questions than requested)          #
+    # ------------------------------------------------------------------ #
+    final_missing = mcq_count - len(all_questions)
     if final_missing > 0:
-        logger.warning("Still short by %d questions — fetching extra from DB and rephrasing.", final_missing)
-        extra_raw = await _fallback_from_bank(db_query, final_missing * 2, target_topics[0] if target_topics else "General")
-        extra_paraphrased = await _paraphrase_questions(extra_raw, grade, difficulty, batch_size)
-        cleaned.extend(extra_paraphrased)
+        logger.warning(
+            "Still short by %d after per-topic generation — final Gemini failsafe.",
+            final_missing,
+        )
+        failsafe_qs = await _gemini_generate_for_topic(
+            default_topic, final_missing, grade, paper_type, term,
+            difficulty, context, bank_texts, batch_size,
+        )
+        all_questions.extend(failsafe_qs)
 
-    random.shuffle(cleaned)
-    return cleaned[:mcq_count]
+    random.shuffle(all_questions)
+    return all_questions[:mcq_count]
+
