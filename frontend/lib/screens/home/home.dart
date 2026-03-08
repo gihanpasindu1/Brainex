@@ -280,7 +280,7 @@ class BrainexHome extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AIStudyPlanPage(),
+                              builder: (context) => const AIStudyPlanPage2(),
                             ),
                           );
                         },
@@ -321,7 +321,7 @@ class BrainexHome extends StatelessWidget {
           if (index == 1) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AIStudyPlanPage()),
+              MaterialPageRoute(builder: (context) => const AIStudyPlanPage2()),
             );
           } else if (index == 3) {
             Navigator.push(

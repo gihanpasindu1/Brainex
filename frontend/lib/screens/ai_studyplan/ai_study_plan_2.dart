@@ -1,12 +1,36 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/premium_bottom_nav.dart';
+import 'package:frontend/screens/home/home.dart';
+import 'package:frontend/screens/profile screen/profile_screen.dart';
 
-class AIStudyPlanPage extends StatelessWidget {
-  const AIStudyPlanPage({super.key});
+class AIStudyPlanPage2 extends StatefulWidget {
+  const AIStudyPlanPage2({super.key});
+
+  @override
+  State<AIStudyPlanPage2> createState() => _AIStudyPlanPage2State();
+}
+
+class _AIStudyPlanPage2State extends State<AIStudyPlanPage2> {
+  int selectedTab = 0; // 0 = Term Plan, 1 = Final Plan
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: selectedTab);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -15,207 +39,489 @@ class AIStudyPlanPage extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// 🔙 Back + Title
-                        _TopHeader(
-                          title: "AI Study Plan",
-                          subtitle: "Your personalized path to success",
-                          onBack: () => Navigator.maybePop(context),
-                        ),
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// 🔙 Back + Title
+              _TopHeader(
+                title: "AI Study Plan",
+                subtitle: "Your personalized path to success",
+                onBack: () => Navigator.maybePop(context),
+              ),
 
-                        const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
-                        /// 🔘 Toggle Buttons
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF00C6FF),
-                                        Color(0xFF7F00FF),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      "Term Plan",
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const Expanded(
-                                child: Center(
-                                  child: Text(
-                                    "Final Plan",
-                                    style: TextStyle(color: Colors.white70),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: _SegmentedTabs(
+                  leftText: "Term Plan",
+                  rightText: "Final Plan",
+                  selectedIndex: selectedTab,
+                  onChanged: (i) {
+                    setState(() => selectedTab = i);
+                    _pageController.animateToPage(
+                      i,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                ),
+              ),
 
-                        const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                        /// 📊 Plan Overview Card
-                        _glassCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Plan Overview",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                "Duration: 4 Weeks • Term Target: 75%",
-                                style: TextStyle(color: Colors.white70),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                "Focus Areas: SQL, System Analysis, Web Tech",
-                                style: TextStyle(color: Colors.white70),
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  _chip("6h / week"),
-                                  _chip("10 Papers"),
-                                  _chip("3 Revisions"),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (i) => setState(() => selectedTab = i),
+                  children: [_TermPlanView(), _FinalPlanView()],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: PremiumBottomNav(
+        currentIndex: 1,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Home()),
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          }
+        },
+      ),
+    );
+  }
+}
 
-                        const SizedBox(height: 16),
-
-                        const Text(
-                          "Study Timeline",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        /// 📍 Timeline Card
-                        _glassCard(
-                          child: Column(
-                            children: const [
-                              _timelineItem(
-                                color: Colors.cyan,
-                                title: "Week 1",
-                                subtitle: "SQL Basics + ER Diagrams • Paper 01",
-                              ),
-                              _timelineItem(
-                                color: Colors.blue,
-                                title: "Week 2",
-                                subtitle: "Web Dev (HTML/CSS) • Paper 02",
-                              ),
-                              _timelineItem(
-                                color: Colors.purple,
-                                title: "Week 3",
-                                subtitle:
-                                    "System Analysis + Flowcharts • Paper 03",
-                              ),
-                              _timelineItem(
-                                color: Colors.pink,
-                                title: "Week 4",
-                                subtitle: "Revision + Term Mock Paper",
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        const Text(
-                          "Weekly Activities",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        _weeklyCard(
-                          "1 st week plan",
-                          "Linked to Week 2 • 25 mins",
-                        ),
-                        const SizedBox(height: 10),
-                        _weeklyCard("2 nd week plan", "Linked to Week 2 • 2h"),
-                        const SizedBox(height: 20),
-                      ],
+/// 🔹 Term Plan View
+class _TermPlanView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// 📊 Plan Overview Card
+            _glassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Plan Overview",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Duration: 4 Weeks • Term Target: 75%",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    "Focus Areas: SQL, System Analysis, Web Tech",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _chip("6h / week"),
+                      _chip("10 Papers"),
+                      _chip("3 Revisions"),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-                /// 🚀 Generate Button
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF00C6FF), Color(0xFF7F00FF)],
+            const SizedBox(height: 25),
+
+            const Text(
+              "Study Timeline",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            /// 📍 Timeline Card
+            _glassCard(
+              child: Column(
+                children: const [
+                  _timelineItem(
+                    color: Colors.cyan,
+                    title: "Week 1",
+                    subtitle: "SQL Basics + ER Diagrams • Paper 01",
+                    isLast: false,
+                  ),
+                  _timelineItem(
+                    color: Colors.blue,
+                    title: "Week 2",
+                    subtitle: "Web Dev (HTML/CSS) • Paper 02",
+                    isLast: false,
+                  ),
+                  _timelineItem(
+                    color: Colors.purple,
+                    title: "Week 3",
+                    subtitle: "System Analysis + Flowcharts • Paper 03",
+                    isLast: false,
+                  ),
+                  _timelineItem(
+                    color: Colors.pink,
+                    title: "Week 4",
+                    subtitle: "Revision + Term Mock Paper",
+                    isLast: true,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            const Text(
+              "Weekly Activities",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            _weeklyCard(
+              "1 st week plan",
+              "Linked to Week 2 • 25 mins",
+              const Color(0xFF40C4FF),
+            ),
+            const SizedBox(height: 12),
+            _weeklyCard(
+              "2 nd week plan",
+              "Linked to Week 2 • 2h",
+              const Color(0xFF69F0AE),
+            ),
+            const SizedBox(height: 30),
+
+            /// 🚀 Generate Button
+            _generateButton(),
+
+            const SizedBox(height: 12),
+
+            const Center(
+              child: Text(
+                "Term plans end with a mock term paper",
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 120),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 🔹 Final Plan View
+class _FinalPlanView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// 📊 Plan Overview Card
+            _glassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Plan Overview",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic,
                     ),
-                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Center(
-                    child: Text(
-                      "Generate New Plan",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Duration: 4 Weeks • Term Target: 75%",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    "Focus Areas: SQL, System Analysis, Web Tech",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _chip("6h / week"),
+                      _chip("10 Papers"),
+                      _chip("3 Revisions"),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            const Text(
+              "Study Timeline",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            /// 📍 Timeline Card
+            _glassCard(
+              child: Column(
+                children: const [
+                  _timelineItem(
+                    title: "Week 1",
+                    subtitle: "SQL Basics + ER Diagrams • Paper 01",
+                    color: Colors.cyan,
+                    isLast: false,
+                  ),
+                  _timelineItem(
+                    title: "Week 2",
+                    subtitle: "Web Dev (HTML/CSS) • Paper 02",
+                    color: Colors.blue,
+                    isLast: false,
+                  ),
+                  _timelineItem(
+                    title: "Week 3",
+                    subtitle: "System Analysis + Flowcharts • Paper 03",
+                    color: Colors.purple,
+                    isLast: false,
+                  ),
+                  _timelineItem(
+                    title: "Week 4",
+                    subtitle: "Revision + Term Mock Paper",
+                    color: Colors.pink,
+                    isLast: true,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            const Text(
+              "Weekly Activities",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            _weeklyCard(
+              "1 st week plan",
+              "Linked to Week 2 • 25 mins",
+              const Color(0xFF40C4FF),
+            ),
+            const SizedBox(height: 12),
+            _weeklyCard(
+              "2 nd week plan",
+              "Linked to Week 2 • 2h",
+              const Color(0xFF69F0AE),
+            ),
+            const SizedBox(height: 30),
+
+            /// 🚀 Generate Button
+            _generateButton(),
+
+            const SizedBox(height: 12),
+
+            const Center(
+              child: Text(
+                "Term plans end with a mock term paper",
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 120),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 🔹 Segmented Tabs Widget (from Short Notes)
+class _SegmentedTabs extends StatelessWidget {
+  final String leftText;
+  final String rightText;
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  const _SegmentedTabs({
+    required this.leftText,
+    required this.rightText,
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _TabPill(
+              text: leftText,
+              selected: selectedIndex == 0,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF26D3F9), Color(0xFF9D5DFF)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              onTap: () => onChanged(0),
+            ),
+          ),
+          Expanded(
+            child: _TabPill(
+              text: rightText,
+              selected: selectedIndex == 1,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF26D3F9), Color(0xFF9D5DFF)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              onTap: () => onChanged(1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  final String text;
+  final bool selected;
+  final Gradient gradient;
+  final VoidCallback onTap;
+
+  const _TabPill({
+    required this.text,
+    required this.selected,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: selected ? gradient : null,
+            color: selected ? null : Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF26D3F9).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                const Center(
-                  child: Text(
-                    "Term plans end with a mock term paper",
-                    style: TextStyle(color: Colors.white60, fontSize: 12),
-                  ),
-                ),
-              ],
+                  ]
+                : null,
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: selected ? Colors.white : Colors.white54,
+              fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+              fontSize: 15,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// 🔹 Generate Button
+Widget _generateButton() {
+  return Container(
+    width: double.infinity,
+    height: 55,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      gradient: const LinearGradient(
+        colors: [Color(0xFF26D3F9), Color(0xFF9D5DFF)],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF26D3F9).withValues(alpha: 0.3),
+          blurRadius: 15,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: ElevatedButton(
+      onPressed: () {},
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      child: const Text(
+        "Generate New Plan",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    ),
+  );
 }
 
 /// 🔹 Glass Card Widget
@@ -257,7 +563,12 @@ Widget _chip(String text) {
     ),
     child: Text(
       text,
-      style: const TextStyle(color: Colors.white, fontSize: 12),
+      style: const TextStyle(
+        color: Color(0xFFE0E0E0),
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        fontStyle: FontStyle.italic,
+      ),
     ),
   );
 }
@@ -267,41 +578,65 @@ class _timelineItem extends StatelessWidget {
   final Color color;
   final String title;
   final String subtitle;
+  final bool isLast;
 
   const _timelineItem({
     required this.color,
     required this.title,
     required this.subtitle,
+    required this.isLast,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+    return IntrinsicHeight(
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Column(
-            children: [
-              CircleAvatar(radius: 6, backgroundColor: color),
-              Container(width: 2, height: 40, color: color.withOpacity(0.5)),
-            ],
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+          SizedBox(
+            width: 30,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: Colors.white70)),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      color: color.withValues(alpha: 0.5),
+                    ),
+                  ),
               ],
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -311,46 +646,68 @@ class _timelineItem extends StatelessWidget {
 }
 
 /// 🔹 Weekly Card
-Widget _weeklyCard(String title, String subtitle) {
-  return Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFF1A2A6C), Color(0xFF16213E)],
-      ),
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+Widget _weeklyCard(String title, String subtitle, Color glowColor) {
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(20),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF16193A).withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white12),
+          gradient: LinearGradient(
+            colors: [
+              glowColor.withValues(alpha: 0.2),
+              const Color(0xFF16193A).withValues(alpha: 0.3),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.center,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF26D3F9), Color(0xFF9D5DFF)],
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(subtitle, style: const TextStyle(color: Colors.white70)),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00C6FF), Color(0xFF7F00FF)],
+              child: const Text(
+                "Start",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Text("Start", style: TextStyle(color: Colors.white)),
+          ],
         ),
-      ],
+      ),
     ),
   );
 }
