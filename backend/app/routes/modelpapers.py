@@ -9,12 +9,20 @@ router = APIRouter(prefix="/modelpapers", tags=["modelpapers"])
 
 @router.post("/generate")
 async def generate_modelpapers(req: GenerateModelPaperRequest):
-    # Validate term logic
-    if req.paper_type == "Term" and not req.term:
-        raise HTTPException(status_code=400, detail="term is required when paper_type is Term")
-    if req.paper_type == "Final":
+    # Validate logic based on paper_type requirements
+    if req.paper_type == "Subject":
+        if not req.grade or not req.term or not req.topic:
+            raise HTTPException(status_code=400, detail="Grade, term, and topic (subject) are all required when paper_type is Subject")
+    elif req.paper_type == "Term":
+        if not req.grade or not req.term:
+            raise HTTPException(status_code=400, detail="Grade and term are required when paper_type is Term")
+        req.topic = None # Clear topic if wrongly sent
+    elif req.paper_type == "Final":
+        # Final paper conceptually covers everything, so specific grades/terms/topics aren't targeted individually.
+        # We default the backend generator to full "13" logic which natively scans both 12 and 13.
+        req.grade = "13" 
         req.term = None
-
+        req.topic = None
     created_ids = []
 
     for i in range(req.count):
@@ -24,14 +32,20 @@ async def generate_modelpapers(req: GenerateModelPaperRequest):
             term=req.term,
             difficulty=req.difficulty,
             mcq_count=req.mcq_count,
+            topic=req.topic,
         )
+        
+        title = f"Model Paper {i+1:02d} - {req.paper_type} - {req.difficulty}"
+        if req.paper_type == "Subject":
+            title = f"Model Paper {i+1:02d} - Subject: {req.topic} - {req.difficulty}"
 
         doc = {
-            "title": f"Model Paper {i+1:02d} - {req.paper_type} - {req.difficulty}",
+            "title": title,
             "paper_type": req.paper_type,
             "grade": req.grade,
             "difficulty": req.difficulty,
             "term": req.term,
+            "topic": req.topic,
             "duration_min": 120,
             "questions": questions,
         }

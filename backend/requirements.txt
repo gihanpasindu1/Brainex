@@ -5,3 +5,5 @@ openai
 python-dotenv
 pypdf
 google-genai
+motor
+dnspython
