@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from .routes.chat import router as chat_router
 from .routes.chatbot import router as chatbot_router
+from app.routes.modelpapers import router as modelpapers_router
+from app.routes.friend_challenges import router as friend_challenges_router
+from .routes.planner import router as planner_router
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -14,5 +17,10 @@ def root():
 # Include the new chat router
 app.include_router(chat_router)
 
+
+app.include_router(modelpapers_router)
+app.include_router(friend_challenges_router)
 # Include the old chatbot router (optional, keeping for safety if user wants both, or I could comment it out)
 # app.include_router(chatbot_router) 
+
+app.include_router(planner_router)
