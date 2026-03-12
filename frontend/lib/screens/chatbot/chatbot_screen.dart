@@ -1240,7 +1240,7 @@ class _MicWaveState extends State<MicWave> with SingleTickerProviderStateMixin {
       height: widget.height,
       child: AnimatedBuilder(
         animation: _c,
-        builder: (_, __) {
+        builder: (_, card) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(widget.bars, (i) {

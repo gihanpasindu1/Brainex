@@ -9,6 +9,8 @@ import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+import 'package:frontend/widgets/premium_bottom_nav.dart';
+import 'package:frontend/screens/profile screen/profile_screen.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -320,7 +322,7 @@ class BrainexHome extends StatelessWidget {
           if (index == 1) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AIStudyPlanPage()),
+              MaterialPageRoute(builder: (context) => const AIStudyPlanPage2()),
             );
           } else if (index == 3) {
             Navigator.push(

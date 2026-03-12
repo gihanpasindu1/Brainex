@@ -17,7 +17,7 @@ class _RootScreenState extends State<RootScreen> {
   // List of the main screens that correspond to the bottom nav tabs
   final List<Widget> _screens = [
     const BrainexHome(), // 0: Home
-    const AIStudyPlanPage(), // 1: Plan
+    const AIStudyPlanPage2(), // 1: Plan
     const Scaffold(
       backgroundColor: Color(0xFF0D1026),
       body: Center(

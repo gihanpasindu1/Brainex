@@ -36,9 +36,11 @@ class WeeklyActivitiesPage extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.10),
+                    color: Colors.white.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -48,10 +50,10 @@ class WeeklyActivitiesPage extends StatelessWidget {
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.22),
+                          color: Colors.black.withValues(alpha: 0.22),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withValues(alpha: 0.08),
                           ),
                         ),
                         child: const Text(
@@ -86,7 +88,7 @@ class WeeklyActivitiesPage extends StatelessWidget {
                     Text(
                       "3 / 5 activities completed",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
+                        color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -109,7 +111,7 @@ class WeeklyActivitiesPage extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
+                        color: Colors.black.withValues(alpha: 0.25),
                         blurRadius: 18,
                         offset: const Offset(0, 10),
                       ),
@@ -133,7 +135,7 @@ class WeeklyActivitiesPage extends StatelessWidget {
                 Text(
                   "This Week’s Quests",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.70),
+                    color: Colors.white.withValues(alpha: 0.70),
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -261,7 +263,7 @@ class _GradientProgressBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       child: Container(
         height: 10,
-        color: Colors.white.withOpacity(0.10),
+        color: Colors.white.withValues(alpha: 0.10),
         child: Align(
           alignment: Alignment.centerLeft,
           child: FractionallySizedBox(
@@ -300,12 +302,12 @@ class _QuestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final baseColor = isHighlighted
-        ? const Color(0xFF163B2C).withOpacity(0.85)
-        : Colors.black.withOpacity(0.30);
+        ? const Color(0xFF163B2C).withValues(alpha: 0.85)
+        : Colors.black.withValues(alpha: 0.30);
 
     final borderColor = isHighlighted
-        ? const Color(0xFF31E7A6).withOpacity(0.25)
-        : Colors.white.withOpacity(0.10);
+        ? const Color(0xFF31E7A6).withValues(alpha: 0.25)
+        : Colors.white.withValues(alpha: 0.10);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -315,7 +317,7 @@ class _QuestCard extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.22),
+            color: Colors.black.withValues(alpha: 0.22),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -340,7 +342,7 @@ class _QuestCard extends StatelessWidget {
                 Text(
                   subtitle1,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.75),
+                    color: Colors.white.withValues(alpha: 0.75),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -349,7 +351,7 @@ class _QuestCard extends StatelessWidget {
                 Text(
                   subtitle2,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.70),
+                    color: Colors.white.withValues(alpha: 0.70),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
