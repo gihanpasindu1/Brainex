@@ -122,5 +122,64 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
         ],
       ),
     );
+
+    if (confirm != true) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      // Prepare results payload
+      final List<Map<String, dynamic>> results = [];
+      for (int i = 0; i < questions.length; i++) {
+        final q = questions[i];
+        final selected = selectedAnswers[i];
+        final correct = q['correct_answer'];
+        results.add({
+          "question": q['question'],
+          "topic": q['topic'] ?? "General",
+          "is_correct": selected == correct,
+        });
+      }
+
+      final uri = Uri.parse('http://10.0.2.2:8000/modelpapers/analyze');
+      final response = await http.post(
+        uri,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"results": results}),
+      );
+
+      if (response.statusCode == 200) {
+        final analysis = jsonDecode(response.body);
+        if (mounted) {
+          // Use push instead of pushReplacement to allow 'Review Answers' to work properly
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PerformanceFeedbackScreen(
+                analysis: analysis,
+                paperTitle: widget.paperData['title'] ?? 'Model Paper',
+              ),
+            ),
+          ).then((_) {
+            // Optional: Handle returning from results if needed
+          });
+        }
+      } else {
+        throw Exception("Failed to analyze results: ${response.statusCode}");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Submission Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isSubmitting = false);
+      }
+    }
   }
 }
