@@ -34,6 +34,32 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
     _startTimer();
   }
 
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsRemaining > 0) {
+        setState(() {
+          _secondsRemaining--;
+        });
+      } else {
+        _timer.cancel();
+        _submitExam(); // Auto submit if time runs out
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String _formatTime(int totalSeconds) {
+    final int hours = totalSeconds ~/ 3600;
+    final int minutes = (totalSeconds % 3600) ~/ 60;
+    final int seconds = totalSeconds % 60;
+    return "${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
+  }
+
   Map<int, String?> selectedAnswers = {};
 
   void _loadQuestions() {
@@ -63,5 +89,38 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
         currentQuestionIndex--;
       });
     }
+  }
+
+  Future<void> _submitExam() async {
+    if (questions.isEmpty) return;
+
+    // Confirm submission
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF161821),
+        title: Text(
+          "Submit Exam",
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        content: Text(
+          "Are you sure you want to submit your answers?",
+          style: GoogleFonts.poppins(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              "Submit",
+              style: TextStyle(color: Colors.cyanAccent),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
