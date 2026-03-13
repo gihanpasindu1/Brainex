@@ -166,25 +166,25 @@ class _TermPlanView extends StatelessWidget {
             _glassCard(
               child: Column(
                 children: const [
-                  _TimelineItem(
+                  _timelineItem(
                     color: Colors.cyan,
                     title: "Week 1",
                     subtitle: "SQL Basics + ER Diagrams • Paper 01",
                     isLast: false,
                   ),
-                  _TimelineItem(
+                  _timelineItem(
                     color: Colors.blue,
                     title: "Week 2",
                     subtitle: "Web Dev (HTML/CSS) • Paper 02",
                     isLast: false,
                   ),
-                  _TimelineItem(
+                  _timelineItem(
                     color: Colors.purple,
                     title: "Week 3",
                     subtitle: "System Analysis + Flowcharts • Paper 03",
                     isLast: false,
                   ),
-                  _TimelineItem(
+                  _timelineItem(
                     color: Colors.pink,
                     title: "Week 4",
                     subtitle: "Revision + Term Mock Paper",
@@ -304,25 +304,25 @@ class _FinalPlanView extends StatelessWidget {
             _glassCard(
               child: Column(
                 children: const [
-                  _TimelineItem(
+                  _timelineItem(
                     title: "Week 1",
                     subtitle: "SQL Basics + ER Diagrams • Paper 01",
                     color: Colors.cyan,
                     isLast: false,
                   ),
-                  _TimelineItem(
+                  _timelineItem(
                     title: "Week 2",
                     subtitle: "Web Dev (HTML/CSS) • Paper 02",
                     color: Colors.blue,
                     isLast: false,
                   ),
-                  _TimelineItem(
+                  _timelineItem(
                     title: "Week 3",
                     subtitle: "System Analysis + Flowcharts • Paper 03",
                     color: Colors.purple,
                     isLast: false,
                   ),
-                  _TimelineItem(
+                  _timelineItem(
                     title: "Week 4",
                     subtitle: "Revision + Term Mock Paper",
                     color: Colors.pink,
@@ -558,7 +558,7 @@ Widget _chip(String text) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.1),
+      color: Colors.white.withOpacity(0.1),
       borderRadius: BorderRadius.circular(20),
     ),
     child: Text(
@@ -574,13 +574,13 @@ Widget _chip(String text) {
 }
 
 /// 🔹 Timeline Item
-class _TimelineItem extends StatelessWidget {
+class _timelineItem extends StatelessWidget {
   final Color color;
   final String title;
   final String subtitle;
   final bool isLast;
 
-  const _TimelineItem({
+  const _timelineItem({
     required this.color,
     required this.title,
     required this.subtitle,

@@ -3,6 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:frontend/widgets/premium_bottom_nav.dart';
+import 'package:frontend/screens/profile screen/profile_screen.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
 
 class ShortNotesPage extends StatefulWidget {
   const ShortNotesPage({super.key});
@@ -13,6 +16,7 @@ class ShortNotesPage extends StatefulWidget {
 
 class _ShortNotesPageState extends State<ShortNotesPage> {
   int selectedTab = 0; // 0 = My Notes, 1 = Predefined Notes
+  int bottomIndex = -1; // -1 = nothing highlighted
 
   late PageController _pageController;
   final TextEditingController _searchController = TextEditingController();
@@ -348,6 +352,26 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
             ],
           ),
         ),
+      ),
+      extendBody: true,
+      bottomNavigationBar: PremiumBottomNav(
+        currentIndex: bottomIndex,
+        onTap: (index) {
+          setState(() => bottomIndex = index);
+          if (index == 0) {
+            Navigator.maybePop(context);
+          } else if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AIStudyPlanPage()),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          }
+        },
       ),
     );
   }

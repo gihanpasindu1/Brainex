@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/premium_bottom_nav.dart';
+import 'package:frontend/screens/home/home.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -86,6 +88,17 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: PremiumBottomNav(
+        currentIndex: 3,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Home()),
+            );
+          }
+        },
       ),
     );
   }
