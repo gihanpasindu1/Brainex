@@ -1,8 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:frontend/widgets/premium_bottom_nav.dart';
-import 'package:frontend/screens/home/home.dart';
-import 'package:frontend/screens/profile screen/profile_screen.dart';
 
 class AIStudyPlanPage2 extends StatefulWidget {
   const AIStudyPlanPage2({super.key});
@@ -81,22 +78,6 @@ class _AIStudyPlanPage2State extends State<AIStudyPlanPage2> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: PremiumBottomNav(
-        currentIndex: 1,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const Home()),
-            );
-          } else if (index == 3) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          }
-        },
       ),
     );
   }
