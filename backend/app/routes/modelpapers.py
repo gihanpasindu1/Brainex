@@ -2,8 +2,13 @@ from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 
 from app.db.mongo import model_papers_col
-from app.schemas.modelpaper import GenerateModelPaperRequest, ModelPaperListItem
-from app.services.rag_service import generate_mcqs
+from app.schemas.modelpaper import (
+    GenerateModelPaperRequest, 
+    ModelPaperListItem, 
+    PerformanceAnalysisRequest, 
+    PerformanceAnalysisResponse
+)
+from app.services.rag_service import generate_mcqs, analyze_performance
 
 router = APIRouter(prefix="/modelpapers", tags=["modelpapers"])
 
@@ -85,3 +90,11 @@ async def get_modelpaper(paper_id: str):
     p["id"] = str(p["_id"])
     del p["_id"]
     return p
+
+@router.post("/analyze", response_model=PerformanceAnalysisResponse)
+async def analyze_results(req: PerformanceAnalysisRequest):
+    # Convert Pydantic models to dicts for the service
+    results_list = [r.model_dump() for r in req.results]
+    analysis = await analyze_performance(results_list)
+    return analysis
+
