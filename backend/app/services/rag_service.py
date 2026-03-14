@@ -611,3 +611,62 @@ async def generate_mcqs(
     random.shuffle(all_questions)
     return all_questions[:mcq_count]
 
+
+async def analyze_performance(results: List[dict]) -> dict:
+    """
+    Analyze the user's performance and provide feedback using Gemini.
+    results: list of { "question": str, "topic": str, "is_correct": bool }
+    """
+    # Group results by topic
+    topic_stats = {}
+    total_correct = 0
+    total_questions = len(results)
+
+    for r in results:
+        topic = r.get("topic", "General")
+        if topic not in topic_stats:
+            topic_stats[topic] = {"correct": 0, "total": 0}
+        topic_stats[topic]["total"] += 1
+        if r["is_correct"]:
+            topic_stats[topic]["correct"] += 1
+            total_correct += 1
+
+    prompt = f"""
+You are an expert A/L ICT teacher. Analyze the following student performance data and provide constructive feedback.
+
+Performance Data:
+{json.dumps(topic_stats, indent=2)}
+
+Rules:
+1. Identify "strong_areas": topics where the student got most questions correctly (e.g., > 70%).
+2. Identify "improvement_areas": topics where the student lost major marks (e.g., < 60%).
+3. provide "suggestions": 3-4 specific, actionable bullet points on how to improve.
+4. Output ONLY valid JSON in the following format:
+{{
+  "strong_areas": ["Topic 1", "Topic 2"],
+  "improvement_areas": ["Topic 3", "Topic 4"],
+  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
+}}
+"""
+    try:
+        raw = await _gemini_generate(prompt)
+        analysis = _extract_json(raw)
+    except Exception as e:
+        logger.error(f"Failed to analyze performance with Gemini: {e}")
+        # Build a very basic fallback analysis
+        strong = [t for t, s in topic_stats.items() if s["total"] > 0 and s["correct"]/s["total"] >= 0.7]
+        improve = [t for t, s in topic_stats.items() if s["total"] > 0 and s["correct"]/s["total"] < 0.7]
+        analysis = {
+            "strong_areas": strong[:3],
+            "improvement_areas": improve[:3],
+            "suggestions": [f"Review {t} concepts" for t in improve[:2]] or ["Review all chapters carefully"]
+        }
+
+    return {
+        "score": total_correct,
+        "total": total_questions,
+        "percentage": round((total_correct / total_questions) * 100, 1) if total_questions > 0 else 0,
+        **analysis
+    }
+
+
