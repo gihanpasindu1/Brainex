@@ -363,7 +363,7 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
           } else if (index == 1) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AIStudyPlanPage()),
+              MaterialPageRoute(builder: (context) => const AIStudyPlanPage2()),
             );
           } else if (index == 3) {
             Navigator.push(

@@ -57,7 +57,7 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
     final int hours = totalSeconds ~/ 3600;
     final int minutes = (totalSeconds % 3600) ~/ 60;
     final int seconds = totalSeconds % 60;
-    return "${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   Map<int, String?> selectedAnswers = {};
@@ -149,7 +149,9 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
       );
 
       if (response.statusCode == 200) {
-        final analysis = jsonDecode(response.body);
+        final analysis = Map<String, dynamic>.from(
+          jsonDecode(response.body) as Map,
+        );
         if (mounted) {
           // Use push instead of pushReplacement to allow 'Review Answers' to work properly
           Navigator.push(
@@ -376,12 +378,14 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
   }
 
   Widget _buildQuestionCard() {
-    final currentQ = questions[currentQuestionIndex];
+    final currentQ = questions[currentQuestionIndex] as Map<String, dynamic>;
     final String questionText =
         currentQ['question'] ?? 'No question text provided.';
     final String topic = currentQ['topic'] ?? 'General';
     final String? imageUrl = currentQ['image_url'];
-    Map<String, dynamic> options = currentQ['options'] ?? {};
+    final Map<String, dynamic> options = Map<String, dynamic>.from(
+      currentQ['options'] ?? <String, dynamic>{},
+    );
 
     // Sort to ensure A, B, C, D order
     var sortedKeys = options.keys.toList()..sort();
@@ -448,7 +452,9 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          ...sortedKeys.map((key) => _buildOptionCard(key, options[key])),
+          ...sortedKeys.map(
+            (key) => _buildOptionCard(key, options[key]?.toString() ?? ''),
+          ),
         ],
       ),
     );
@@ -611,6 +617,74 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class PerformanceFeedbackScreen extends StatelessWidget {
+  final Map<String, dynamic> analysis;
+  final String paperTitle;
+
+  const PerformanceFeedbackScreen({
+    super.key,
+    required this.analysis,
+    required this.paperTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = analysis.entries.toList();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F1116),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF161821),
+        foregroundColor: Colors.white,
+        title: Text(
+          paperTitle,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+      ),
+      body: entries.isEmpty
+          ? Center(
+              child: Text(
+                'No analysis available.',
+                style: GoogleFonts.poppins(color: Colors.white70),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: entries.length,
+              itemBuilder: (context, index) {
+                final entry = entries[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF161821),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.key,
+                        style: GoogleFonts.poppins(
+                          color: Colors.cyanAccent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${entry.value}',
+                        style: GoogleFonts.poppins(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 }
