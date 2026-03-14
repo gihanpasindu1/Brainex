@@ -40,3 +40,20 @@ class ModelPaperListItem(BaseModel):
     difficulty: DifficultyType
     term: Optional[TermType] = None
     duration_min: int
+
+class QuestionResult(BaseModel):
+    question: str
+    topic: str
+    is_correct: bool
+
+class PerformanceAnalysisRequest(BaseModel):
+    results: List[QuestionResult]
+
+class PerformanceAnalysisResponse(BaseModel):
+    score: int
+    total: int
+    percentage: float
+    strong_areas: List[str]
+    improvement_areas: List[str]
+    suggestions: List[str]
+
