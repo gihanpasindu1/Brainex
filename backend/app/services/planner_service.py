@@ -20,13 +20,17 @@ def generate_study_plan_ai(data: StudyPlanRequest) -> dict:
     You are an expert Sri Lankan GCE A/L ICT Teacher and supportive Study Coach.
     Create a highly structured, personalized weekly study plan for a student based on these parameters:
     - Target: {data.grade} {data.exam_type} (Term {data.term_number if data.term_number else 'N/A'})
-    - Weak Areas to Prioritize: {", ".join(data.weak_topics) if data.weak_topics else 'None specified'}
+    - Topics to Focus On: {", ".join(data.weak_topics) if data.weak_topics else 'None specified'}
     - Time Available: {data.weeks_to_exam} weeks
 
     The syllabus includes: Information Systems, Logic Gates, Computer Architecture, OS, Networking, Python, Database (MySQL), Web Dev (HTML/CSS/PHP), IoT, etc.
 
+    IMPORTANT PLANNING RULE:
+    - If the Target is "Final Exam" or "Term Exam", create a comprehensive revision plan that prioritizes the "Topics to Focus On" but also includes other general syllabus areas.
+    - If the Target is "Topic-wise Plan", you MUST restrict the entire study plan ONLY to the "Topics to Focus On" provided. Do NOT add other syllabus topics.
+
     CRITICAL INSTRUCTION FOR DAILY HOURS:
-    Do NOT copy the dummy number (0) from the example below. You MUST dynamically calculate a realistic integer between 1 and 4 for "suggested_hours_per_day" for EACH week. Heavy topics (like Python/MySQL) should get more hours, lighter topics should get fewer.
+    Do NOT copy the dummy number (0) from the example below. You MUST dynamically calculate a realistic integer between 1 and 6 for "suggested_hours_per_day" for EACH week. Heavy topics (like Python/MySQL) should get more hours, lighter topics should get fewer.
 
     Respond ONLY with a valid JSON object matching this exact structure. Do not include markdown code blocks, just the raw JSON:
     {{
