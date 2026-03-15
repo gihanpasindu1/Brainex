@@ -37,4 +37,16 @@ class _HearAboutUsPageState extends State<HearAboutUs> {
       ),
     );
   }
+
+  Widget _radio(String title) {
+    return RadioListTile(
+      value: title,
+      groupValue: selected,
+      onChanged: (value) {
+        setState(() => selected = value.toString());
+      },
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      activeColor: Colors.cyanAccent,
+    );
+  }
 }
