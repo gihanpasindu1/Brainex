@@ -29,6 +29,11 @@ class ChoosePlan extends StatelessWidget {
                 ),
                 const SizedBox(height: 30),
 
+                _planCard("Premium", "7 days free\nUnlimited access"),
+                const SizedBox(height: 16),
+                _planCard("Free", "Core study tools"),
+
+                const Spacer(),
               ],
             ),
           ),
