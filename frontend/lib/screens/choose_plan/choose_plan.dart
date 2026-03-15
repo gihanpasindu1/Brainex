@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/hear_about_us/hear_about_us.dart';
 
 class ChoosePlan extends StatelessWidget {
   const ChoosePlan({super.key});
@@ -34,6 +35,20 @@ class ChoosePlan extends StatelessWidget {
                 _planCard("Free", "Core study tools"),
 
                 const Spacer(),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HearAboutUs()),
+                      );
+                    },
+                    child: const Text("Continue"),
+                  ),
+                ),
               ],
             ),
           ),
