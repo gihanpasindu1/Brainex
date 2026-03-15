@@ -24,7 +24,12 @@ class _HearAboutUsPageState extends State<HearAboutUs> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                
+                const Text(
+                  "How did you hear about us?",
+                  style: TextStyle(color: Colors.white, fontSize: 22),
+                ),
+                const SizedBox(height: 30),
+
               ],
             ),
           ),
