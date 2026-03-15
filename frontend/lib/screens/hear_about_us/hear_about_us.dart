@@ -30,6 +30,16 @@ class _HearAboutUsPageState extends State<HearAboutUs> {
                 ),
                 const SizedBox(height: 30),
 
+                _radio("Friend / Classmate"),
+                _radio("Teacher / School"),
+                _radio("Social Media"),
+                _radio("YouTube"),
+                _radio("Google Search"),
+                _radio("Other"),
+
+                const Spacer(),
+                
+                
               ],
             ),
           ),
