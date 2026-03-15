@@ -28,11 +28,33 @@ class ChoosePlan extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 30),
-                
+
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _planCard(String title, String desc) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(desc, style: const TextStyle(color: Colors.white70)),
+        ],
       ),
     );
   }
