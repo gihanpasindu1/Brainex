@@ -5,7 +5,7 @@ from datetime import datetime
 # --- Incoming Request Models ---
 class StudyPlanRequest(BaseModel):
     user_id: str
-    exam_type: str = Field(..., description="'Final Exam' or 'Term Exam'")
+    exam_type: str = Field(..., description="'Final Exam', 'Term Exam', or 'Topic-wise Plan'")
     grade: str = Field(..., description="'Grade 12' or 'Grade 13'")
     term_number: Optional[int] = Field(None, description="1, 2, or 3 (if Term Exam)")
     weak_topics: List[str] = Field(default_factory=list, description="Topics user struggles with")
