@@ -19,6 +19,16 @@ class ChoosePlan extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
+                const Text(
+                  "Choose your plan",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                
               ],
             ),
           ),
