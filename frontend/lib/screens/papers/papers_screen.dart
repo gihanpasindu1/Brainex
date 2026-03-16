@@ -19,6 +19,7 @@ class _PapersScreenState extends State<PapersScreen> {
   bool isLoading = false;
   bool isFetchingPapers = true;
   List<dynamic> generatedPapers = [];
+  String? loadingPaperId; // Track which paper is being fetched
   String? selectedPaperType = 'Term Paper';
   String? selectedDifficulty = 'Medium';
   String? selectedGrade;
@@ -79,7 +80,7 @@ class _PapersScreenState extends State<PapersScreen> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/bg.png'),
+            image: AssetImage('assets/images/bg.png.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -104,18 +105,15 @@ class _PapersScreenState extends State<PapersScreen> {
                 children: [
                   _buildHeader(context),
                   Expanded(
-                    child: SingleChildScrollView(
+                    child: ListView(
                       padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFilterCard(),
-                          const SizedBox(height: 24),
-                          _buildSectionTitle(),
-                          const SizedBox(height: 16),
-                          _buildPaperList(),
-                        ],
-                      ),
+                      children: [
+                        _buildFilterCard(),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle(),
+                        const SizedBox(height: 16),
+                        _buildPaperListContent(), // Integrated list content
+                      ],
                     ),
                   ),
                 ],
@@ -469,7 +467,7 @@ class _PapersScreenState extends State<PapersScreen> {
     );
   }
 
-  Widget _buildPaperList() {
+  Widget _buildPaperListContent() {
     if (isFetchingPapers) {
       return const Center(
         child: Padding(
@@ -491,130 +489,162 @@ class _PapersScreenState extends State<PapersScreen> {
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: generatedPapers.length,
-      itemBuilder: (context, index) {
+    return Column(
+      children: List.generate(generatedPapers.length, (index) {
         final paper = generatedPapers[index];
         final title = paper['title'] ?? 'Untitled Paper';
         final duration = paper['duration_min'] ?? 120;
         final detail = "Duration: ${duration}m • MCQ";
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF161821),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white10),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        fontStyle: FontStyle.italic,
+        return InkWell(
+          onTap: () {
+            print("!!! PAPER CLICKED: $title (ID: ${paper['id']}) !!!");
+            _openPaper(paper);
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF161821),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      detail,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        fontSize: 13,
+                      const SizedBox(height: 4),
+                      Text(
+                        detail,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.cyan, Colors.purpleAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      final paperId = paper['id'];
-                      if (paperId == null) return;
-
-                      // Show loading on the list item specifically if we had local state,
-                      // but for now let's just fetch and go.
-                      final uri = Uri.parse(
-                        'http://10.0.2.2:8000/modelpapers/$paperId',
-                      );
-                      final response = await http.get(uri);
-
-                      if (response.statusCode == 200) {
-                        final paperData = jsonDecode(response.body);
-                        if (mounted) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ModelPaperOverviewScreen(
-                                paperData: paperData,
-                              ),
-                            ),
-                          );
-                        }
-                      } else {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to load paper details.'),
-                            ),
-                          );
-                        }
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 8,
-                    ),
-                  ),
-                  child: Text(
-                    "Start",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.italic,
-                    ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                (loadingPaperId == paper['id'])
+                    ? const SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: CircularProgressIndicator(
+                            color: Colors.cyan,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Colors.cyan, Colors.purpleAccent],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          "Start",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+              ],
+            ),
           ),
         );
-      },
+      }),
+    );
+  }
+
+  // Removed old _buildPaperList and moved to integrated content above
+
+  Future<void> _openPaper(dynamic paper) async {
+    try {
+      final paperId = paper['id'];
+      if (paperId == null) {
+        print("ERROR: Paper ID is null");
+        return;
+      }
+
+      print(
+        "NETWORK: Fetching paper $paperId from http://10.0.2.2:8000/modelpapers/$paperId",
+      );
+      setState(() => loadingPaperId = paperId);
+
+      final uri = Uri.parse('http://10.0.2.2:8000/modelpapers/$paperId');
+      final response = await http.get(uri).timeout(const Duration(seconds: 15));
+
+      print("NETWORK: Status ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final paperData = jsonDecode(response.body);
+        if (paperData == null || (paperData['questions'] as List).isEmpty) {
+          _showErrorAlert("Paper found, but it has no questions.");
+          return;
+        }
+
+        if (mounted) {
+          print("ACTION: Navigating to Exam Screen...");
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  ModelPaperOverviewScreen(paperData: paperData),
+            ),
+          );
+        }
+      } else {
+        _showErrorAlert(
+          "Server error: ${response.statusCode}\nBody: ${response.body}",
+        );
+      }
+    } catch (e) {
+      print("CRITICAL ERROR: $e");
+      _showErrorAlert("Connection failed: $e\n\nIs your backend running?");
+    } finally {
+      if (mounted) {
+        setState(() => loadingPaperId = null);
+      }
+    }
+  }
+
+  void _showErrorAlert(String message) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF161821),
+        title: const Text("Oops!", style: TextStyle(color: Colors.redAccent)),
+        content: Text(message, style: const TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
     );
   }
 
