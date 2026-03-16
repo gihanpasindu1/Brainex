@@ -8,6 +8,7 @@ import 'package:frontend/screens/chatbot/chatbot_screen.dart';
 import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+import 'package:frontend/screens/papers/papers_screen.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -254,6 +255,14 @@ class BrainexHome extends StatelessWidget {
                         icon: Icons.description_outlined,
                         color: const Color(0xFFC084FC),
                         subtitle: t('past_papers'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PapersScreen(),
+                            ),
+                          );
+                        },
                       ),
                       _PremiumActionCard(
                         title: t('short_notes'),
