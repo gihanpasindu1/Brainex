@@ -1,7 +1,7 @@
 import random
 import string
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Literal, Optional
 
 from bson import ObjectId
 from fastapi import HTTPException
@@ -11,13 +11,10 @@ from app.db.mongo import (
     friend_challenge_submissions_col,
     friend_challenges_col,
 )
+from app.services.rag_service import generate_mcqs
 
 CHALLENGE_STATUS_WAITING = "waiting"
 CHALLENGE_STATUS_STARTED = "started"
-
-
-def _generate_mock_question_ids(question_count: int) -> list[str]:
-    return [f"mock_q_{index + 1}" for index in range(question_count)]
 
 
 async def _generate_unique_invite_code(length: int = 6) -> str:
@@ -32,6 +29,54 @@ async def _generate_unique_invite_code(length: int = 6) -> str:
     raise HTTPException(status_code=500, detail="Could not generate invite code")
 
 
+def _normalize_generation_params(
+    *,
+    paper_type: str,
+    grade: Optional[str],
+    term: Optional[str],
+    topic: Optional[str],
+) -> tuple[str, Optional[str], Optional[str]]:
+    if paper_type == "Subject":
+        if not grade or not topic:
+            raise HTTPException(
+                status_code=400,
+                detail="grade and topic are required when paper_type is Subject",
+            )
+        return grade, None, topic
+
+    if paper_type == "Term":
+        if not grade or not term:
+            raise HTTPException(
+                status_code=400,
+                detail="grade and term are required when paper_type is Term",
+            )
+        return grade, term, None
+
+    if paper_type == "Final":
+        return "13", None, None
+
+    raise HTTPException(status_code=400, detail="Invalid paper_type")
+
+
+def _build_challenge_questions(generated_questions: list[dict]) -> list[dict]:
+    challenge_questions = []
+
+    for index, question in enumerate(generated_questions):
+        question_id = f"challenge_q_{index + 1}"
+        challenge_questions.append(
+            {
+                "question_id": question_id,
+                "question": question["question"],
+                "options": question["options"],
+                "correct_answer": question["correct_answer"],
+                "explanation": question.get("explanation"),
+                "topic": question.get("topic"),
+            }
+        )
+
+    return challenge_questions
+
+
 def _to_challenge_response(challenge_doc: dict, participants: list[dict]) -> dict:
     return {
         "id": str(challenge_doc["_id"]),
@@ -41,7 +86,12 @@ def _to_challenge_response(challenge_doc: dict, participants: list[dict]) -> dic
         "status": challenge_doc["status"],
         "duration_seconds": challenge_doc["duration_seconds"],
         "question_count": challenge_doc["question_count"],
-        "question_ids": challenge_doc["question_ids"],
+        "question_ids": [q["question_id"] for q in challenge_doc["questions"]],
+        "paper_type": challenge_doc["paper_type"],
+        "difficulty": challenge_doc["difficulty"],
+        "grade": challenge_doc.get("grade"),
+        "term": challenge_doc.get("term"),
+        "topic": challenge_doc.get("topic"),
         "created_at": challenge_doc["created_at"],
         "started_at": challenge_doc.get("started_at"),
         "ends_at": challenge_doc.get("ends_at"),
@@ -55,52 +105,6 @@ def _to_challenge_response(challenge_doc: dict, participants: list[dict]) -> dic
             for participant in participants
         ],
     }
-
-
-def _build_mock_question(question_id: str, index: int) -> dict:
-    variants = [
-        {
-            "question": f"[{question_id}] What does CPU stand for?",
-            "options": {
-                "A": "Central Processing Unit",
-                "B": "Computer Personal Unit",
-                "C": "Central Program Utility",
-                "D": "Control Processing User",
-            },
-            "correct_answer": "A",
-        },
-        {
-            "question": f"[{question_id}] Which data structure uses FIFO order?",
-            "options": {
-                "A": "Stack",
-                "B": "Queue",
-                "C": "Tree",
-                "D": "Graph",
-            },
-            "correct_answer": "B",
-        },
-        {
-            "question": f"[{question_id}] Which protocol is commonly used to load web pages?",
-            "options": {
-                "A": "FTP",
-                "B": "SMTP",
-                "C": "HTTP",
-                "D": "SSH",
-            },
-            "correct_answer": "C",
-        },
-        {
-            "question": f"[{question_id}] Binary number 10 equals which decimal value?",
-            "options": {
-                "A": "1",
-                "B": "2",
-                "C": "8",
-                "D": "10",
-            },
-            "correct_answer": "B",
-        },
-    ]
-    return variants[index % len(variants)]
 
 
 async def _get_challenge_doc_or_404(challenge_id: str) -> dict:
@@ -144,10 +148,37 @@ async def create_friend_challenge(
     title: str,
     duration_seconds: int,
     question_count: int,
+    paper_type: str,
+    difficulty: str,
+    grade: Optional[str] = None,
+    term: Optional[str] = None,
+    topic: Optional[str] = None,
 ) -> dict:
+    normalized_grade, normalized_term, normalized_topic = _normalize_generation_params(
+        paper_type=paper_type,
+        grade=grade,
+        term=term,
+        topic=topic,
+    )
+
+    generated_questions = await generate_mcqs(
+        grade=normalized_grade,
+        paper_type=paper_type,
+        term=normalized_term,
+        difficulty=difficulty,
+        mcq_count=question_count,
+        topic=normalized_topic,
+    )
+
+    if len(generated_questions) < question_count:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not generate enough questions for the friend challenge",
+        )
+
     now = datetime.utcnow()
-    question_ids = _generate_mock_question_ids(question_count)
     invite_code = await _generate_unique_invite_code()
+    challenge_questions = _build_challenge_questions(generated_questions[:question_count])
 
     challenge_doc = {
         "invite_code": invite_code,
@@ -156,7 +187,12 @@ async def create_friend_challenge(
         "status": CHALLENGE_STATUS_WAITING,
         "duration_seconds": duration_seconds,
         "question_count": question_count,
-        "question_ids": question_ids,
+        "paper_type": paper_type,
+        "difficulty": difficulty,
+        "grade": normalized_grade,
+        "term": normalized_term,
+        "topic": normalized_topic,
+        "questions": challenge_questions,
         "created_at": now,
         "started_at": None,
         "ends_at": None,
@@ -255,16 +291,14 @@ async def get_friend_challenge_questions(challenge_id: str, user_id: str) -> dic
     await _ensure_participant(challenge_id, user_id)
     _ensure_challenge_active(challenge_doc)
 
-    questions = []
-    for index, question_id in enumerate(challenge_doc["question_ids"]):
-        mock = _build_mock_question(question_id=question_id, index=index)
-        questions.append(
-            {
-                "question_id": question_id,
-                "question": mock["question"],
-                "options": mock["options"],
-            }
-        )
+    questions = [
+        {
+            "question_id": question["question_id"],
+            "question": question["question"],
+            "options": question["options"],
+        }
+        for question in challenge_doc["questions"]
+    ]
 
     return {"challenge_id": challenge_id, "questions": questions}
 
@@ -272,7 +306,7 @@ async def get_friend_challenge_questions(challenge_id: str, user_id: str) -> dic
 async def submit_friend_challenge(
     challenge_id: str,
     user_id: str,
-    answers: dict[str, Literal["A", "B", "C", "D"]],
+    answers: dict[str, Literal["A", "B", "C", "D", "E"]],
 ) -> dict:
     challenge_doc = await _get_challenge_doc_or_404(challenge_id)
     await _ensure_participant(challenge_id, user_id)
@@ -284,8 +318,8 @@ async def submit_friend_challenge(
     if existing_submission:
         raise HTTPException(status_code=400, detail="Participant has already submitted")
 
-    question_ids = challenge_doc["question_ids"]
-    valid_question_ids = set(question_ids)
+    questions = challenge_doc["questions"]
+    valid_question_ids = {question["question_id"] for question in questions}
 
     for answered_question_id in answers.keys():
         if answered_question_id not in valid_question_ids:
@@ -295,13 +329,12 @@ async def submit_friend_challenge(
             )
 
     correct_answers = 0
-    for index, question_id in enumerate(question_ids):
-        mock = _build_mock_question(question_id=question_id, index=index)
-        selected = answers.get(question_id)
-        if selected and selected == mock["correct_answer"]:
+    for question in questions:
+        selected = answers.get(question["question_id"])
+        if selected and selected == question["correct_answer"]:
             correct_answers += 1
 
-    total_questions = len(question_ids)
+    total_questions = len(questions)
     score_percent = (correct_answers / total_questions) * 100 if total_questions > 0 else 0
     submitted_at = datetime.utcnow()
 

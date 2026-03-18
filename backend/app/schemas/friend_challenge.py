@@ -3,12 +3,19 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from app.schemas.modelpaper import DifficultyType, GradeType, PaperType, TermType
+
 
 class CreateFriendChallengeRequest(BaseModel):
     host_user_id: str
     title: str
     duration_seconds: int = Field(..., ge=30)
     question_count: int = Field(..., ge=1, le=100)
+    paper_type: PaperType
+    difficulty: DifficultyType
+    grade: Optional[GradeType] = None
+    term: Optional[TermType] = None
+    topic: Optional[str] = None
 
 
 class JoinFriendChallengeRequest(BaseModel):
@@ -35,6 +42,11 @@ class FriendChallengeResponse(BaseModel):
     duration_seconds: int
     question_count: int
     question_ids: list[str]
+    paper_type: PaperType
+    difficulty: DifficultyType
+    grade: Optional[GradeType] = None
+    term: Optional[TermType] = None
+    topic: Optional[str] = None
     created_at: datetime
     started_at: Optional[datetime] = None
     ends_at: Optional[datetime] = None
@@ -60,9 +72,9 @@ class FriendChallengeQuestionsResponse(BaseModel):
 
 class SubmitFriendChallengeRequest(BaseModel):
     user_id: str
-    answers: dict[str, Literal["A", "B", "C", "D"]] = Field(
+    answers: dict[str, Literal["A", "B", "C", "D", "E"]] = Field(
         ...,
-        description="Map of question_id -> selected option (A/B/C/D)",
+        description="Map of question_id -> selected option (A/B/C/D/E)",
     )
 
 
