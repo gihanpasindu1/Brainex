@@ -96,3 +96,35 @@ Context (use only this):
     data = _extract_json(resp.text)
     return data["questions"]
 
+
+def generate_short_note_with_gemini(ocr_text: str) -> dict:
+    if not settings.GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY missing in .env")
+
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+    prompt = f"""
+You are an expert tutor. Please take the following raw OCR text and structure it into a clean, easy-to-read Short Note.
+Extract a suitable "title" for the note, and rewrite the text into a well-formatted "desc" (description) that summarizes and organizes the key points.
+
+Rules:
+- Return ONLY valid JSON (no markdown, no explanation outside JSON).
+- The JSON must have exactly two string keys: "title" and "desc".
+- Do NOT use ANY double quotes (") inside the title or description strings. Use single quotes (') instead.
+- Do NOT include literal newlines inside strings. If you need a newline, use \\n.
+
+Raw OCR Text:
+{ocr_text}
+""".strip()
+
+    resp = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=types.Part.from_text(text=prompt),
+        config=types.GenerateContentConfig(
+            temperature=0.4,
+            max_output_tokens=2048
+        ),
+    )
+
+    data = _extract_json(resp.text)
+    return data

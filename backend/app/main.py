@@ -4,6 +4,7 @@ from .routes.chatbot import router as chatbot_router
 from app.routes.modelpapers import router as modelpapers_router
 from app.routes.friend_challenges import router as friend_challenges_router
 from .routes.planner import router as planner_router
+from .routes.short_notes import router as short_notes_router
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -24,3 +25,4 @@ app.include_router(friend_challenges_router)
 # app.include_router(chatbot_router) 
 
 app.include_router(planner_router)
+app.include_router(short_notes_router)

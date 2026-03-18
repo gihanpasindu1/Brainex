@@ -1,11 +1,17 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+<<<<<<< Updated upstream
+import 'package:frontend/services/localization_service.dart';
+=======
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:frontend/widgets/premium_bottom_nav.dart';
 import 'package:frontend/screens/profile screen/profile_screen.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:frontend/models/short_note_model.dart';
+import 'package:frontend/services/short_notes_service.dart';
+>>>>>>> Stashed changes
 
 class ShortNotesPage extends StatefulWidget {
   const ShortNotesPage({super.key});
@@ -16,15 +22,13 @@ class ShortNotesPage extends StatefulWidget {
 
 class _ShortNotesPageState extends State<ShortNotesPage> {
   int selectedTab = 0; // 0 = My Notes, 1 = Predefined Notes
-  int bottomIndex = -1; // -1 = nothing highlighted
+  int bottomIndex = 1; // default highlight like screenshot (Plan)
 
   late PageController _pageController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
-  final ImagePicker _picker = ImagePicker();
-  final TextRecognizer _textRecognizer = TextRecognizer();
-
+<<<<<<< Updated upstream
   // Dummy Data for My Notes
   final List<Map<String, String>> myNotes = [
     {
@@ -46,58 +50,80 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
       "date": "Oct 9, 2023",
     },
   ];
+=======
+  final ImagePicker _picker = ImagePicker();
+  final TextRecognizer _textRecognizer = TextRecognizer();
+
+  List<ShortNoteModel> myNotes = [];
+  bool isLoadingNotes = true;
+  bool isProcessingScan = false;
+
+  final String userUid = FirebaseAuth.instance.currentUser?.uid ?? 'test_user_uid';
+>>>>>>> Stashed changes
 
   // Dummy Data for Predefined Notes
   final List<Map<String, String>> predefinedNotes = [
     {
       "title": "Physics Formula Sheet",
-      "desc":
-          "A complete list of formulas for Mechanics, Waves, and Thermodynamics...",
+      "desc": "A complete list of formulas for Mechanics, Waves, and Thermodynamics...",
       "date": "Updated: Sep 2023",
     },
     {
       "title": "Math Cheat Sheet",
-      "desc":
-          "Quick reference for Algebra, Trigonometry, and Calculus identities...",
+      "desc": "Quick reference for Algebra, Trigonometry, and Calculus identities...",
       "date": "Updated: Aug 2023",
     },
     {
       "title": "Chemistry Periodic Table",
-      "desc":
-          "High definition periodic table with atomic properties and trends...",
+      "desc": "High definition periodic table with atomic properties and trends...",
       "date": "Updated: Jul 2023",
     },
     {
       "title": "English Grammar Rules",
-      "desc":
-          "Comprehensive grammar guide covering tenses, voice, and speech...",
+      "desc": "Comprehensive grammar guide covering tenses, voice, and speech...",
       "date": "Updated: Jun 2023",
     },
   ];
 
   @override
+  @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: selectedTab);
+    _loadMyNotes();
+  }
+
+  Future<void> _loadMyNotes() async {
+    setState(() => isLoadingNotes = true);
+    try {
+      final notes = await ShortNotesService.getShortNotes(userUid);
+      setState(() {
+        myNotes = notes.reversed.toList(); // newest first
+        isLoadingNotes = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isLoadingNotes = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load notes: $e")),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _textRecognizer.close();
     _pageController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<Map<String, String>> get _filteredMyNotes {
+  List<ShortNoteModel> get _filteredMyNotes {
     if (_searchQuery.isEmpty) return myNotes;
     return myNotes
         .where(
           (note) =>
-              note["title"]!.toLowerCase().contains(
-                _searchQuery.toLowerCase(),
-              ) ||
-              note["desc"]!.toLowerCase().contains(_searchQuery.toLowerCase()),
+              note.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              note.desc.toLowerCase().contains(_searchQuery.toLowerCase()),
         )
         .toList();
   }
@@ -107,41 +133,45 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
     return predefinedNotes
         .where(
           (note) =>
-              note["title"]!.toLowerCase().contains(
-                _searchQuery.toLowerCase(),
-              ) ||
+              note["title"]!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
               note["desc"]!.toLowerCase().contains(_searchQuery.toLowerCase()),
         )
         .toList();
   }
 
+<<<<<<< Updated upstream
+=======
   Future<void> _scanNote(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(source: source);
-
       if (image == null) return;
 
-      final inputImage = InputImage.fromFile(File(image.path));
-      final RecognizedText recognizedText = await _textRecognizer.processImage(
-        inputImage,
-      );
+      setState(() => isProcessingScan = true);
 
+      // OCR
+      final inputImage = InputImage.fromFile(File(image.path));
+      final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
       final extractedText = recognizedText.text;
 
       if (extractedText.isEmpty) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("No text detected.")));
+        setState(() => isProcessingScan = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No text detected in image.")));
         return;
       }
 
-      _showEditDialog(extractedText);
+      // Gemini Processing
+      final geminiData = await ShortNotesService.generateNoteWithGemini(extractedText);
+      
+      if (!mounted) return;
+      setState(() => isProcessingScan = false);
+
+      _showEditDialog(geminiData['title'] ?? 'Generated Note', geminiData['desc'] ?? '');
+
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error scanning: $e")));
+      setState(() => isProcessingScan = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error scanning: $e")));
     }
   }
 
@@ -158,28 +188,16 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(
-                  Icons.camera_alt_rounded,
-                  color: Colors.white,
-                ),
-                title: const Text(
-                  'Camera',
-                  style: TextStyle(color: Colors.white),
-                ),
+                leading: const Icon(Icons.camera_alt_rounded, color: Colors.white),
+                title: const Text('Camera', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
                   _scanNote(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.photo_library_rounded,
-                  color: Colors.white,
-                ),
-                title: const Text(
-                  'Gallery',
-                  style: TextStyle(color: Colors.white),
-                ),
+                leading: const Icon(Icons.photo_library_rounded, color: Colors.white),
+                title: const Text('Gallery', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
                   _scanNote(ImageSource.gallery);
@@ -192,37 +210,104 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
     );
   }
 
-  void _showEditDialog(String text) {
-    final controller = TextEditingController(text: text);
+  void _showEditDialog(String initialTitle, String initialDesc) {
+    final titleController = TextEditingController(text: initialTitle);
+    final descController = TextEditingController(text: initialDesc);
+
+    bool isSaving = false;
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Edit Scanned Note"),
-        content: TextField(controller: controller, maxLines: 8),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                myNotes.insert(0, {
-                  "title": "Scanned Note",
-                  "desc": controller.text,
-                  "date": DateTime.now().toString().split(' ')[0],
-                });
-              });
-              Navigator.pop(context);
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF0B1326),
+              title: const Text(
+                "Finalize Note",
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: "Title",
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2DE2E6))),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: descController,
+                      style: const TextStyle(color: Colors.white),
+                      maxLines: 8,
+                      decoration: const InputDecoration(
+                        labelText: "Note Description",
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF2DE2E6))),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                if (!isSaving)
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel", style: TextStyle(color: Colors.white70)),
+                  ),
+                isSaving
+                    ? const Padding(
+                        padding: EdgeInsets.only(right: 16.0),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Color(0xFF2DE2E6))),
+                        ),
+                      )
+                    : ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB13CFF)),
+                        onPressed: () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            final savedNote = await ShortNotesService.saveShortNote(
+                              userUid,
+                              titleController.text,
+                              descController.text,
+                            );
+
+                            if (!mounted) return;
+                            setState(() {
+                              myNotes.insert(0, savedNote);
+                            });
+                            
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            setDialogState(() => isSaving = false);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+                            }
+                          }
+                        },
+                        child: const Text("Save", style: TextStyle(color: Colors.white)),
+                      ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 
+>>>>>>> Stashed changes
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -236,7 +321,6 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
         child: SafeArea(
           child: Stack(
             children: [
-              // soft dark overlay / shapes
               Positioned(
                 right: -120,
                 top: 120,
@@ -249,7 +333,6 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                   ),
                 ),
               ),
-
               Column(
                 children: [
                   _TopHeader(
@@ -258,7 +341,6 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                     onBack: () => Navigator.maybePop(context),
                   ),
                   const SizedBox(height: 16),
-
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -280,53 +362,73 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                               },
                             ),
                             const SizedBox(height: 12),
-
                             _SearchBar(
                               controller: _searchController,
                               hint: "Search notes by topic or keyword",
-                              onChanged: (val) =>
-                                  setState(() => _searchQuery = val),
+                              onChanged: (val) => setState(() => _searchQuery = val),
                             ),
                             const SizedBox(height: 14),
+<<<<<<< Updated upstream
 
                             _GradientActionButton(
                               icon: Icons.qr_code_scanner_rounded,
                               label: "Scan New Note",
-                              onTap: _showImageSourceDialog,
+                              onTap: () {},
                             ),
+=======
+                            isProcessingScan
+                                ? Container(
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0B1326).withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation(Color(0xFF2DE2E6)),
+                                      ),
+                                    ),
+                                  )
+                                : _GradientActionButton(
+                                    icon: Icons.qr_code_scanner_rounded,
+                                    label: "Scan New Note",
+                                    onTap: _showImageSourceDialog,
+                                  ),
+>>>>>>> Stashed changes
                             const SizedBox(height: 14),
-
                             Expanded(
                               child: PageView(
                                 controller: _pageController,
-                                onPageChanged: (i) =>
-                                    setState(() => selectedTab = i),
+                                onPageChanged: (i) => setState(() => selectedTab = i),
                                 children: [
                                   // Tab 0: My Notes
-                                  ListView.builder(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                    itemCount: _filteredMyNotes.length,
-                                    itemBuilder: (context, index) {
-                                      final note = _filteredMyNotes[index];
-                                      return Column(
-                                        children: [
-                                          _NoteCard(
-                                            title: note["title"]!,
-                                            desc: note["desc"]!,
-                                            dateText: note["date"]!,
-                                          ),
-                                          const SizedBox(height: 12),
-                                        ],
-                                      );
-                                    },
-                                  ),
+                                  isLoadingNotes
+                                      ? const Center(child: CircularProgressIndicator(color: Color(0xFF2DE2E6)))
+                                      : _filteredMyNotes.isEmpty
+                                          ? const Center(child: Text("No notes found.", style: TextStyle(color: Colors.white70)))
+                                          : ListView.builder(
+                                              padding: const EdgeInsets.only(bottom: 8),
+                                              itemCount: _filteredMyNotes.length,
+                                              itemBuilder: (context, index) {
+                                                final note = _filteredMyNotes[index];
+                                                return Column(
+                                                  children: [
+                                                    _NoteCard(
+                                                      title: note.title,
+                                                      desc: note.desc,
+                                                      dateText: note.date,
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                  ],
+                                                );
+                                              },
+                                            ),
                                   // Tab 1: Predefined Notes
                                   ListView.builder(
                                     padding: const EdgeInsets.only(bottom: 8),
                                     itemCount: _filteredPredefinedNotes.length,
                                     itemBuilder: (context, index) {
-                                      final note =
-                                          _filteredPredefinedNotes[index];
+                                      final note = _filteredPredefinedNotes[index];
                                       return Column(
                                         children: [
                                           _NoteCard(
@@ -354,24 +456,9 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
         ),
       ),
       extendBody: true,
-      bottomNavigationBar: PremiumBottomNav(
+      bottomNavigationBar: _BottomNav(
         currentIndex: bottomIndex,
-        onTap: (index) {
-          setState(() => bottomIndex = index);
-          if (index == 0) {
-            Navigator.maybePop(context);
-          } else if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AIStudyPlanPage2()),
-            );
-          } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          }
-        },
+        onChanged: (i) => setState(() => bottomIndex = i),
       ),
     );
   }
@@ -559,9 +646,7 @@ class _TabPill extends StatelessWidget {
           child: Text(
             text,
             style: TextStyle(
-              color: selected
-                  ? Colors.white
-                  : Colors.white.withValues(alpha: 0.5),
+              color: selected ? Colors.white : Colors.white.withValues(alpha: 0.5),
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
@@ -735,29 +820,12 @@ class _NoteCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: Icon(
-                  Icons.mic_rounded,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  size: 16,
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             desc,
-            maxLines: 2,
+            maxLines: 4,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.7),
@@ -776,6 +844,128 @@ class _NoteCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/* ------------------------------ BOTTOM NAV ---------------------------- */
+
+class _BottomNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onChanged;
+
+  const _BottomNav({required this.currentIndex, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final tr = AppLocalizations.of(context);
+    String t(String key) => tr?.translate(key) ?? key;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  icon: Icons.home_rounded,
+                  label: t('nav_home'),
+                  active: currentIndex == 0,
+                  onTap: () {
+                    onChanged(0);
+                    Navigator.maybePop(context);
+                  },
+                ),
+                _NavItem(
+                  icon: Icons.calendar_month_rounded,
+                  label: t('nav_plan'),
+                  active: currentIndex == 1,
+                  onTap: () => onChanged(1),
+                ),
+                _NavItem(
+                  icon: Icons.emoji_events_rounded,
+                  label: t('nav_leaderboard'),
+                  active: currentIndex == 2,
+                  onTap: () => onChanged(2),
+                ),
+                _NavItem(
+                  icon: Icons.person_rounded,
+                  label: t('nav_profile'),
+                  active: currentIndex == 3,
+                  onTap: () => onChanged(3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: active
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.blueAccent.withValues(alpha: 0.9),
+                    Colors.purpleAccent.withValues(alpha: 0.85),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blueAccent.withValues(alpha: 0.22),
+                    blurRadius: 16,
+                  ),
+                ],
+              )
+            : null,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: active ? Colors.white : Colors.white60),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10.5,
+                color: active ? Colors.white : Colors.white60,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
