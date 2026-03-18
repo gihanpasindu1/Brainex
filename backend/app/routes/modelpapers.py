@@ -40,9 +40,17 @@ async def generate_modelpapers(req: GenerateModelPaperRequest):
             topic=req.topic,
         )
         
-        title = f"Model Paper {i+1:02d} - {req.paper_type} - {req.difficulty}"
-        if req.paper_type == "Subject":
-            title = f"Model Paper {i+1:02d} - Subject: {req.topic} - {req.difficulty}"
+        from datetime import datetime
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        
+        if req.paper_type == "Final":
+            title = f"Final Model Paper ({now_str})"
+        elif req.paper_type == "Term":
+            title = f"{req.term} - Grade {req.grade} Model Paper ({now_str})"
+        elif req.paper_type == "Subject":
+            title = f"Subject: {req.topic} (Grade {req.grade}) ({now_str})"
+        else:
+            title = f"Model Paper - {req.paper_type} ({now_str})"
 
         doc = {
             "title": title,
@@ -72,7 +80,9 @@ async def list_modelpapers():
             "grade": p["grade"],
             "difficulty": p["difficulty"],
             "term": p.get("term"),
+            "topic": p.get("topic"),
             "duration_min": p.get("duration_min", 120),
+            "created_at": p["_id"].generation_time.isoformat(),
         })
     return items
 

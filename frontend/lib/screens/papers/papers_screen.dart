@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'exam_screen.dart';
 
 class PapersScreen extends StatefulWidget {
@@ -489,96 +490,198 @@ class _PapersScreenState extends State<PapersScreen> {
       );
     }
 
-    return Column(
-      children: List.generate(generatedPapers.length, (index) {
-        final paper = generatedPapers[index];
-        final title = paper['title'] ?? 'Untitled Paper';
-        final duration = paper['duration_min'] ?? 120;
-        final detail = "Duration: ${duration}m • MCQ";
+    // Grouping by Date
+    final Map<String, List<dynamic>> groupedPapers = {};
+    for (var paper in generatedPapers) {
+      final dateLabel = _formatDate(paper['created_at']);
+      if (!groupedPapers.containsKey(dateLabel)) {
+        groupedPapers[dateLabel] = [];
+      }
+      groupedPapers[dateLabel]!.add(paper);
+    }
 
-        return InkWell(
-          onTap: () {
-            print("!!! PAPER CLICKED: $title (ID: ${paper['id']}) !!!");
-            _openPaper(paper);
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF161821),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children:
+          groupedPapers.entries.map((entry) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          fontStyle: FontStyle.italic,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        detail,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 8, top: 12),
+                  child: Text(
+                    entry.key.toUpperCase(),
+                    style: GoogleFonts.poppins(
+                      color: Colors.cyanAccent.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                (loadingPaperId == paper['id'])
-                    ? const SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: Padding(
-                          padding: EdgeInsets.all(10.0),
-                          child: CircularProgressIndicator(
-                            color: Colors.cyan,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Colors.cyan, Colors.purpleAccent],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          "Start",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                ...entry.value.map((paper) => _buildPaperCard(paper)),
               ],
+            );
+          }).toList(),
+    );
+  }
+
+  Widget _buildPaperCard(dynamic paper) {
+    final title = paper['title'] ?? 'Untitled Paper';
+    final duration = paper['duration_min'] ?? 120;
+
+    return InkWell(
+      onTap: () {
+        print("!!! PAPER CLICKED: $title (ID: ${paper['id']}) !!!");
+        _openPaper(paper);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF161821),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _buildChip(
+                        paper['paper_type'] ?? 'Paper',
+                        Colors.cyanAccent,
+                      ),
+                      const SizedBox(width: 8),
+                      if (paper['difficulty'] != null)
+                        _buildChip(paper['difficulty'], Colors.purpleAccent),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      if (paper['grade'] != null)
+                        _buildInfoLabel(Icons.school, "Grade ${paper['grade']}"),
+                      if (paper['term'] != null)
+                        _buildInfoLabel(Icons.calendar_today, paper['term']),
+                      _buildInfoLabel(Icons.timer, "${duration}m"),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      }),
+            const SizedBox(width: 12),
+            (loadingPaperId == paper['id'])
+                ? const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: CircularProgressIndicator(
+                      color: Colors.cyan,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                )
+                : Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.cyan, Colors.purpleAccent],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    "Start",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+          ],
+        ),
+      ),
     );
   }
 
   // Removed old _buildPaperList and moved to integrated content above
+
+  Widget _buildChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoLabel(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: Colors.white38),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return "Recent";
+    try {
+      final date = DateTime.parse(dateStr).toLocal();
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays == 0 && now.day == date.day) {
+        return "Today";
+      } else if (difference.inDays == 1 ||
+          (difference.inDays == 0 && now.day != date.day)) {
+        return "Yesterday";
+      } else if (difference.inDays < 7) {
+        return DateFormat('EEEE').format(date); // Friday, Saturday etc
+      } else {
+        return DateFormat('MMM dd, yyyy').format(date);
+      }
+    } catch (e) {
+      return "Recent";
+    }
+  }
 
   Future<void> _openPaper(dynamic paper) async {
     try {

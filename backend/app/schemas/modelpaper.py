@@ -39,7 +39,9 @@ class ModelPaperListItem(BaseModel):
     grade: GradeType
     difficulty: DifficultyType
     term: Optional[TermType] = None
+    topic: Optional[str] = None
     duration_min: int
+    created_at: Optional[str] = None
 
 class QuestionResult(BaseModel):
     question: str
