@@ -1,16 +1,34 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import 'package:frontend/services/localization_service.dart';
 =======
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+import 'package:frontend/services/localization_service.dart';
+=======
+>>>>>>> backend
+>>>>>>> Stashed changes
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:frontend/widgets/premium_bottom_nav.dart';
 import 'package:frontend/screens/profile screen/profile_screen.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:frontend/models/short_note_model.dart';
 import 'package:frontend/services/short_notes_service.dart';
+>>>>>>> Stashed changes
+<<<<<<< Updated upstream
+=======
+>>>>>>> backend
 >>>>>>> Stashed changes
 
 class ShortNotesPage extends StatefulWidget {
@@ -29,6 +47,16 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
   String _searchQuery = "";
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+  final ImagePicker _picker = ImagePicker();
+  final TextRecognizer _textRecognizer = TextRecognizer();
+
+=======
+<<<<<<< Updated upstream
+>>>>>>> backend
+>>>>>>> Stashed changes
   // Dummy Data for My Notes
   final List<Map<String, String>> myNotes = [
     {
@@ -140,6 +168,25 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
   }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
+  Future<void> _scanNote(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(source: source);
+      if (image == null) return;
+
+      setState(() => isProcessingScan = true);
+
+<<<<<<< Updated upstream
+      // OCR
+      final inputImage = InputImage.fromFile(File(image.path));
+      final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
+=======
+=======
+<<<<<<< Updated upstream
 =======
   Future<void> _scanNote(ImageSource source) async {
     try {
@@ -151,10 +198,42 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
       // OCR
       final inputImage = InputImage.fromFile(File(image.path));
       final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
+>>>>>>> backend
+>>>>>>> Stashed changes
       final extractedText = recognizedText.text;
 
       if (extractedText.isEmpty) {
         if (!mounted) return;
+<<<<<<< Updated upstream
+        setState(() => isProcessingScan = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No text detected in image.")));
+=======
+<<<<<<< HEAD
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("No text detected.")));
+>>>>>>> Stashed changes
+        return;
+      }
+
+      // Gemini Processing
+      final geminiData = await ShortNotesService.generateNoteWithGemini(extractedText);
+      
+      if (!mounted) return;
+      setState(() => isProcessingScan = false);
+
+      _showEditDialog(geminiData['title'] ?? 'Generated Note', geminiData['desc'] ?? '');
+
+    } catch (e) {
+      if (!mounted) return;
+<<<<<<< Updated upstream
+      setState(() => isProcessingScan = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error scanning: $e")));
+=======
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error scanning: $e")));
+=======
         setState(() => isProcessingScan = false);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No text detected in image.")));
         return;
@@ -172,6 +251,8 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
       if (!mounted) return;
       setState(() => isProcessingScan = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error scanning: $e")));
+>>>>>>> backend
+>>>>>>> Stashed changes
     }
   }
 
@@ -188,16 +269,48 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
+<<<<<<< Updated upstream
                 leading: const Icon(Icons.camera_alt_rounded, color: Colors.white),
                 title: const Text('Camera', style: TextStyle(color: Colors.white)),
+=======
+<<<<<<< HEAD
+                leading: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: Colors.white,
+                ),
+                title: const Text(
+                  'Camera',
+                  style: TextStyle(color: Colors.white),
+                ),
+=======
+                leading: const Icon(Icons.camera_alt_rounded, color: Colors.white),
+                title: const Text('Camera', style: TextStyle(color: Colors.white)),
+>>>>>>> backend
+>>>>>>> Stashed changes
                 onTap: () {
                   Navigator.pop(context);
                   _scanNote(ImageSource.camera);
                 },
               ),
               ListTile(
+<<<<<<< Updated upstream
                 leading: const Icon(Icons.photo_library_rounded, color: Colors.white),
                 title: const Text('Gallery', style: TextStyle(color: Colors.white)),
+=======
+<<<<<<< HEAD
+                leading: const Icon(
+                  Icons.photo_library_rounded,
+                  color: Colors.white,
+                ),
+                title: const Text(
+                  'Gallery',
+                  style: TextStyle(color: Colors.white),
+                ),
+=======
+                leading: const Icon(Icons.photo_library_rounded, color: Colors.white),
+                title: const Text('Gallery', style: TextStyle(color: Colors.white)),
+>>>>>>> backend
+>>>>>>> Stashed changes
                 onTap: () {
                   Navigator.pop(context);
                   _scanNote(ImageSource.gallery);
@@ -210,6 +323,113 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
     );
   }
 
+<<<<<<< Updated upstream
+  void _showEditDialog(String initialTitle, String initialDesc) {
+    final titleController = TextEditingController(text: initialTitle);
+    final descController = TextEditingController(text: initialDesc);
+
+    bool isSaving = false;
+=======
+<<<<<<< HEAD
+  void _showEditDialog(String text) {
+    final controller = TextEditingController(text: text);
+>>>>>>> Stashed changes
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF0B1326),
+              title: const Text(
+                "Finalize Note",
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: "Title",
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2DE2E6))),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: descController,
+                      style: const TextStyle(color: Colors.white),
+                      maxLines: 8,
+                      decoration: const InputDecoration(
+                        labelText: "Note Description",
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF2DE2E6))),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                if (!isSaving)
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel", style: TextStyle(color: Colors.white70)),
+                  ),
+                isSaving
+                    ? const Padding(
+                        padding: EdgeInsets.only(right: 16.0),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Color(0xFF2DE2E6))),
+                        ),
+                      )
+                    : ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB13CFF)),
+                        onPressed: () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            final savedNote = await ShortNotesService.saveShortNote(
+                              userUid,
+                              titleController.text,
+                              descController.text,
+                            );
+
+                            if (!mounted) return;
+                            setState(() {
+                              myNotes.insert(0, savedNote);
+                            });
+                            
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            setDialogState(() => isSaving = false);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+                            }
+                          }
+                        },
+                        child: const Text("Save", style: TextStyle(color: Colors.white)),
+                      ),
+              ],
+            );
+          }
+        );
+      },
+    );
+  }
+
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+=======
   void _showEditDialog(String initialTitle, String initialDesc) {
     final titleController = TextEditingController(text: initialTitle);
     final descController = TextEditingController(text: initialDesc);
@@ -307,6 +527,8 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
     );
   }
 
+>>>>>>> Stashed changes
+>>>>>>> backend
 >>>>>>> Stashed changes
   @override
   Widget build(BuildContext context) {
