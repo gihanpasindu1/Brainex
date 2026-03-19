@@ -1,1 +1,9 @@
-python libaries
+fastapi
+uvicorn
+pydantic
+openai
+python-dotenv
+pypdf
+google-genai
+motor
+dnspython

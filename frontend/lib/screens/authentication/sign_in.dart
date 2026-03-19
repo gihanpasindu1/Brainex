@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/services/auth.dart';
 import 'package:frontend/screens/wrapper.dart';
 import 'dart:ui';
+import 'register.dart';
+import 'package:frontend/services/localization_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,9 +30,11 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
+    final tr = AppLocalizations.of(context)!;
+
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email and password required")),
+        SnackBar(content: Text(tr.translate("error_email_password"))),
       );
       return;
     }
@@ -44,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
 
     if (result == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login failed. Check email/password")),
+        SnackBar(content: Text(tr.translate("error_login_failed"))),
       );
       return; // ✅ IMPORTANT: don't navigate
     }
@@ -59,6 +63,10 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final tr = AppLocalizations.of(context);
+    // Helper to safely get translation or key if null
+    String t(String key) => tr?.translate(key) ?? key;
+
     return Scaffold(
       body: Container(
         height: double.infinity,
@@ -75,46 +83,52 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    "Welcome to Brainex",
+                  Text(
+                    t("welcome_title"),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  const Text(
-                    "A/L ICT Exam Helper",
+                  Text(
+                    t("welcome_subtitle"),
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.white70),
+                    style: const TextStyle(fontSize: 14, color: Colors.white70),
                   ),
                   const SizedBox(height: 35),
 
-                  _label("Email"),
-                  _inputField("Enter your email", _emailController),
+                  _label(t("email_label")),
+                  _inputField(t("email_hint"), _emailController),
                   const SizedBox(height: 20),
 
-                  _label("Password"),
-                  _passwordField("Enter your password", _passwordController),
+                  _label(t("password_label")),
+                  _passwordField(t("password_hint"), _passwordController),
                   const SizedBox(height: 30),
 
-                  _gradientButton("Login", _handleLogin),
+                  _gradientButton(t("login_btn"), _handleLogin),
                   const SizedBox(height: 20),
 
-                  const Center(
+                  Center(
                     child: Text(
-                      "Don't have an account?",
-                      style: TextStyle(color: Colors.white54),
+                      t("no_account"),
+                      style: const TextStyle(color: Colors.white54),
                     ),
                   ),
                   TextButton(
                     onPressed: () {
-                      debugPrint("Navigate to Register");
+                      // ✅ Add this navigation code
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const Register(),
+                        ),
+                      );
                     },
-                    child: const Text(
-                      "Create an Account!",
-                      style: TextStyle(color: Color(0xFF21CBF3)),
+                    child: Text(
+                      t("create_account"),
+                      style: const TextStyle(color: Color(0xFF21CBF3)),
                     ),
                   ),
 
@@ -122,17 +136,34 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 20),
 
                   _socialButton(
-                    "Continue with Google",
+                    t("continue_google"),
                     "assets/images/icons8-google-100.png",
-                    () {
-                      debugPrint("Google Button Clicked");
+                    () async {
+                      setState(() => _loading = true);
+                      final result = await _auth.signInWithGoogle();
+                      
+                      if (!mounted) return;
+                      setState(() => _loading = false);
+
+                      if (result == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(t("error_login_failed"))),
+                        );
+                        return;
+                      }
+
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => Wrapper()),
+                        (route) => false,
+                      );
                     },
                   ),
 
                   const SizedBox(height: 10),
 
                   _socialButton(
-                    "Continue with Apple",
+                    t("continue_apple"),
                     "assets/images/apple-512.png",
                     () {
                       debugPrint("Apple Button Clicked");
@@ -249,7 +280,7 @@ class _LoginPageState extends State<LoginPage> {
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white30),
       filled: true,
-      fillColor: const Color(0xFF14141E).withOpacity(0.6),
+      fillColor: const Color(0xFF14141E).withValues(alpha: 0.6),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white38, width: 1.2),
@@ -271,12 +302,12 @@ class GlassCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2C).withOpacity(0.3),
+        color: const Color(0xFF1E1E2C).withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             spreadRadius: 1,
           ),

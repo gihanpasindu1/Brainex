@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/authentication/authenticate.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
@@ -12,11 +13,10 @@ class LanguageScreen extends StatefulWidget {
 
 class _LanguageScreenState extends State<LanguageScreen> {
   Future<void> _onLanguageSelected(String code) async {
-
     debugPrint("Language selected: $code");
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selected_language', code);
+    // Use the provider to set the locale
+    Provider.of<LocaleProvider>(context, listen: false).setLocale(Locale(code));
 
     if (!mounted) return;
 
@@ -25,6 +25,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
       MaterialPageRoute(builder: (context) => const Authenticate()),
     );
   }
+
   @override
   void initState() {
     super.initState();
@@ -32,8 +33,10 @@ class _LanguageScreenState extends State<LanguageScreen> {
   }
 
   Future<void> _checkSavedLanguage() async {
+    // The provider handles basic loading, but if we need to skip this screen:
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString('selected_language');
+    // Check the key used by LocaleProvider ('language_code'), NOT 'selected_language'
+    final saved = prefs.getString('language_code');
 
     if (saved != null && saved.isNotEmpty) {
       if (!mounted) return;
@@ -43,7 +46,6 @@ class _LanguageScreenState extends State<LanguageScreen> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -214,12 +216,12 @@ class _LanguageScreenState extends State<LanguageScreen> {
           colors: [Color(0xFF1B1E6D), Color(0xFF0F123F)],
         ),
         border: Border.all(
-          color: const Color(0xFF4F6BFF).withOpacity(0.4),
+          color: const Color(0xFF4F6BFF).withValues(alpha: 0.1),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
