@@ -51,7 +51,7 @@ def generate_study_plan_ai(data: StudyPlanRequest) -> dict:
     - Do NOT invent topics outside of the official syllabus.
 
     CRITICAL INSTRUCTION FOR DAILY HOURS:
-    ... (keep the rest of your prompt exactly the same) ...
+    Do NOT copy the dummy number (0) from the example below. You MUST dynamically calculate a realistic integer between 1 and 4 for "suggested_hours_per_day" for EACH week. Heavy topics (like Python/MySQL) should get more hours, lighter topics should get fewer.
 
     Respond ONLY with a valid JSON object matching this exact structure. Do not include markdown code blocks, just the raw JSON:
     {{
