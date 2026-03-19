@@ -46,4 +46,23 @@ class UserProfileService {
       return false;
     }
   }
+
+  Future<bool> updateProfile(String userId, String? name, String? base64Image) async {
+    final uri = Uri.parse('${BackendConfig.baseUrl}/users/$userId/profile');
+    try {
+      final Map<String, dynamic> data = {};
+      if (name != null) data['name'] = name;
+      if (base64Image != null) data['profile_picture_base64'] = base64Image;
+
+      final response = await http.patch(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(data),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('HTTP Exception Caught on Update: $e');
+      return false;
+    }
+  }
 }

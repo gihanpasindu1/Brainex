@@ -12,6 +12,10 @@ class UserOnboardingRequest(BaseModel):
     plan: str
     hear_about_us: str
 
+class UserUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    profile_picture_base64: Optional[str] = None
+
 XpEventType = Literal[
     "daily_login",
     "model_paper",
@@ -33,6 +37,7 @@ class XpHistoryItem(BaseModel):
 class UserProfileResponse(BaseModel):
     user_id: str
     total_xp: int = Field(..., ge=0)
+    papers_completed: int = 0
     last_login_xp_date: Optional[str] = None
     xp_history: list[XpHistoryItem] = Field(default_factory=list)
     onboarding_completed: bool = False
@@ -43,6 +48,7 @@ class UserProfileResponse(BaseModel):
     district: Optional[str] = None
     plan: Optional[str] = None
     hear_about_us: Optional[str] = None
+    profile_picture_base64: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

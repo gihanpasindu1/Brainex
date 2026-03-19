@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
-from app.db.mongo import users_col
-from app.schemas.user_profile import UserOnboardingRequest
+from app.db.mongo import users_col, model_paper_submissions_col
+from app.schemas.user_profile import UserOnboardingRequest, UserUpdateRequest
 
 DAILY_LOGIN_XP = 10
 FRIEND_CHALLENGE_COMPLETION_XP = 20
@@ -55,8 +55,25 @@ async def complete_user_onboarding(user_id: str, data: UserOnboardingRequest) ->
     )
     return await users_col.find_one({"user_id": user_id})
 
+async def update_user_profile(user_id: str, data: UserUpdateRequest) -> dict:
+    await ensure_user_profile(user_id)
+    update_data = data.model_dump(exclude_unset=True)
+    if not update_data:
+        return await users_col.find_one({"user_id": user_id})
+        
+    update_data["updated_at"] = _utc_now()
+    
+    await users_col.update_one(
+        {"user_id": user_id},
+        {"$set": update_data}
+    )
+    return await users_col.find_one({"user_id": user_id})
+
 async def get_user_profile(user_id: str) -> dict:
-    return await ensure_user_profile(user_id)
+    profile = await ensure_user_profile(user_id)
+    papers_count = await model_paper_submissions_col.count_documents({"user_id": user_id})
+    profile["papers_completed"] = papers_count
+    return profile
 
 
 async def _has_xp_event(user_id: str, event_type: str, reference_id: str) -> bool:
