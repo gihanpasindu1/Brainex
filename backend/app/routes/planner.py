@@ -29,10 +29,10 @@ async def create_study_plan(req: StudyPlanRequest):
         )
 
         # 3. Save to MongoDB
-        #result = await plans_col.insert_one(db_doc.model_dump())
+        result = await plans_col.insert_one(db_doc.model_dump())
 
         return {
-            "id": "test_id_no_database_needed_123",
+            "id": str(result.inserted_id),
             "plan": db_doc
         }
 

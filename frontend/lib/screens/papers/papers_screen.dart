@@ -1,9 +1,11 @@
 import 'dart:ui';
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'exam_screen.dart';
 
 class PapersScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class _PapersScreenState extends State<PapersScreen> {
   int bottomIndex = 1;
   bool isModelPapers = true;
   bool isLoading = false;
+  bool isSuccess = false;
   bool isFetchingPapers = true;
   List<dynamic> generatedPapers = [];
   String? loadingPaperId; // Track which paper is being fetched
@@ -26,6 +29,7 @@ class _PapersScreenState extends State<PapersScreen> {
   String? selectedTerm;
   String? selectedSubject;
   String? selectedYear;
+  List<String> availablePastYears = [];
 
   final List<String> paperTypes = ['Term Paper', 'Subject Paper', 'Final year'];
   final List<String> difficulties = ['Easy', 'Medium', 'Hard'];
@@ -46,7 +50,7 @@ class _PapersScreenState extends State<PapersScreen> {
     'Unit 12: ICT in Business',
     'Unit 13: New Trends in ICT',
   ];
-  final List<String> years = ['2023', '2022', '2021', '2020'];
+  final List<String> years = ['2023', '2022', '2021', '2020', '2019', '2018'];
 
   @override
   void initState() {
@@ -57,16 +61,63 @@ class _PapersScreenState extends State<PapersScreen> {
   Future<void> _fetchPapers() async {
     setState(() => isFetchingPapers = true);
     try {
-      final uri = Uri.parse('http://10.0.2.2:8000/modelpapers');
-      final response = await http.get(uri);
+      Uri uri;
+      if (isModelPapers) {
+        String apiType = 'Term';
+        if (selectedPaperType == 'Final year') {
+          apiType = 'Final';
+        } else if (selectedPaperType == 'Subject Paper') {
+          apiType = 'Subject';
+        }
+
+        String query = "paper_type=$apiType";
+        // ONLY send grade/term if NOT a Final paper (Finals conceptually encompass many units)
+        if (apiType != 'Final') {
+          if (selectedGrade != null) {
+            query += "&grade=${Uri.encodeComponent(selectedGrade!)}";
+          }
+          if (selectedTerm != null) {
+            query += "&term=${Uri.encodeComponent(selectedTerm!)}";
+          }
+        }
+        uri = Uri.parse("http://10.0.2.2:8000/modelpapers?$query");
+      } else {
+        // Fetch official past papers registry
+        uri = Uri.parse("http://10.0.2.2:8000/pastpapers");
+      }
+
+      print("NETWORK: Fetching from $uri");
+      final response = await http.get(uri).timeout(const Duration(seconds: 15));
+      print("NETWORK: Result status ${response.statusCode}");
+      
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        setState(() {
-          generatedPapers = data;
-        });
+        print("NETWORK: Received ${data.length} papers");
+        if (mounted) {
+          setState(() {
+            generatedPapers = data;
+            if (!isModelPapers) {
+              // Extract unique years and sort DESC
+              final yrs = data
+                  .where((e) => e['year'] != null)
+                  .map((e) => e['year'].toString())
+                  .toSet()
+                  .toList();
+              yrs.sort((a, b) => b.compareTo(a));
+              availablePastYears = yrs;
+            }
+          });
+        }
+      } else {
+        print("NETWORK ERROR: ${response.statusCode} - ${response.body}");
       }
     } catch (e) {
       debugPrint("Failed to fetch papers: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not refresh papers: $e")),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => isFetchingPapers = false);
@@ -118,6 +169,50 @@ class _PapersScreenState extends State<PapersScreen> {
                   ),
                 ],
               ),
+              if (isLoading)
+                Stack(
+                  children: [
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.8),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            isSuccess
+                                ? const Icon(
+                                  Icons.check_circle_outline,
+                                  color: Colors.greenAccent,
+                                  size: 64,
+                                )
+                                : const CircularProgressIndicator(
+                                  color: Colors.cyan,
+                                ),
+                            const SizedBox(height: 24),
+                            Text(
+                              isSuccess
+                                  ? "Paper Generated!\nSuccesfully added to Suggested Papers."
+                                  : "Generating Paper with AI...\nThis usually takes 15-25 seconds",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 40,
+                      right: 20,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white54),
+                        onPressed: () => setState(() => isLoading = false),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -216,6 +311,7 @@ class _PapersScreenState extends State<PapersScreen> {
                     selectedPaperType,
                     (val) {
                       setState(() => selectedPaperType = val);
+                      _fetchPapers();
                     },
                   ),
                 ),
@@ -241,12 +337,14 @@ class _PapersScreenState extends State<PapersScreen> {
                       val,
                     ) {
                       setState(() => selectedGrade = val);
+                      _fetchPapers();
                     }, fontSize: 11),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildDropdown("Term", terms, selectedTerm, (val) {
                       setState(() => selectedTerm = val);
+                      _fetchPapers();
                     }, fontSize: 11),
                   ),
                 ],
@@ -262,6 +360,7 @@ class _PapersScreenState extends State<PapersScreen> {
                         selectedSubject,
                         (val) {
                           setState(() => selectedSubject = val);
+                          _fetchPapers();
                         },
                         fontSize: 10,
                       ),
@@ -274,67 +373,72 @@ class _PapersScreenState extends State<PapersScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildDropdown("Select Year", years, selectedYear, (
-                    val,
-                  ) {
-                    setState(() => selectedYear = val);
-                  }),
+                  child: _buildDropdown(
+                    "Select Year",
+                    availablePastYears.isNotEmpty ? availablePastYears : years,
+                    selectedYear,
+                    (val) {
+                      setState(() => selectedYear = val);
+                      _fetchPapers();
+                    },
+                  ),
                 ),
               ],
             ),
           ],
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : _generatePaper,
-              style:
-                  ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ).copyWith(
-                    backgroundColor: WidgetStateProperty.resolveWith(
-                      (states) => Colors.transparent,
-                    ),
+          if (isModelPapers || selectedYear != null) ...[
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _generatePaper,
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
-              child: Ink(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.cyan, Colors.purpleAccent],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+                ).copyWith(
+                  backgroundColor: WidgetStateProperty.resolveWith(
+                    (states) => Colors.transparent,
                   ),
-                  borderRadius: BorderRadius.circular(30),
                 ),
-                child: Container(
-                  alignment: Alignment.center,
-                  constraints: const BoxConstraints(minHeight: 45),
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.cyan, Colors.purpleAccent],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Container(
+                    alignment: Alignment.center,
+                    constraints: const BoxConstraints(minHeight: 45),
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            isModelPapers ? "Generate Papers" : "Start",
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
-                        )
-                      : Text(
-                          "Generate Papers",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
           const SizedBox(height: 12),
           Center(
             child: Text(
@@ -358,7 +462,10 @@ class _PapersScreenState extends State<PapersScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => isModelPapers = false),
+              onTap: () {
+                setState(() => isModelPapers = false);
+                _fetchPapers();
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
@@ -386,7 +493,10 @@ class _PapersScreenState extends State<PapersScreen> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => isModelPapers = true),
+              onTap: () {
+                setState(() => isModelPapers = true);
+                _fetchPapers();
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
@@ -457,13 +567,40 @@ class _PapersScreenState extends State<PapersScreen> {
   }
 
   Widget _buildSectionTitle() {
-    return Text(
-      "Suggested Papers",
-      style: GoogleFonts.poppins(
-        color: Colors.white,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
+    String titleText = "Suggested Papers";
+    if (isModelPapers) {
+      if (selectedGrade != null && selectedTerm != null) {
+        titleText = "$selectedGrade - $selectedTerm Suggested";
+      } else if (selectedGrade != null) {
+        titleText = "$selectedGrade Suggested";
+      }
+    } else {
+      if (selectedYear != null) {
+        titleText = "Official $selectedYear Past Papers";
+      } else {
+        titleText = "GCE A/L Past Papers";
+      }
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          titleText,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (isModelPapers)
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.cyanAccent, size: 20),
+            visualDensity: VisualDensity.compact,
+            onPressed: isFetchingPapers ? null : _fetchPapers,
+            tooltip: "Reload suggested papers",
+          ),
+      ],
     );
   }
 
@@ -489,96 +626,213 @@ class _PapersScreenState extends State<PapersScreen> {
       );
     }
 
-    return Column(
-      children: List.generate(generatedPapers.length, (index) {
-        final paper = generatedPapers[index];
-        final title = paper['title'] ?? 'Untitled Paper';
-        final duration = paper['duration_min'] ?? 120;
-        final detail = "Duration: ${duration}m • MCQ";
+    // Grouping by Date
+    final Map<String, List<dynamic>> groupedPapers = {};
+    for (var paper in generatedPapers) {
+      final dateLabel = _formatDate(paper['created_at']);
+      if (!groupedPapers.containsKey(dateLabel)) {
+        groupedPapers[dateLabel] = [];
+      }
+      groupedPapers[dateLabel]!.add(paper);
+    }
 
-        return InkWell(
-          onTap: () {
-            print("!!! PAPER CLICKED: $title (ID: ${paper['id']}) !!!");
-            _openPaper(paper);
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF161821),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white10),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: groupedPapers.entries.map((entry) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8, top: 12),
+              child: Text(
+                entry.key.toUpperCase(),
+                style: GoogleFonts.poppins(
+                  color: Colors.cyanAccent.withValues(alpha: 0.7),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            ...entry.value.map((paper) => _buildPaperCard(paper)),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildPaperCard(dynamic paper) {
+    final title = paper['title'] ?? 'Untitled Paper';
+    final duration = paper['duration_min'] ?? 120;
+    
+    // Check if paper was created in the last 2 minutes to show NEW badge
+    bool isNewlyGenerated = false;
+    if (paper['created_at'] != null) {
+      try {
+        final createdAt = DateTime.parse(paper['created_at']).toLocal();
+        isNewlyGenerated = DateTime.now().difference(createdAt).inMinutes < 2;
+      } catch (_) {}
+    }
+
+    return InkWell(
+      onTap: () {
+        print("!!! PAPER CLICKED: $title (ID: ${paper['id']}) !!!");
+        _openPaper(paper);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF161821),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          fontStyle: FontStyle.italic,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      if (isNewlyGenerated) ...[
+                        _buildChip('NEW', Colors.greenAccent),
+                        const SizedBox(width: 8),
+                      ],
+                      _buildChip(
+                        paper['paper_type'] ?? 'Paper',
+                        Colors.cyanAccent,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        detail,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
-                      ),
+                      const SizedBox(width: 8),
+                      if (paper['difficulty'] != null)
+                        _buildChip(paper['difficulty'], Colors.purpleAccent),
                     ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                (loadingPaperId == paper['id'])
-                    ? const SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: Padding(
-                          padding: EdgeInsets.all(10.0),
-                          child: CircularProgressIndicator(
-                            color: Colors.cyan,
-                            strokeWidth: 2,
-                          ),
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      if (paper['grade'] != null)
+                        _buildInfoLabel(
+                          Icons.school,
+                          "Grade ${paper['grade']}",
                         ),
-                      )
-                    : Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Colors.cyan, Colors.purpleAccent],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          "Start",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-              ],
+                      if (paper['term'] != null)
+                        _buildInfoLabel(Icons.calendar_today, paper['term']),
+                      _buildInfoLabel(Icons.timer, "${duration}m"),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      }),
+            const SizedBox(width: 12),
+            (loadingPaperId == paper['id'])
+                ? const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: CircularProgressIndicator(
+                        color: Colors.cyan,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Colors.cyan, Colors.purpleAccent],
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      "Start",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+          ],
+        ),
+      ),
     );
   }
 
   // Removed old _buildPaperList and moved to integrated content above
+
+  Widget _buildChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoLabel(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: Colors.white38),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return "Recent";
+    try {
+      final date = DateTime.parse(dateStr).toLocal();
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays == 0 && now.day == date.day) {
+        return "Today";
+      } else if (difference.inDays == 1 ||
+          (difference.inDays == 0 && now.day != date.day)) {
+        return "Yesterday";
+      } else if (difference.inDays < 7) {
+        return DateFormat('EEEE').format(date); // Friday, Saturday etc
+      } else {
+        return DateFormat('MMM dd, yyyy').format(date);
+      }
+    } catch (e) {
+      return "Recent";
+    }
+  }
 
   Future<void> _openPaper(dynamic paper) async {
     try {
@@ -588,13 +842,19 @@ class _PapersScreenState extends State<PapersScreen> {
         return;
       }
 
-      print(
-        "NETWORK: Fetching paper $paperId from http://10.0.2.2:8000/modelpapers/$paperId",
-      );
-      setState(() => loadingPaperId = paperId);
+      setState(() => loadingPaperId = paperId.toString());
 
-      final uri = Uri.parse('http://10.0.2.2:8000/modelpapers/$paperId');
-      final response = await http.get(uri).timeout(const Duration(seconds: 15));
+      Uri uri;
+      if (paperId.toString().startsWith("past_")) {
+        // Retrieve virtual official paper by year
+        final year = paper['year'];
+        uri = Uri.parse('http://10.0.2.2:8000/pastpapers/$year');
+      } else {
+        uri = Uri.parse('http://10.0.2.2:8000/modelpapers/$paperId');
+      }
+
+      print("NETWORK: Fetching paper from $uri");
+      final response = await http.get(uri).timeout(const Duration(seconds: 30));
 
       print("NETWORK: Status ${response.statusCode}");
 
@@ -650,9 +910,21 @@ class _PapersScreenState extends State<PapersScreen> {
 
   Future<void> _generatePaper() async {
     if (!isModelPapers) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Past papers feature coming soon!')),
-      );
+      if (selectedYear == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a year first')),
+        );
+        return;
+      }
+
+      // Directly open the paper instead of just generating it
+      _openPaper({
+        'id': 'past_$selectedYear',
+        'year': selectedYear,
+        'paper_type': 'Past Paper',
+        'title': 'Official G.C.E. A/L $selectedYear Past Paper',
+        'duration_min': 120,
+      });
       return;
     }
 
@@ -697,27 +969,50 @@ class _PapersScreenState extends State<PapersScreen> {
       // Typically you'd pull URL from an environment/config var
       final uri = Uri.parse('http://10.0.2.2:8000/modelpapers/generate');
 
-      final response = await http.post(
-        uri,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(payload),
-      );
+      final response = await http
+          .post(uri, headers: {"Content-Type": "application/json"}, body: jsonEncode(payload))
+          .timeout(const Duration(seconds: 120));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List<dynamic> newPapers = data['created'] ?? [];
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Successfully generated model paper!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _fetchPapers(); // refresh list
+          // Show success state
+          setState(() {
+            isSuccess = true;
+            // Prepend new papers so they appear at the top
+            generatedPapers = [...newPapers, ...generatedPapers];
+          });
+
+          // Wait 2 seconds so user sees the success icon
+          await Future.delayed(const Duration(seconds: 2));
+
+          if (mounted) {
+            setState(() {
+              isLoading = false;
+              isSuccess = false;
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Success! Your ${newPapers.length > 1 ? "papers are" : "AI paper is"} now in the Suggested Papers list.',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // 2. Refresh full list in background to sync any other metadata
+            unawaited(_fetchPapers());
+          }
         }
       } else {
         if (mounted) {
+          setState(() => isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to generate paper: ${response.statusCode}'),
+              content: Text('Failed: ${response.statusCode} - ${response.body}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -725,12 +1020,9 @@ class _PapersScreenState extends State<PapersScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to connect: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) {
