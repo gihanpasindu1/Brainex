@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import Dict, List, Literal, Optional
 
-PaperType = Literal["Term", "Final", "Subject"]
+PaperType = Literal["Term", "Final", "Subject", "Past Paper"]
 TermType = Literal["Term 1", "Term 2", "Term 3"]
 GradeType = Literal["12", "13"]
 DifficultyType = Literal["Easy", "Medium", "Hard"]
@@ -41,6 +41,7 @@ class ModelPaperListItem(BaseModel):
     term: Optional[TermType] = None
     topic: Optional[str] = None
     duration_min: int
+    year: Optional[int] = None
     created_at: Optional[str] = None
 
 class QuestionResult(BaseModel):
