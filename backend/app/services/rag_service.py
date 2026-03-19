@@ -491,122 +491,103 @@ async def generate_mcqs(
     db_query, target_topics, target_pdfs = _get_query_and_topics(grade, paper_type, term, topic)
     default_topic = target_topics[0] if target_topics else "General"
 
-    # Shared context retrieved once — used by all per-topic Gemini calls
+    # 1. Retrieve context (shared across all parallel tasks)
     context = await _retrieve_context(db_query, target_pdfs, target_topics)
     bank_texts = await _bank_question_texts(db_query)
     batch_size = 8
 
-    # ------------------------------------------------------------------ #
-    # WEIGHTED DISTRIBUTION                                                #
-    # Compute how many questions each topic should contribute based on     #
-    # the official A/L ICT exam weightage table (TOPIC_WEIGHTS).          #
-    # For Term papers this normalises weights across only the active       #
-    # term's topics.  For Final papers it uses all active topics.         #
-    # ------------------------------------------------------------------ #
+    # 2. Compute how many questions each topic should contribute
     topic_distribution = _compute_topic_distribution(target_topics, mcq_count)
-    logger.info(
-        "Weighted distribution for Grade=%s %s term=%s (%d Qs): %s",
-        grade, paper_type, term or "Final", mcq_count, topic_distribution,
-    )
+    logger.info("Weighted parallel distribution: %s", topic_distribution)
 
-    all_questions: List[dict] = []
+    # 3. Helper function to process each topic concurrently
+    # We use a semaphore to manage API concurrency. Increasing to 15 allows 
+    # most full-syllabus papers to process all units simultaneously.
+    sem = asyncio.Semaphore(15)
 
-    # ------------------------------------------------------------------ #
-    # PER-TOPIC GENERATION                                                 #
-    # For each topic: adaptive 3-tier bank check → Gemini/bank split      #
-    # ------------------------------------------------------------------ #
-    for topic_name, topic_count in topic_distribution.items():
+    async def _process_topic_parallel(topic_name: str, topic_count: int) -> List[dict]:
         if topic_count == 0:
-            continue
+            return []
 
-        # Topic-scoped MongoDB query so bank sampling/counting is precise
-        topic_query = {
-            **db_query,
-            "topic": {"$regex": re.escape(topic_name), "$options": "i"},
-        }
+        async with sem:
+            topic_query = {
+                **db_query,
+                "topic": {"$regex": re.escape(topic_name), "$options": "i"},
+            }
 
-        # Compute ideal split quotas for this individual topic
-        base_gen  = max(1, int(topic_count * 0.4))
-        base_bank = topic_count - base_gen
+            base_gen = max(1, int(topic_count * 0.4))
+            base_bank = topic_count - base_gen
+            available_in_bank = await _count_bank_questions(topic_query)
 
-        available_in_bank = await _count_bank_questions(topic_query)
+            if available_in_bank == 0:
+                gen_count = topic_count
+                bank_count = 0
+                gemini_extra = 0
+            elif available_in_bank < base_bank:
+                bank_count = available_in_bank
+                gemini_extra = base_bank - available_in_bank
+                gen_count = base_gen
+            else:
+                gen_count = base_gen
+                bank_count = base_bank
+                gemini_extra = 0
 
-        if available_in_bank == 0:
-            # Tier 3: no bank questions for this topic — Gemini generates all
-            gen_count    = topic_count
-            bank_count   = 0
-            gemini_extra = 0
-            logger.info("Topic '%s': bank empty → Gemini generates all %d.", topic_name, gen_count)
-        elif available_in_bank < base_bank:
-            # Tier 2: bank too small — use what exists, shift shortfall to Gemini
-            bank_count   = available_in_bank
-            gemini_extra = base_bank - available_in_bank
-            gen_count    = base_gen
-            logger.info(
-                "Topic '%s': bank has %d (need %d) → shifting %d to Gemini.",
-                topic_name, available_in_bank, base_bank, gemini_extra,
-            )
-        else:
-            # Tier 1: bank has enough — standard 40/60 split
-            gen_count    = base_gen
-            bank_count   = base_bank
-            gemini_extra = 0
-            logger.info(
-                "Topic '%s': bank ok (%d avail) → standard 40/60 split.",
-                topic_name, available_in_bank,
-            )
+            topic_questions: List[dict] = []
 
-        topic_questions: List[dict] = []
-
-        # Step 1 — Fresh Gemini questions for this topic
-        gemini_qs = await _gemini_generate_for_topic(
-            topic_name, gen_count, grade, paper_type, term,
-            difficulty, context, bank_texts, batch_size,
-        )
-        topic_questions.extend(gemini_qs)
-
-        # Step 2a — Paraphrase unique bank questions for this topic
-        if bank_count > 0:
-            bank_qs = await _safe_sample_bank(topic_query, bank_count, topic_name)
-            paraphrased = await _paraphrase_questions(bank_qs, grade, difficulty, batch_size)
-            topic_questions.extend(paraphrased)
-
-        # Step 2b — Fill bank shortfall with extra Gemini (Tier 2 / Tier 3)
-        if gemini_extra > 0:
-            extra_qs = await _gemini_generate_for_topic(
-                topic_name, gemini_extra, grade, paper_type, term,
+            # Step 1 — Fresh Gemini questions
+            gemini_qs = await _gemini_generate_for_topic(
+                topic_name, gen_count, grade, paper_type, term,
                 difficulty, context, bank_texts, batch_size,
             )
-            topic_questions.extend(extra_qs)
+            topic_questions.extend(gemini_qs)
 
-        # Topic-level failsafe: if generated + paraphrased fell short
-        topic_shortfall = topic_count - len(topic_questions)
-        if topic_shortfall > 0:
-            logger.warning("Topic '%s' short by %d. Filling with Gemini.", topic_name, topic_shortfall)
-            topic_failsafe_qs = await _gemini_generate_for_topic(
-                topic_name, topic_shortfall, grade, paper_type, term,
-                difficulty, context, bank_texts, batch_size,
-            )
-            topic_questions.extend(topic_failsafe_qs)
+            # Step 2a — Paraphrase unique bank questions
+            if bank_count > 0:
+                bank_qs = await _safe_sample_bank(topic_query, bank_count, topic_name)
+                paraphrased = await _paraphrase_questions(bank_qs, grade, difficulty, batch_size)
+                topic_questions.extend(paraphrased)
 
-        # Collect exactly topic_count questions for this topic
-        all_questions.extend(topic_questions[:topic_count])
+            # Step 2b — Fill bank shortfall with extra Gemini (Tier 2 / Tier 3)
+            if gemini_extra > 0:
+                extra_qs = await _gemini_generate_for_topic(
+                    topic_name, gemini_extra, grade, paper_type, term,
+                    difficulty, context, bank_texts, batch_size,
+                )
+                topic_questions.extend(extra_qs)
 
-    # ------------------------------------------------------------------ #
-    # FINAL FAILSAFE — Gemini fills any residual shortage                 #
-    # (happens when Gemini yields fewer questions than requested)          #
-    # ------------------------------------------------------------------ #
+            # Topic-level failsafe
+            topic_shortfall = topic_count - len(topic_questions)
+            if topic_shortfall > 0:
+                topic_failsafe_qs = await _gemini_generate_for_topic(
+                    topic_name, topic_shortfall, grade, paper_type, term,
+                    difficulty, context, bank_texts, batch_size,
+                )
+                topic_questions.extend(topic_failsafe_qs)
+
+            return topic_questions[:topic_count]
+
+    # Spawn all topic generation tasks in parallel
+    tasks = [
+        _process_topic_parallel(name, count) 
+        for name, count in topic_distribution.items()
+    ]
+    
+    topic_results = await asyncio.gather(*tasks)
+    
+    all_questions = []
+    for qr in topic_results:
+        all_questions.extend(qr)
+
+    # 4. Final Failsafe
     final_missing = mcq_count - len(all_questions)
     if final_missing > 0:
-        logger.warning(
-            "Still short by %d after per-topic generation — final Gemini failsafe.",
-            final_missing,
-        )
-        failsafe_qs = await _gemini_generate_for_topic(
-            default_topic, final_missing, grade, paper_type, term,
-            difficulty, context, bank_texts, batch_size,
-        )
-        all_questions.extend(failsafe_qs)
+        logger.warning("Still short by %d Qs after parallel gen. Final failsafe.", final_missing)
+        async with sem:
+            failsafe_qs = await _gemini_generate_for_topic(
+                default_topic, final_missing, grade, paper_type, term,
+                difficulty, context, bank_texts, batch_size,
+            )
+            all_questions.extend(failsafe_qs)
 
     random.shuffle(all_questions)
     return all_questions[:mcq_count]
