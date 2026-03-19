@@ -662,9 +662,9 @@ class _PapersScreenState extends State<PapersScreen> {
       // mapping Term formats
       String? backendTerm;
       if (selectedTerm != null) {
-        if (selectedTerm!.contains('1st'))
+        if (selectedTerm!.contains('1st')) {
           backendTerm = 'Term 1';
-        else if (selectedTerm!.contains('2nd'))
+        } else if (selectedTerm!.contains('2nd'))
           backendTerm = 'Term 2';
         else if (selectedTerm!.contains('3rd'))
           backendTerm = 'Term 3';
@@ -672,9 +672,9 @@ class _PapersScreenState extends State<PapersScreen> {
 
       // map Paper Type
       String apiType = 'Term';
-      if (selectedPaperType == 'Final year')
+      if (selectedPaperType == 'Final year') {
         apiType = 'Final';
-      else if (selectedPaperType == 'Subject Paper')
+      } else if (selectedPaperType == 'Subject Paper')
         apiType = 'Subject';
 
       String gradeVal = selectedGrade?.replaceAll('Grade-', '') ?? '13';

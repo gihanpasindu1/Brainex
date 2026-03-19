@@ -16,6 +16,8 @@ class PerformanceFeedbackScreen extends StatelessWidget {
     final int score = analysis['score'] ?? 0;
     final int total = analysis['total'] ?? 0;
     final double percentage = (analysis['percentage'] ?? 0).toDouble();
+    final int xpAwarded = (analysis['xp_awarded'] as num?)?.toInt() ?? 0;
+    final int? totalXp = (analysis['total_xp'] as num?)?.toInt();
     final List<dynamic> strongAreas = analysis['strong_areas'] ?? [];
     final List<dynamic> improvementAreas = analysis['improvement_areas'] ?? [];
     final List<dynamic> suggestions = analysis['suggestions'] ?? [];
@@ -37,6 +39,10 @@ class PerformanceFeedbackScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildScoreCard(score, total, percentage),
+                    if (xpAwarded > 0) ...[
+                      const SizedBox(height: 20),
+                      _buildXpCard(xpAwarded, totalXp),
+                    ],
                     const SizedBox(height: 20),
                     _buildAreasSection(
                       title: "Strong Areas",
@@ -160,6 +166,43 @@ class PerformanceFeedbackScreen extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildXpCard(int xpAwarded, int? totalXp) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1C26),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "XP Earned",
+            style: TextStyle(color: Colors.white54, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "+$xpAwarded XP",
+            style: const TextStyle(
+              color: Colors.amber,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (totalXp != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              "Total XP: $totalXp",
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+          ],
         ],
       ),
     );

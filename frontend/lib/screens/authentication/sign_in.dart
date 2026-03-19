@@ -138,8 +138,25 @@ class _LoginPageState extends State<LoginPage> {
                   _socialButton(
                     t("continue_google"),
                     "assets/images/icons8-google-100.png",
-                    () {
-                      debugPrint("Google Button Clicked");
+                    () async {
+                      setState(() => _loading = true);
+                      final result = await _auth.signInWithGoogle();
+                      
+                      if (!mounted) return;
+                      setState(() => _loading = false);
+
+                      if (result == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(t("error_login_failed"))),
+                        );
+                        return;
+                      }
+
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => Wrapper()),
+                        (route) => false,
+                      );
                     },
                   ),
 

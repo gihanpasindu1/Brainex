@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 
-from app.db.mongo import model_papers_col
+from app.db.mongo import model_paper_submissions_col, model_papers_col
 from app.schemas.modelpaper import (
     GenerateModelPaperRequest, 
     ModelPaperListItem, 
@@ -9,6 +9,7 @@ from app.schemas.modelpaper import (
     PerformanceAnalysisResponse
 )
 from app.services.rag_service import generate_mcqs, analyze_performance
+from app.services.user_profile_service import award_model_paper_xp
 
 router = APIRouter(prefix="/modelpapers", tags=["modelpapers"])
 
@@ -96,5 +97,39 @@ async def analyze_results(req: PerformanceAnalysisRequest):
     # Convert Pydantic models to dicts for the service
     results_list = [r.model_dump() for r in req.results]
     analysis = await analyze_performance(results_list)
-    return analysis
+
+    xp_awarded = 0
+    total_xp = None
+
+    if req.user_id and req.submission_id:
+        submission_doc = {
+            "user_id": req.user_id,
+            "paper_id": req.paper_id or "model_paper",
+            "submission_id": req.submission_id,
+            "score": analysis["score"],
+            "total": analysis["total"],
+            "percentage": analysis["percentage"],
+        }
+        await model_paper_submissions_col.update_one(
+            {
+                "user_id": req.user_id,
+                "submission_id": req.submission_id,
+            },
+            {"$setOnInsert": submission_doc},
+            upsert=True,
+        )
+        xp_result = await award_model_paper_xp(
+            req.user_id,
+            paper_id=req.paper_id or "model_paper",
+            submission_id=req.submission_id,
+            score=analysis["score"],
+        )
+        xp_awarded = xp_result["xp_awarded"]
+        total_xp = xp_result["profile"]["total_xp"]
+
+    return {
+        **analysis,
+        "xp_awarded": xp_awarded,
+        "total_xp": total_xp,
+    }
 

@@ -85,6 +85,8 @@ class SubmitFriendChallengeResponse(BaseModel):
     total_questions: int
     correct_answers: int
     score_percent: float
+    xp_awarded: int = 0
+    total_xp: Optional[int] = None
 
 
 class FriendChallengeResultItem(BaseModel):

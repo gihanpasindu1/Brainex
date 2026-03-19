@@ -47,6 +47,9 @@ class QuestionResult(BaseModel):
     is_correct: bool
 
 class PerformanceAnalysisRequest(BaseModel):
+    user_id: Optional[str] = None
+    paper_id: Optional[str] = None
+    submission_id: Optional[str] = None
     results: List[QuestionResult]
 
 class PerformanceAnalysisResponse(BaseModel):
@@ -56,4 +59,6 @@ class PerformanceAnalysisResponse(BaseModel):
     strong_areas: List[str]
     improvement_areas: List[str]
     suggestions: List[str]
+    xp_awarded: int = 0
+    total_xp: Optional[int] = None
 

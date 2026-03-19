@@ -9,9 +9,6 @@ import 'package:frontend/screens/splash_screen/splash_screen.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/screens/create_profile/create_profile.dart';
-import 'package:frontend/screens/exam_details/exam_details.dart';
-import 'package:frontend/screens/choose_plan/choose_plan.dart';
-import 'package:frontend/screens/hear_about_us/hear_about_us.dart';
 import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
 import 'dart:async';
 
@@ -137,9 +134,6 @@ class _AppRootState extends State<_AppRoot> {
           ),
           routes: {
             '/profile': (context) => const CreateProfile(),
-            '/exam-details': (context) => const ExamDetails(),
-            '/plan': (context) => const ChoosePlan(),
-            '/referral': (context) => const HearAboutUs(),
             '/activity-challenges': (context) =>
                 const ActivityChallengesScreen(),
           },

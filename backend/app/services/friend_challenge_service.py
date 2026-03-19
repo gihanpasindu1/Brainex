@@ -12,6 +12,10 @@ from app.db.mongo import (
     friend_challenges_col,
 )
 from app.services.rag_service import generate_mcqs
+from app.services.user_profile_service import (
+    award_friend_challenge_completion_xp,
+    award_friend_challenge_win_bonus,
+)
 
 CHALLENGE_STATUS_WAITING = "waiting"
 CHALLENGE_STATUS_STARTED = "started"
@@ -349,6 +353,12 @@ async def submit_friend_challenge(
     }
     await friend_challenge_submissions_col.insert_one(submission_doc)
 
+    xp_result = await award_friend_challenge_completion_xp(
+        challenge_id,
+        user_id,
+        score_percent,
+    )
+
     return {
         "challenge_id": challenge_id,
         "user_id": user_id,
@@ -356,16 +366,22 @@ async def submit_friend_challenge(
         "total_questions": total_questions,
         "correct_answers": correct_answers,
         "score_percent": round(score_percent, 2),
+        "xp_awarded": xp_result["xp_awarded"],
+        "total_xp": xp_result["profile"]["total_xp"],
     }
 
 
 async def get_friend_challenge_results(challenge_id: str) -> dict:
-    await _get_challenge_doc_or_404(challenge_id)
+    challenge_doc = await _get_challenge_doc_or_404(challenge_id)
 
     submissions_cursor = friend_challenge_submissions_col.find({"challenge_id": challenge_id}).sort(
         [("score_percent", -1), ("submitted_at", 1)]
     )
     submissions = [submission async for submission in submissions_cursor]
+
+    ends_at = challenge_doc.get("ends_at")
+    if submissions and ends_at and datetime.utcnow() >= ends_at:
+        await award_friend_challenge_win_bonus(challenge_id, submissions[0]["user_id"])
 
     leaderboard = []
     for index, submission in enumerate(submissions):

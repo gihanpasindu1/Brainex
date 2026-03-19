@@ -163,7 +163,26 @@ class _RegisterState extends State<Register> {
                   _socialButton(
                     t("signup_google"),
                     "assets/images/icons8-google-100.png",
-                    () {},
+                    () async {
+                      setState(() => _loading = true);
+                      final result = await _auth.signInWithGoogle();
+                      
+                      if (!mounted) return;
+                      setState(() => _loading = false);
+
+                      if (result == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(t("error_register_failed"))),
+                        );
+                        return;
+                      }
+
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => Wrapper()),
+                        (route) => false,
+                      );
+                    },
                   ),
                   const SizedBox(height: 10),
                   _socialButton(

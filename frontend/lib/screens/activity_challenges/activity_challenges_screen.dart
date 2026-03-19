@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
 import 'friend_challenge_lobby_screen.dart';
+import 'global_challenge_exam_screen.dart';
 
 class ActivityChallengesScreen extends StatefulWidget {
   const ActivityChallengesScreen({super.key});
@@ -47,36 +49,16 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
     ],
   };
 
-  final List<_GlobalChallengePaper> _papers = const [
-    _GlobalChallengePaper(
-      icon: Icons.auto_awesome,
-      iconColors: [Color(0xFF2BD1F6), Color(0xFF9D58FF)],
-      title: 'Paper 01 - SQL & DBMS',
-      meta: 'Difficulty: Medium - Time: 1h 30m',
-      attempts: 'Global attempts: 2,340',
-    ),
-    _GlobalChallengePaper(
-      icon: Icons.psychology_alt_rounded,
-      iconColors: [Color(0xFF5C77FF), Color(0xFFFF6DC8)],
-      title: 'Paper 02 - Logic & Networks',
-      meta: 'Difficulty: Hard - Time: 1h 45m',
-      attempts: 'Global attempts: 1,720',
-    ),
-    _GlobalChallengePaper(
-      icon: Icons.bolt_rounded,
-      iconColors: [Color(0xFF4D5CFF), Color(0xFF8B63FF)],
-      title: 'Paper 03 - System Analysis',
-      meta: 'Difficulty: Easy - Time: 1h 15m',
-      attempts: 'Global attempts: 3,010',
-    ),
-  ];
-
   String _selectedTab = 'Global';
   String _selectedExamType = 'Final Exam';
   String _selectedGrade = '13';
   String _selectedTerm = 'Term 1';
   String _selectedSubject = _subjectsByGrade['13']!.first;
   bool _isCreatingChallenge = false;
+  bool _isLoadingGlobalChallenges = true;
+  bool _isOpeningGlobalChallenge = false;
+  String? _globalChallengeError;
+  List<_GlobalChallengePaper> _papers = const [];
 
   bool get _isGlobal => _selectedTab == 'Global';
   bool get _requiresGrade => _selectedExamType != 'Final Exam';
@@ -84,6 +66,21 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
   bool get _requiresSubject => _selectedExamType == 'Subject Wise';
   List<String> get _availableSubjects =>
       _subjectsByGrade[_selectedGrade] ?? const [];
+
+  static String get _baseUrl {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000';
+    }
+    return defaultTargetPlatform == TargetPlatform.android
+        ? 'http://10.0.2.2:8000'
+        : 'http://127.0.0.1:8000';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGlobalChallenges();
+  }
 
   @override
   void dispose() {
@@ -109,6 +106,121 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
         _selectedSubject = _availableSubjects.first;
       }
     });
+  }
+
+  Future<void> _loadGlobalChallenges() async {
+    setState(() {
+      _isLoadingGlobalChallenges = true;
+      _globalChallengeError = null;
+    });
+
+    try {
+      final uri = Uri.parse('$_baseUrl/global-challenges/schedule');
+      final response = await http.get(uri);
+
+      if (response.statusCode != 200) {
+        throw Exception(response.body);
+      }
+
+      final payload = jsonDecode(response.body) as Map<String, dynamic>;
+      final challenges = payload['challenges'] as List<dynamic>? ?? const [];
+
+      setState(() {
+        _papers = challenges
+            .map((item) => _GlobalChallengePaper.fromJson(item as Map<String, dynamic>))
+            .toList();
+      });
+    } catch (e) {
+      setState(() => _globalChallengeError = 'Failed to load global challenges: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingGlobalChallenges = false);
+      }
+    }
+  }
+
+  String _formatCountdown(Duration duration) {
+    final totalHours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    return '${totalHours}h ${minutes}m';
+  }
+
+  DateTime? get _nextGlobalBoundary {
+    final now = DateTime.now().toUtc();
+    final futureTimes = _papers
+        .expand((paper) => [paper.scheduledStartAt, paper.scheduledEndAt])
+        .where((time) => time.isAfter(now))
+        .toList()
+      ..sort();
+    return futureTimes.isEmpty ? null : futureTimes.first;
+  }
+
+  Future<void> _openGlobalChallenge(_GlobalChallengePaper paper) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in before joining a challenge.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isOpeningGlobalChallenge = true);
+
+    try {
+      final joinUri = Uri.parse('$_baseUrl/global-challenges/${paper.id}/join');
+      final joinResponse = await http.post(
+        joinUri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': currentUser.uid}),
+      );
+
+      if (joinResponse.statusCode != 200) {
+        throw Exception(joinResponse.body);
+      }
+
+      final questionsUri = Uri.parse(
+        '$_baseUrl/global-challenges/${paper.id}/questions?user_id=${currentUser.uid}',
+      );
+      final questionsResponse = await http.get(questionsUri);
+
+      if (questionsResponse.statusCode != 200) {
+        throw Exception(questionsResponse.body);
+      }
+
+      final questionData = jsonDecode(questionsResponse.body) as Map<String, dynamic>;
+
+      if (!mounted) return;
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GlobalChallengeExamScreen(
+            challengeId: paper.id,
+            userId: currentUser.uid,
+            title: paper.title,
+            durationSeconds: (questionData['remaining_seconds'] as num?)?.toInt() ?? 0,
+            questions: questionData['questions'] as List<dynamic>? ?? const [],
+          ),
+        ),
+      );
+
+      _loadGlobalChallenges();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to open global challenge: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isOpeningGlobalChallenge = false);
+      }
+    }
   }
 
   Future<void> _createFriendChallenge() async {
@@ -159,7 +271,7 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
     setState(() => _isCreatingChallenge = true);
 
     try {
-      final uri = Uri.parse('http://10.0.2.2:8000/friend-challenges');
+      final uri = Uri.parse('$_baseUrl/friend-challenges');
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
@@ -332,6 +444,11 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
   }
 
   Widget _buildGlobalSection() {
+    final nextBoundary = _nextGlobalBoundary;
+    final countdownText = nextBoundary == null
+        ? 'No upcoming slot'
+        : _formatCountdown(nextBoundary.difference(DateTime.now().toUtc()));
+
     return Column(
       key: const ValueKey('global-section'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,7 +462,7 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Season ends in',
+                      nextBoundary == null ? 'Schedule' : 'Next change in',
                       style: GoogleFonts.inter(
                         color: const Color(0xFF7E87A7),
                         fontSize: 11,
@@ -354,7 +471,7 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '2d 14h 08m',
+                      countdownText,
                       style: GoogleFonts.sora(
                         color: Colors.white,
                         fontSize: 28,
@@ -366,7 +483,7 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _MiniPillButton(label: 'Generate / Refresh', onTap: () {}),
+              _MiniPillButton(label: 'Refresh', onTap: _loadGlobalChallenges),
             ],
           ),
         ),
@@ -380,12 +497,34 @@ class _ActivityChallengesScreenState extends State<ActivityChallengesScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        ..._papers.map(
-          (paper) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _GlobalPaperCard(paper: paper),
+        if (_isLoadingGlobalChallenges)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_globalChallengeError != null)
+          _GlassPanel(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              _globalChallengeError!,
+              style: GoogleFonts.inter(
+                color: const Color(0xFFDCE1FF),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+        else
+          ..._papers.map(
+            (paper) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _GlobalPaperCard(
+                paper: paper,
+                isBusy: _isOpeningGlobalChallenge,
+                onTap: paper.isLive ? () => _openGlobalChallenge(paper) : null,
+              ),
+            ),
           ),
-        ),
         const SizedBox(height: 8),
         Text(
           'Friends Competitive Mode',
@@ -596,18 +735,83 @@ InputDecoration _fieldDecoration({required String hintText}) {
 
 class _GlobalChallengePaper {
   const _GlobalChallengePaper({
-    required this.icon,
-    required this.iconColors,
+    required this.id,
     required this.title,
     required this.meta,
     required this.attempts,
+    required this.statusText,
+    required this.actionLabel,
+    required this.isLive,
+    required this.scheduledStartAt,
+    required this.scheduledEndAt,
+    required this.reminderText,
+    required this.icon,
+    required this.iconColors,
   });
 
+  final String id;
   final IconData icon;
   final List<Color> iconColors;
   final String title;
   final String meta;
   final String attempts;
+  final String statusText;
+  final String actionLabel;
+  final bool isLive;
+  final DateTime scheduledStartAt;
+  final DateTime scheduledEndAt;
+  final String reminderText;
+
+  factory _GlobalChallengePaper.fromJson(Map<String, dynamic> json) {
+    final scheduledStartAt =
+        DateTime.parse(json['scheduled_start_at'] as String).toUtc();
+    final scheduledEndAt =
+        DateTime.parse(json['scheduled_end_at'] as String).toUtc();
+    final status = json['status'] as String? ?? 'upcoming';
+    final reminderTimes = (json['reminder_times'] as List<dynamic>? ?? const [])
+        .map((item) => DateTime.parse(item as String).toUtc())
+        .toList();
+
+    final icon = switch (json['challenge_date_label'] as String? ?? '') {
+      'Monday' => Icons.auto_awesome,
+      'Wednesday' => Icons.psychology_alt_rounded,
+      'Friday' => Icons.bolt_rounded,
+      _ => Icons.public_rounded,
+    };
+
+    final iconColors = switch (status) {
+      'live' => const [Color(0xFF23E3A2), Color(0xFF35A8FF)],
+      'ended' => const [Color(0xFF65708B), Color(0xFF434C67)],
+      _ => const [Color(0xFF2BD1F6), Color(0xFF9D58FF)],
+    };
+
+    final dateLabel = json['challenge_date_label'] as String? ?? 'Challenge';
+    final timeLabel = _formatUtcToSriLankaTime(scheduledStartAt);
+    final questionCount = (json['question_count'] as num?)?.toInt() ?? 0;
+    final participantCount = (json['participant_count'] as num?)?.toInt() ?? 0;
+    final submissionCount = (json['submission_count'] as num?)?.toInt() ?? 0;
+
+    return _GlobalChallengePaper(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? dateLabel,
+      meta: '$dateLabel • $timeLabel • $questionCount MCQs',
+      attempts: 'Joined: $participantCount • Submitted: $submissionCount',
+      statusText: switch (status) {
+        'live' => 'Live now until 10:00 PM',
+        'ended' => 'Ended',
+        _ => 'Starts at 8:00 PM Sri Lanka time',
+      },
+      actionLabel: status == 'live' ? 'Attempt' : (status == 'ended' ? 'Closed' : 'Starts 8 PM'),
+      isLive: status == 'live',
+      scheduledStartAt: scheduledStartAt,
+      scheduledEndAt: scheduledEndAt,
+      reminderText: reminderTimes.isEmpty
+          ? 'Reminders: 30 min and 10 min before'
+          : 'Reminders: ${reminderTimes.length} scheduled',
+      icon: icon,
+      iconColors: iconColors,
+    );
+  }
 }
 
 class _GlassPanel extends StatelessWidget {
@@ -801,10 +1005,23 @@ class _DropdownField extends StatelessWidget {
   }
 }
 
+String _formatUtcToSriLankaTime(DateTime utcTime) {
+  final local = utcTime.add(const Duration(hours: 5, minutes: 30));
+  final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+  final period = local.hour >= 12 ? 'PM' : 'AM';
+  return '$hour:${local.minute.toString().padLeft(2, '0')} $period';
+}
+
 class _GlobalPaperCard extends StatelessWidget {
-  const _GlobalPaperCard({required this.paper});
+  const _GlobalPaperCard({
+    required this.paper,
+    required this.isBusy,
+    required this.onTap,
+  });
 
   final _GlobalChallengePaper paper;
+  final bool isBusy;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -853,11 +1070,42 @@ class _GlobalPaperCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  paper.statusText,
+                  style: GoogleFonts.inter(
+                    color: paper.isLive
+                        ? const Color(0xFF7EF6C7)
+                        : const Color(0xFFD8DDF8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  paper.reminderText,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF95A0C3),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(width: 10),
-          _MiniPillButton(label: 'Attempt', onTap: () {}),
+          if (isBusy && paper.isLive)
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            _MiniPillButton(
+              label: paper.actionLabel,
+              onTap: onTap ?? () {},
+              enabled: onTap != null,
+            ),
         ],
       ),
     );
@@ -909,26 +1157,35 @@ class _AvatarBubble extends StatelessWidget {
 }
 
 class _MiniPillButton extends StatelessWidget {
-  const _MiniPillButton({required this.label, required this.onTap});
+  const _MiniPillButton({
+    required this.label,
+    required this.onTap,
+    this.enabled = true,
+  });
 
   final String label;
   final VoidCallback onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(18),
         splashColor: Colors.white.withValues(alpha: 0.12),
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2FD2F8), Color(0xFFAA59FF)],
-            ),
+            gradient: enabled
+                ? const LinearGradient(
+                    colors: [Color(0xFF2FD2F8), Color(0xFFAA59FF)],
+                  )
+                : const LinearGradient(
+                    colors: [Color(0xFF3A4157), Color(0xFF2A3042)],
+                  ),
             border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
             boxShadow: [
               BoxShadow(
