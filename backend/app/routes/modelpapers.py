@@ -117,17 +117,21 @@ async def list_modelpapers(
 
 @router.get("/{paper_id}")
 async def get_modelpaper(paper_id: str):
+    p = None
+    # Try fetching by ObjectId first
     try:
         oid = ObjectId(paper_id)
+        p = await model_papers_col.find_one({"_id": oid})
     except Exception:
-        raise HTTPException(status_code=400, detail="Invalid paper_id")
+        # Fallback to fetching by title if not a valid ObjectId
+        p = await model_papers_col.find_one({"title": paper_id})
 
-    p = await model_papers_col.find_one({"_id": oid})
     if not p:
         raise HTTPException(status_code=404, detail="Model paper not found")
 
     p["id"] = str(p["_id"])
-    del p["_id"]
+    if "_id" in p:
+        del p["_id"]
     return p
 
 @router.post("/analyze", response_model=PerformanceAnalysisResponse)
