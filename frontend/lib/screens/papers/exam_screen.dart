@@ -18,7 +18,7 @@ class ModelPaperOverviewScreen extends StatefulWidget {
 class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
   int currentQuestionIndex = 0;
   List<dynamic> questions = [];
-  bool isLoading = true;
+  bool isLoading = false;
   bool isSubmitting = false;
 
   late Timer _timer;
