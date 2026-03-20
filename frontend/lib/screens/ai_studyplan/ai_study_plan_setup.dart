@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+import 'package:frontend/services/study_plan_service.dart';
 
 class AIStudyPlanSetupPage extends StatefulWidget {
   const AIStudyPlanSetupPage({super.key});
@@ -18,9 +20,46 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
   String? _selectedSubject;
 
   final List<String> _planTypes = ['Final Year', 'Term', 'Subject'];
-  final List<String> _grades = ['Grade 9', 'Grade 10', 'Grade 11'];
+  final List<String> _grades = ['Grade 12', 'Grade 13']; // Mapped to A/L standard
   final List<String> _terms = ['Term 1', 'Term 2', 'Term 3'];
   final List<String> _subjects = ['Mathematics', 'Science', 'English', 'History', 'ICT'];
+  
+  bool _isLoading = false;
+  bool _isCheckingExistingPlan = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingPlan();
+  }
+
+  Future<void> _checkExistingPlan() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (mounted) setState(() => _isCheckingExistingPlan = false);
+      return;
+    }
+
+    final plans = await StudyPlanService().getUserPlans(user.uid);
+    if (!mounted) return;
+
+    if (plans != null && plans.isNotEmpty) {
+      final latestPlan = plans.first;
+      final planData = {
+        "id": latestPlan['id'],
+        "plan": latestPlan
+      };
+      
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AIStudyPlanPage2(planData: planData),
+        ),
+      );
+    } else {
+      setState(() => _isCheckingExistingPlan = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -28,18 +67,86 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
     super.dispose();
   }
 
-  void _navigateToPlan() {
-    // In a real app we'd pass the parameters to the next screen or a provider here.
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AIStudyPlanPage2(),
-      ),
-    );
+  Future<void> _generatePlan() async {
+    if (_weeksController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter the number of weeks.")));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please login first.")));
+      return;
+    }
+
+    // Map frontend states to backend schema
+    String examType = 'Final Exam';
+    if (_selectedPlan == 'Term') {
+      examType = 'Term Exam';
+    } else if (_selectedPlan == 'Subject') {
+      examType = 'Topic-wise Plan';
+    }
+
+    String gradeStr = 'Grade 13'; // Default
+    if (_selectedGrade != null) {
+       if (_selectedGrade!.contains('12')) gradeStr = 'Grade 12';
+       else gradeStr = 'Grade 13';
+    }
+
+    int? termNumber;
+    if (_selectedTerm != null) {
+      if (_selectedTerm!.contains('1')) termNumber = 1;
+      else if (_selectedTerm!.contains('2')) termNumber = 2;
+      else if (_selectedTerm!.contains('3')) termNumber = 3;
+    }
+
+    List<String> weakTopics = [];
+    if (_selectedSubject != null) {
+      weakTopics.add(_selectedSubject!);
+    }
+
+    int weeks = int.tryParse(_weeksController.text) ?? 4;
+
+    final request = {
+      "user_id": user.uid,
+      "exam_type": examType,
+      "grade": gradeStr,
+      "term_number": termNumber,
+      "weak_topics": weakTopics,
+      "weeks_to_exam": weeks,
+    };
+
+    final response = await StudyPlanService().generateStudyPlan(request);
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (response != null && response['plan'] != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AIStudyPlanPage2(planData: response),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to generate plan securely via AI. Please try again.")));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingExistingPlan) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0F1123),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF26D3F9)),
+        ),
+      );
+    }
+
     return Scaffold(
       extendBody: true,
       body: Container(
@@ -276,13 +383,15 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: _navigateToPlan,
+        onPressed: _isLoading ? null : _generatePlan,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: const Text(
+        child: _isLoading 
+          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          : const Text(
           "Generate Plan Overview",
           style: TextStyle(
             color: Colors.white,
@@ -347,28 +456,30 @@ class _TopHeader extends StatelessWidget {
             color: Colors.white,
           ),
           const SizedBox(width: 4),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
