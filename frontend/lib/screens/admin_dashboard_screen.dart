@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/auth.dart';
 import 'package:frontend/services/admin_service.dart';
+import 'package:frontend/screens/admin_past_papers_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -144,13 +145,21 @@ class AdminDashboardScreen extends StatelessWidget {
                         const SizedBox(height: 16),
 
                         // Quick Action Buttons
-                        _buildPrimaryActionButton('Add Past Paper'),
+                        _buildPrimaryActionButton(
+                          'Add Past Paper',
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AdminPastPapersScreen()),
+                            );
+                          },
+                        ),
                         const SizedBox(height: 12),
-                        _buildSecondaryActionButton('Add Note'),
+                        _buildSecondaryActionButton('Add Note', null),
                         const SizedBox(height: 12),
-                        _buildSecondaryActionButton('Manage Users'),
+                        _buildSecondaryActionButton('Manage Users', null),
                         const SizedBox(height: 12),
-                        _buildSecondaryActionButton('MCQ Bank Upload'),
+                        _buildSecondaryActionButton('MCQ Bank Upload', null),
 
                         const SizedBox(height: 32),
 
@@ -255,7 +264,7 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPrimaryActionButton(String title) {
+  Widget _buildPrimaryActionButton(String title, VoidCallback? onTap) {
     return Container(
       width: double.infinity,
       height: 56,
@@ -271,7 +280,7 @@ class AdminDashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
@@ -291,7 +300,7 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSecondaryActionButton(String title) {
+  Widget _buildSecondaryActionButton(String title, VoidCallback? onTap) {
     return Container(
       width: double.infinity,
       height: 56,
@@ -301,7 +310,7 @@ class AdminDashboardScreen extends StatelessWidget {
         border: Border.all(color: Colors.white12),
       ),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
