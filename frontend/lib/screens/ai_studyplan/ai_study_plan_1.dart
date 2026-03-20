@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class WeeklyActivitiesPage extends StatelessWidget {
-  const WeeklyActivitiesPage({super.key});
+  final Map<String, dynamic>? weekData;
+  const WeeklyActivitiesPage({super.key, this.weekData});
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +23,8 @@ class WeeklyActivitiesPage extends StatelessWidget {
               children: [
                 // Top bar
                 _TopHeader(
-                  title: "Weekly Activities",
-                  subtitle: "Your plan-linked quests",
+                  title: weekData != null ? "Week ${weekData!['week_number']} Activities" : "Weekly Activities",
+                  subtitle: weekData != null ? "${weekData!['focus_area']}" : "Your plan-linked quests",
                   onBack: () => Navigator.maybePop(context),
                 ),
 
@@ -131,7 +132,7 @@ class WeeklyActivitiesPage extends StatelessWidget {
                 const SizedBox(height: 14),
 
                 Text(
-                  "This Week’s Quests",
+                  weekData != null ? "AI Study Advice: ${weekData!['study_advice']}" : "This Week’s Quests",
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.70),
                     fontSize: 12,
@@ -145,37 +146,42 @@ class WeeklyActivitiesPage extends StatelessWidget {
                 Expanded(
                   child: ListView(
                     padding: EdgeInsets.zero,
-                    children: const [
-                      _QuestCard(
-                        title: "Quest 1: Review SQL JOIN Notes",
-                        subtitle1: "Short Notes → SQL Unit",
-                        subtitle2: "25 mins • Badge: “SQL Explorer”",
-                        buttonText: "Start",
-                      ),
-                      SizedBox(height: 12),
-                      _QuestCard(
-                        title: "Quest 2: Chatbot Practice (5 Qs)",
-                        subtitle1: "Ask 5 ICT concept questions",
-                        subtitle2: "15 mins • Reward: “Curiosity” bonus",
-                        buttonText: "Start",
-                      ),
-                      SizedBox(height: 12),
-                      _QuestCard(
-                        title: "Quest 3: Attempt Model Paper 02",
-                        subtitle1: "Timed Exam → Medium Level",
-                        subtitle2: "2h • League Points Enabled",
-                        buttonText: "Start",
-                      ),
-                      SizedBox(height: 12),
-                      _QuestCard(
-                        title: "Quest 4: Upload Last Week Paper",
-                        subtitle1: "OCR Marking → Weak Topic update",
-                        subtitle2: "10 mins • Mastery boosts",
-                        buttonText: "Start",
-                        isHighlighted: true,
-                      ),
-                      SizedBox(height: 22),
-                      Center(
+                    children: [
+                      if (weekData != null && weekData!['topics_to_cover'] != null) ...[
+                        for (int i = 0; i < (weekData!['topics_to_cover'] as List).length; i++) ...[
+                          _QuestCard(
+                            title: "Quest ${i + 1}: ${(weekData!['topics_to_cover'] as List)[i]}",
+                            subtitle1: "Topic Checkpoint",
+                            subtitle2: "${weekData!['suggested_hours_per_day']}h / day recommended",
+                            buttonText: "Start",
+                            isHighlighted: i == 0,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ] else ...[
+                        const _QuestCard(
+                          title: "Quest 1: Review SQL JOIN Notes",
+                          subtitle1: "Short Notes → SQL Unit",
+                          subtitle2: "25 mins • Badge: “SQL Explorer”",
+                          buttonText: "Start",
+                        ),
+                        const SizedBox(height: 12),
+                        const _QuestCard(
+                          title: "Quest 2: Chatbot Practice (5 Qs)",
+                          subtitle1: "Ask 5 ICT concept questions",
+                          subtitle2: "15 mins • Reward: “Curiosity” bonus",
+                          buttonText: "Start",
+                        ),
+                        const SizedBox(height: 12),
+                        const _QuestCard(
+                          title: "Quest 3: Attempt Model Paper 02",
+                          subtitle1: "Timed Exam → Medium Level",
+                          subtitle2: "2h • League Points Enabled",
+                          buttonText: "Start",
+                        ),
+                      ],
+                      const SizedBox(height: 22),
+                      const Center(
                         child: Text(
                           "Completing all quests unlocks the Weekly Chest",
                           style: TextStyle(
@@ -220,28 +226,30 @@ class _TopHeader extends StatelessWidget {
             color: Colors.white,
           ),
           const SizedBox(width: 6),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
