@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_1.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart';
 
 class AIStudyPlanPage2 extends StatefulWidget {
   final Map<String, dynamic>? planData;
@@ -44,7 +45,9 @@ class _AIStudyPlanPage2State extends State<AIStudyPlanPage2> {
             children: [
               /// 🔙 Back + Title
               _TopHeader(
-                title: widget.planData != null ? "My AI Study Plan" : "AI Study Plan",
+                title: widget.planData != null
+                    ? "My AI Study Plan"
+                    : "AI Study Plan",
                 subtitle: "Your personalized path to success",
                 onBack: () => Navigator.maybePop(context),
               ),
@@ -77,9 +80,7 @@ class _AIStudyPlanPage2State extends State<AIStudyPlanPage2> {
                   ),
                 ),
               ] else ...[
-                Expanded(
-                  child: _DynamicPlanView(planData: widget.planData!),
-                ),
+                Expanded(child: _DynamicPlanView(planData: widget.planData!)),
               ],
             ],
           ),
@@ -210,7 +211,7 @@ class _TermPlanView extends StatelessWidget {
             const SizedBox(height: 30),
 
             /// 🚀 Generate Button
-            _generateButton(),
+            _generateButton(context),
 
             const SizedBox(height: 12),
 
@@ -240,7 +241,7 @@ class _DynamicPlanView extends StatelessWidget {
     final weeks = plan['weeks'] as List<dynamic>? ?? [];
     final duration = weeks.length;
     final examType = plan['exam_type'] ?? 'Custom Plan';
-    
+
     // Create timeline items
     List<Widget> timelineWidgets = [];
     for (int i = 0; i < weeks.length; i++) {
@@ -268,6 +269,8 @@ class _DynamicPlanView extends StatelessWidget {
             "${w['suggested_hours_per_day']}h / day • ${w['focus_area']}",
             const Color(0xFF40C4FF),
             w,
+            weeks.length,
+            plan['created_at']?.toString(),
           ),
         ),
       );
@@ -288,6 +291,7 @@ class _DynamicPlanView extends StatelessWidget {
                     "$examType Overview",
                     style: const TextStyle(
                       color: Colors.white,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       fontStyle: FontStyle.italic,
                     ),
@@ -302,7 +306,9 @@ class _DynamicPlanView extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _chip("${weeks.isNotEmpty ? weeks[0]['suggested_hours_per_day'] : 2}h / day"),
+                      _chip(
+                        "${weeks.isNotEmpty ? weeks[0]['suggested_hours_per_day'] : 2}h / day",
+                      ),
                       _chip("AI Powered"),
                       _chip("Personalized"),
                     ],
@@ -313,22 +319,31 @@ class _DynamicPlanView extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            if (plan['ai_advice'] != null && plan['ai_advice'].toString().isNotEmpty) ...[
-              const Text(
-                "Study Advice",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                plan['ai_advice'].toString(),
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                  height: 1.4,
+            if (plan['ai_advice'] != null &&
+                plan['ai_advice'].toString().isNotEmpty) ...[
+              _glassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Study Advice",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      plan['ai_advice'].toString(),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 25),
@@ -349,11 +364,7 @@ class _DynamicPlanView extends StatelessWidget {
 
             /// 📍 Timeline Card
             if (timelineWidgets.isNotEmpty)
-              _glassCard(
-                child: Column(
-                  children: timelineWidgets,
-                ),
-              ),
+              _glassCard(child: Column(children: timelineWidgets)),
 
             const SizedBox(height: 25),
 
@@ -369,7 +380,12 @@ class _DynamicPlanView extends StatelessWidget {
             const SizedBox(height: 12),
 
             ...weeklyActivityWidgets,
-            
+
+            const SizedBox(height: 30),
+
+            /// 🚀 Generate Button
+            _generateButton(context),
+
             const SizedBox(height: 120),
           ],
         ),
@@ -500,7 +516,7 @@ class _FinalPlanView extends StatelessWidget {
             const SizedBox(height: 30),
 
             /// 🚀 Generate Button
-            _generateButton(),
+            _generateButton(context),
 
             const SizedBox(height: 12),
 
@@ -626,7 +642,7 @@ class _TabPill extends StatelessWidget {
 }
 
 /// 🔹 Generate Button
-Widget _generateButton() {
+Widget _generateButton(BuildContext context) {
   return Container(
     width: double.infinity,
     height: 55,
@@ -646,7 +662,15 @@ Widget _generateButton() {
       ],
     ),
     child: ElevatedButton(
-      onPressed: () {},
+      onPressed: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                const AIStudyPlanSetupPage(forceNewPlan: true),
+          ),
+        );
+      },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.transparent,
         shadowColor: Colors.transparent,
@@ -672,6 +696,7 @@ Widget _glassCard({required Widget child}) {
     child: BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFF0A1222).withValues(alpha: 0.05),
@@ -787,7 +812,15 @@ class _timelineItem extends StatelessWidget {
 }
 
 /// 🔹 Weekly Card
-Widget _weeklyCard(BuildContext context, String title, String subtitle, Color glowColor, [Map<String, dynamic>? weekData]) {
+Widget _weeklyCard(
+  BuildContext context,
+  String title,
+  String subtitle,
+  Color glowColor, [
+  Map<String, dynamic>? weekData,
+  int totalWeeks = 8,
+  String? createdAt,
+]) {
   return ClipRRect(
     borderRadius: BorderRadius.circular(20),
     child: BackdropFilter(
@@ -835,11 +868,20 @@ Widget _weeklyCard(BuildContext context, String title, String subtitle, Color gl
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => WeeklyActivitiesPage(weekData: weekData)),
+                  MaterialPageRoute(
+                    builder: (context) => WeeklyActivitiesPage(
+                      weekData: weekData,
+                      totalWeeks: totalWeeks,
+                      createdAt: createdAt,
+                    ),
+                  ),
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   gradient: const LinearGradient(

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart' as frontend;
 import 'exam_screen.dart';
 
 class PapersScreen extends StatefulWidget {
@@ -1074,7 +1075,12 @@ class _BottomNav extends StatelessWidget {
                   icon: Icons.calendar_month_rounded,
                   label: t('nav_plan'),
                   active: currentIndex == 1,
-                  onTap: () => onChanged(1),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const frontend.AIStudyPlanSetupPage()),
+                    );
+                  },
                 ),
                 _NavItem(
                   icon: Icons.emoji_events_rounded,

@@ -5,7 +5,8 @@ import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
 import 'package:frontend/services/study_plan_service.dart';
 
 class AIStudyPlanSetupPage extends StatefulWidget {
-  const AIStudyPlanSetupPage({super.key});
+  final bool forceNewPlan;
+  const AIStudyPlanSetupPage({super.key, this.forceNewPlan = false});
 
   @override
   State<AIStudyPlanSetupPage> createState() => _AIStudyPlanSetupPageState();
@@ -14,23 +15,36 @@ class AIStudyPlanSetupPage extends StatefulWidget {
 class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
   String _selectedPlan = 'Final Year'; // 'Final Year', 'Term', 'Subject'
   final TextEditingController _weeksController = TextEditingController();
-  
+
   String? _selectedGrade;
   String? _selectedTerm;
   String? _selectedSubject;
 
   final List<String> _planTypes = ['Final Year', 'Term', 'Subject'];
-  final List<String> _grades = ['Grade 12', 'Grade 13']; // Mapped to A/L standard
+  final List<String> _grades = [
+    'Grade 12',
+    'Grade 13',
+  ]; // Mapped to A/L standard
   final List<String> _terms = ['Term 1', 'Term 2', 'Term 3'];
-  final List<String> _subjects = ['Mathematics', 'Science', 'English', 'History', 'ICT'];
-  
+  final List<String> _subjects = [
+    'Mathematics',
+    'Science',
+    'English',
+    'History',
+    'ICT',
+  ];
+
   bool _isLoading = false;
   bool _isCheckingExistingPlan = true;
 
   @override
   void initState() {
     super.initState();
-    _checkExistingPlan();
+    if (!widget.forceNewPlan) {
+      _checkExistingPlan();
+    } else {
+      _isCheckingExistingPlan = false;
+    }
   }
 
   Future<void> _checkExistingPlan() async {
@@ -45,11 +59,8 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
 
     if (plans != null && plans.isNotEmpty) {
       final latestPlan = plans.first;
-      final planData = {
-        "id": latestPlan['id'],
-        "plan": latestPlan
-      };
-      
+      final planData = {"id": latestPlan['id'], "plan": latestPlan};
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -69,16 +80,20 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
 
   Future<void> _generatePlan() async {
     if (_weeksController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter the number of weeks.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter the number of weeks.")),
+      );
       return;
     }
 
     setState(() => _isLoading = true);
-    
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please login first.")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please login first.")));
       return;
     }
 
@@ -92,15 +107,20 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
 
     String gradeStr = 'Grade 13'; // Default
     if (_selectedGrade != null) {
-       if (_selectedGrade!.contains('12')) gradeStr = 'Grade 12';
-       else gradeStr = 'Grade 13';
+      if (_selectedGrade!.contains('12'))
+        gradeStr = 'Grade 12';
+      else
+        gradeStr = 'Grade 13';
     }
 
     int? termNumber;
     if (_selectedTerm != null) {
-      if (_selectedTerm!.contains('1')) termNumber = 1;
-      else if (_selectedTerm!.contains('2')) termNumber = 2;
-      else if (_selectedTerm!.contains('3')) termNumber = 3;
+      if (_selectedTerm!.contains('1'))
+        termNumber = 1;
+      else if (_selectedTerm!.contains('2'))
+        termNumber = 2;
+      else if (_selectedTerm!.contains('3'))
+        termNumber = 3;
     }
 
     List<String> weakTopics = [];
@@ -120,7 +140,7 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
     };
 
     final response = await StudyPlanService().generateStudyPlan(request);
-    
+
     if (!mounted) return;
     setState(() => _isLoading = false);
 
@@ -132,7 +152,13 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to generate plan securely via AI. Please try again.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Failed to generate plan securely via AI. Please try again.",
+          ),
+        ),
+      );
     }
   }
 
@@ -167,7 +193,7 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
                 onBack: () => Navigator.maybePop(context),
               ),
               const SizedBox(height: 20),
-              
+
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -206,24 +232,38 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
                                       });
                                     },
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 10,
+                                      ),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(20),
                                         gradient: isSelected
                                             ? const LinearGradient(
-                                                colors: [Color(0xFF26D3F9), Color(0xFF9D5DFF)],
+                                                colors: [
+                                                  Color(0xFF26D3F9),
+                                                  Color(0xFF9D5DFF),
+                                                ],
                                               )
                                             : null,
-                                        color: isSelected ? null : Colors.white.withOpacity(0.1),
+                                        color: isSelected
+                                            ? null
+                                            : Colors.white.withOpacity(0.1),
                                         border: Border.all(
-                                          color: isSelected ? Colors.transparent : Colors.white24,
+                                          color: isSelected
+                                              ? Colors.transparent
+                                              : Colors.white24,
                                         ),
                                       ),
                                       child: Text(
                                         type,
                                         style: TextStyle(
-                                          color: isSelected ? Colors.white : Colors.white70,
-                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : Colors.white70,
+                                          fontWeight: isSelected
+                                              ? FontWeight.bold
+                                              : FontWeight.w600,
                                         ),
                                       ),
                                     ),
@@ -234,9 +274,9 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       _glassCard(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,34 +291,56 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            
+
                             if (_selectedPlan == 'Term') ...[
-                              _buildDropdown("Class Grade", _grades, _selectedGrade, (val) => setState(() => _selectedGrade = val)),
+                              _buildDropdown(
+                                "Class Grade",
+                                _grades,
+                                _selectedGrade,
+                                (val) => setState(() => _selectedGrade = val),
+                              ),
                               const SizedBox(height: 12),
-                              _buildDropdown("School Term", _terms, _selectedTerm, (val) => setState(() => _selectedTerm = val)),
+                              _buildDropdown(
+                                "School Term",
+                                _terms,
+                                _selectedTerm,
+                                (val) => setState(() => _selectedTerm = val),
+                              ),
                               const SizedBox(height: 12),
                             ],
-                            
+
                             if (_selectedPlan == 'Subject') ...[
-                              _buildDropdown("Subject", _subjects, _selectedSubject, (val) => setState(() => _selectedSubject = val)),
+                              _buildDropdown(
+                                "Subject",
+                                _subjects,
+                                _selectedSubject,
+                                (val) => setState(() => _selectedSubject = val),
+                              ),
                               const SizedBox(height: 12),
                             ],
-                            
+
                             // Weeks input is needed for all plans
                             const Text(
                               "Duration (Weeks)",
-                              style: TextStyle(color: Colors.white70, fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
                             ),
                             const SizedBox(height: 8),
-                            _buildTextField(_weeksController, "e.g., 4", TextInputType.number),
+                            _buildTextField(
+                              _weeksController,
+                              "e.g., 4",
+                              TextInputType.number,
+                            ),
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 40),
-                      
+
                       _generateButton(),
-                      
+
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -291,7 +353,12 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
     );
   }
 
-  Widget _buildDropdown(String label, List<String> items, String? value, ValueChanged<String?> onChanged) {
+  Widget _buildDropdown(
+    String label,
+    List<String> items,
+    String? value,
+    ValueChanged<String?> onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -302,7 +369,10 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: value,
-          hint: const Text("Select option", style: TextStyle(color: Colors.white30)),
+          hint: const Text(
+            "Select option",
+            style: TextStyle(color: Colors.white30),
+          ),
           isExpanded: true,
           dropdownColor: const Color(0xFF16193A),
           icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
@@ -322,13 +392,13 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: Color(0xFF26D3F9)),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
           items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
+            return DropdownMenuItem<String>(value: item, child: Text(item));
           }).toList(),
           onChanged: onChanged,
         ),
@@ -336,7 +406,11 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, TextInputType type) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint,
+    TextInputType type,
+  ) {
     return TextField(
       controller: controller,
       keyboardType: type,
@@ -358,7 +432,10 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Color(0xFF26D3F9)),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -387,19 +464,28 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        child: _isLoading 
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-          : const Text(
-          "Generate Plan Overview",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Text(
+                "Generate Plan Overview",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
       ),
     );
   }
@@ -414,10 +500,7 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
           decoration: BoxDecoration(
             color: const Color(0xFF0A1222).withOpacity(0.05),
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.35),
