@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from ..schemas.short_note import ShortNoteCreate, ShortNoteDB, ShortNoteGenerateRequest
-from ..db.mongo import short_notes_col
+from ..db.mongo import short_notes_col, predefined_notes_col
 from ..services.gemini_service import generate_short_note_with_gemini
 import uuid
 from datetime import datetime
@@ -35,6 +35,17 @@ async def create_note(user_uid: str, note: ShortNoteCreate):
         
         await short_notes_col.insert_one(note_dict)
         return note_dict
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/predefined/all")
+async def get_predefined_notes():
+    try:
+        cursor = predefined_notes_col.find({})
+        notes = await cursor.to_list(length=100)
+        for note in notes:
+            note["_id"] = str(note.get("_id", ""))
+        return notes
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
