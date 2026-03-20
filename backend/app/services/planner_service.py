@@ -46,9 +46,9 @@ def generate_study_plan_ai(data: StudyPlanRequest) -> dict:
     [{official_syllabus}]
 
     IMPORTANT PLANNING RULE:
-    - If the Target is "Final Exam" or "Term Exam", create a comprehensive revision plan that prioritizes the "Topics to Focus On", but also pulls other topics strictly from the OFFICIAL SYLLABUS BOUNDARIES above.
-    - If the Target is "Topic-wise Plan", you MUST restrict the entire study plan ONLY to the "Topics to Focus On" provided. Do NOT add other syllabus topics.
-    - Do NOT invent topics outside of the official syllabus.
+    - If "Topics to Focus On" is specified (not 'None specified'), you MUST restrict the entire study plan ONLY to those topics. Do NOT include other units.
+    - If "Topics to Focus On" is "None specified", utilize the OFFICIAL SYLLABUS BOUNDARIES provided above.
+    - Do NOT invent topics outside of the official Sri Lankan GCE A/L ICT syllabus.
 
     CRITICAL INSTRUCTION FOR DAILY HOURS:
     Do NOT copy the dummy number (0) from the example below. You MUST dynamically calculate a realistic integer between 1 and 4 for "suggested_hours_per_day" for EACH week. Heavy topics (like Python/MySQL) should get more hours, lighter topics should get fewer.

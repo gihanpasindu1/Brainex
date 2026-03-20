@@ -18,21 +18,60 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
 
   String? _selectedGrade;
   String? _selectedTerm;
-  String? _selectedSubject;
 
-  final List<String> _planTypes = ['Final Year', 'Term', 'Subject'];
+  final List<String> _planTypes = ['Final Year', 'Term'];
   final List<String> _grades = [
     'Grade 12',
     'Grade 13',
   ]; // Mapped to A/L standard
   final List<String> _terms = ['Term 1', 'Term 2', 'Term 3'];
-  final List<String> _subjects = [
-    'Mathematics',
-    'Science',
-    'English',
-    'History',
-    'ICT',
+  final Map<String, Map<String, List<String>>> _syllabusMappings = {
+    '12': {
+      'Term 1': [
+        'Unit 1: Basic Concepts of ICT',
+        'Unit 2: Introduction to Computer',
+        'Unit 3: Data Representation'
+      ],
+      'Term 2': [
+        'Unit 4: Digital Circuits',
+        'Unit 5: Operating Systems',
+        'Unit 6: Data Communication & Networking'
+      ],
+      'Term 3': [
+        'Unit 7: System Analysis & Design',
+        'Unit 8: Database Management'
+      ]
+    },
+    '13': {
+      'Term 1': ['Unit 9: Programming'],
+      'Term 2': [
+        'Unit 10: Web Development',
+        'Unit 11: Internet of Things (IoT)'
+      ],
+      'Term 3': [
+        'Unit 12: ICT in Business',
+        'Unit 13: New Trends in ICT'
+      ]
+    }
+  };
+
+  final List<String> _allSubjects = [
+    'Unit 1: Basic Concepts of ICT',
+    'Unit 2: Introduction to Computer',
+    'Unit 3: Data Representation',
+    'Unit 4: Digital Circuits',
+    'Unit 5: Operating Systems',
+    'Unit 6: Data Communication & Networking',
+    'Unit 7: System Analysis & Design',
+    'Unit 8: Database Management',
+    'Unit 9: Programming',
+    'Unit 10: Web Development',
+    'Unit 11: Internet of Things (IoT)',
+    'Unit 12: ICT in Business',
+    'Unit 13: New Trends in ICT',
   ];
+
+  List<String> _selectedSubjects = [];
 
   bool _isLoading = false;
   bool _isCheckingExistingPlan = true;
@@ -123,11 +162,6 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
         termNumber = 3;
     }
 
-    List<String> weakTopics = [];
-    if (_selectedSubject != null) {
-      weakTopics.add(_selectedSubject!);
-    }
-
     int weeks = int.tryParse(_weeksController.text) ?? 4;
 
     final request = {
@@ -135,7 +169,7 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
       "exam_type": examType,
       "grade": gradeStr,
       "term_number": termNumber,
-      "weak_topics": weakTopics,
+      "weak_topics": _selectedSubjects,
       "weeks_to_exam": weeks,
     };
 
@@ -223,13 +257,13 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
                                   final isSelected = _selectedPlan == type;
                                   return GestureDetector(
                                     onTap: () {
-                                      setState(() {
-                                        _selectedPlan = type;
-                                        _weeksController.clear();
-                                        _selectedGrade = null;
-                                        _selectedTerm = null;
-                                        _selectedSubject = null;
-                                      });
+                                        setState(() {
+                                          _selectedPlan = type;
+                                          _weeksController.clear();
+                                          _selectedGrade = null;
+                                          _selectedTerm = null;
+                                          _selectedSubjects.clear();
+                                        });
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
@@ -297,24 +331,20 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
                                 "Class Grade",
                                 _grades,
                                 _selectedGrade,
-                                (val) => setState(() => _selectedGrade = val),
+                                (val) => setState(() {
+                                  _selectedGrade = val;
+                                  _selectedSubjects.clear(); // Reset topics on grade change
+                                }),
                               ),
                               const SizedBox(height: 12),
                               _buildDropdown(
                                 "School Term",
                                 _terms,
                                 _selectedTerm,
-                                (val) => setState(() => _selectedTerm = val),
-                              ),
-                              const SizedBox(height: 12),
-                            ],
-
-                            if (_selectedPlan == 'Subject') ...[
-                              _buildDropdown(
-                                "Subject",
-                                _subjects,
-                                _selectedSubject,
-                                (val) => setState(() => _selectedSubject = val),
+                                (val) => setState(() {
+                                  _selectedTerm = val;
+                                  _selectedSubjects.clear(); // Reset topics on term change
+                                }),
                               ),
                               const SizedBox(height: 12),
                             ],
@@ -336,6 +366,9 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      
+                      _buildSubjectSelectionUI(),
 
                       const SizedBox(height: 40),
 
@@ -403,6 +436,142 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
           onChanged: onChanged,
         ),
       ],
+    );
+  }
+
+  Widget _buildSubjectSelectionUI() {
+    List<String> availableSubjects = [];
+    
+    if (_selectedPlan == 'Final Year') {
+      availableSubjects = _allSubjects;
+    } else if (_selectedPlan == 'Term') {
+      if (_selectedGrade != null && _selectedTerm != null) {
+        // Extract '12' or '13' from 'Grade 12'
+        String gradeKey = _selectedGrade!.replaceAll(RegExp(r'[^0-9]'), '');
+        if (_syllabusMappings.containsKey(gradeKey) && 
+            _syllabusMappings[gradeKey]!.containsKey(_selectedTerm)) {
+          availableSubjects = List.from(_syllabusMappings[gradeKey]![_selectedTerm]!);
+        }
+      }
+    }
+
+    if (availableSubjects.isEmpty) {
+      if (_selectedPlan == 'Term') {
+        return _glassCard(
+          child: const Padding(
+             padding: EdgeInsets.symmetric(vertical: 8.0),
+             child: Text(
+               "Please select a Grade and Term to view available topics.",
+               style: TextStyle(color: Colors.white54, fontSize: 13, fontStyle: FontStyle.italic),
+             ),
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+
+    bool allSelected = _selectedSubjects.length == availableSubjects.length && availableSubjects.isNotEmpty;
+
+    return _glassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "3. Focus Topics/Units",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    if (allSelected) {
+                      _selectedSubjects.clear();
+                    } else {
+                      _selectedSubjects = List.from(availableSubjects);
+                    }
+                  });
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  backgroundColor: Colors.white.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  allSelected ? "Deselect All" : "Select All",
+                  style: const TextStyle(
+                    color: Color(0xFF26D3F9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "Select the units you want the AI to focus on in your study plan.",
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          ...availableSubjects.map((subject) {
+            final isSelected = _selectedSubjects.contains(subject);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedSubjects.remove(subject);
+                    } else {
+                      _selectedSubjects.add(subject);
+                    }
+                  });
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF26D3F9).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF26D3F9).withValues(alpha: 0.5) : Colors.transparent,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isSelected ? Icons.check_circle : Icons.circle_outlined,
+                        color: isSelected ? const Color(0xFF26D3F9) : Colors.white54,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          subject,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.white70,
+                            fontSize: 13,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
