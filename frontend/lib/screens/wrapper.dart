@@ -39,7 +39,7 @@ class Wrapper extends StatelessWidget {
             }
             final profile = profileSnapshot.data;
             if (profile != null && profile['onboarding_completed'] == true) {
-              return const RootScreen();
+              return RootScreen(userId: user.uid);
             } else {
               return const ExamDetails();
             }

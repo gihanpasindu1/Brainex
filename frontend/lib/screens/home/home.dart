@@ -6,7 +6,7 @@ import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
 import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
-import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart';
 import 'package:frontend/screens/papers/papers_screen.dart';
 import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
 
@@ -280,7 +280,7 @@ class BrainexHome extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AIStudyPlanPage2(),
+                              builder: (context) => const AIStudyPlanSetupPage(),
                             ),
                           );
                         },
