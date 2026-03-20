@@ -9,6 +9,7 @@ import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
 import 'package:frontend/screens/papers/papers_screen.dart';
 import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
+import 'package:frontend/services/motivation_service.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -188,24 +189,7 @@ class BrainexHome extends StatelessWidget {
                     ),
                     const SizedBox(width: 14),
                     Expanded(
-                      child: _GlassCard(
-                        radius: 22,
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t('motivation_title'),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _Pill(text: t('focused_learner')),
-                          ],
-                        ),
-                      ),
+                      child: _MotivationWidget(title: t('motivation_title')),
                     ),
                   ],
                 ),
@@ -457,6 +441,8 @@ class _Pill extends StatelessWidget {
           color: Colors.white70,
           fontWeight: FontWeight.w600,
         ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -709,3 +695,88 @@ class _NavItem extends StatelessWidget {
 }
 
 //test comment
+
+class _MotivationWidget extends StatefulWidget {
+  final String title;
+  const _MotivationWidget({required this.title});
+
+  @override
+  State<_MotivationWidget> createState() => _MotivationWidgetState();
+}
+
+class _MotivationWidgetState extends State<_MotivationWidget> {
+  final MotivationService _motivationService = MotivationService();
+  late Future<Map<String, dynamic>> _motivationFuture;
+  int? _lastQuoteId;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMotivation();
+  }
+
+  void _fetchMotivation() {
+    setState(() {
+      _motivationFuture = _motivationService.fetchMotivation(
+        lastQuoteId: _lastQuoteId,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _GlassCard(
+      radius: 22,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              GestureDetector(
+                onTap: _fetchMotivation,
+                child: const Icon(
+                  Icons.refresh,
+                  size: 14,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          FutureBuilder<Map<String, dynamic>>(
+            future: _motivationFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white70,
+                  ),
+                );
+              }
+              String quote = 'Focused learner';
+              if (snapshot.hasData && snapshot.data != null) {
+                final data = snapshot.data!;
+                quote = data['quote']?.toString() ?? quote;
+                _lastQuoteId = data['id'] is int ? data['id'] : _lastQuoteId;
+              }
+              return _Pill(text: quote);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
