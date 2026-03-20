@@ -192,7 +192,7 @@ class _PapersScreenState extends State<PapersScreen> {
                             Text(
                               isSuccess
                                   ? "Paper Generated!\nSuccesfully added to Suggested Papers."
-                                  : "Generating Paper with AI...\nThis usually takes 15-25 seconds",
+                                  : "Generating Paper with AI...\nThis usually takes 1-3 minutes",
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -972,7 +972,7 @@ class _PapersScreenState extends State<PapersScreen> {
 
       final response = await http
           .post(uri, headers: {"Content-Type": "application/json"}, body: jsonEncode(payload))
-          .timeout(const Duration(seconds: 120));
+          .timeout(const Duration(seconds: 300));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = jsonDecode(response.body);
