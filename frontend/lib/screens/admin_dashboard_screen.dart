@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/services/auth.dart';
+import 'package:frontend/services/admin_service.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -54,6 +56,13 @@ class AdminDashboardScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.logout, color: Colors.white, size: 24),
+                      onPressed: () async {
+                        await AuthServices().signOut();
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -85,20 +94,41 @@ class AdminDashboardScreen extends StatelessWidget {
                         const SizedBox(height: 16),
 
                         // Overview Grid
-                        Row(
-                          children: [
-                            Expanded(child: _buildMetricCard('Users', '1,248')),
-                            const SizedBox(width: 16),
-                            Expanded(child: _buildMetricCard('Papers', '542')),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(child: _buildMetricCard('Notes', '189')),
-                            const SizedBox(width: 16),
-                            Expanded(child: _buildMetricCard('Challenges', '24')),
-                          ],
+                        FutureBuilder<Map<String, dynamic>?>(
+                          future: AdminService().getAdminStats(),
+                          builder: (context, snapshot) {
+                            String users = '...';
+                            String papers = '...';
+                            String notes = '...';
+                            String challenges = '...';
+
+                            if (snapshot.connectionState == ConnectionState.done && snapshot.data != null) {
+                              users = snapshot.data!['users']?.toString() ?? '0';
+                              papers = snapshot.data!['papers']?.toString() ?? '0';
+                              notes = snapshot.data!['notes']?.toString() ?? '0';
+                              challenges = snapshot.data!['challenges']?.toString() ?? '0';
+                            }
+
+                            return Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(child: _buildMetricCard('Users', users)),
+                                    const SizedBox(width: 16),
+                                    Expanded(child: _buildMetricCard('Papers', papers)),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(child: _buildMetricCard('Notes', notes)),
+                                    const SizedBox(width: 16),
+                                    Expanded(child: _buildMetricCard('Challenges', challenges)),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 32),
