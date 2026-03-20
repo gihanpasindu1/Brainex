@@ -80,8 +80,22 @@ class _FriendChallengeLobbyScreenState
 
       final questionData =
           jsonDecode(questionsResponse.body) as Map<String, dynamic>;
-      final durationSeconds =
+
+      // Calculate true remaining time from server's ends_at so the guest's
+      // countdown is in sync with the host, not reset to full duration.
+      int durationSeconds =
           (data['duration_seconds'] as num?)?.toInt() ?? 7200;
+      final endsAtRaw = data['ends_at'] as String?;
+      if (endsAtRaw != null) {
+        try {
+          final endsAt = DateTime.parse(endsAtRaw).toUtc();
+          final now = DateTime.now().toUtc();
+          final remaining = endsAt.difference(now).inSeconds;
+          if (remaining > 0 && remaining < durationSeconds) {
+            durationSeconds = remaining;
+          }
+        } catch (_) {}
+      }
 
       if (!mounted) return;
       Navigator.pushReplacement(
