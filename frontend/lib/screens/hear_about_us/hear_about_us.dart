@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:frontend/screens/root_screen.dart';
+import 'package:frontend/screens/admin_dashboard_screen.dart';
 import 'package:frontend/services/user_profile_service.dart';
 
 class HearAboutUs extends StatefulWidget {
@@ -38,11 +39,19 @@ class _HearAboutUsPageState extends State<HearAboutUs> {
     setState(() => _isLoading = false);
 
     if (success) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const RootScreen()),
-        (route) => false,
-      );
+      if (user.uid == '2zJK3J7TClQ7Sk6uTKMqHgOwpsu2') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const RootScreen()),
+          (route) => false,
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to save profile. Please try again.')),
