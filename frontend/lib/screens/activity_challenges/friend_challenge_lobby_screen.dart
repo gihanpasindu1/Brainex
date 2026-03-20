@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
@@ -26,6 +27,7 @@ class FriendChallengeLobbyScreen extends StatefulWidget {
 class _FriendChallengeLobbyScreenState
     extends State<FriendChallengeLobbyScreen> {
   bool _isStarting = false;
+  Timer? _pollTimer;
 
   String get _shareUrl => 'brainex://challenge/$_challengeId';
 
@@ -33,6 +35,72 @@ class _FriendChallengeLobbyScreenState
       widget.challengeData['host_user_id'] == widget.currentUserId;
 
   String get _challengeId => widget.challengeData['id'] as String;
+
+  @override
+  void initState() {
+    super.initState();
+    // Guests poll the backend every 3 s until the host starts the challenge.
+    if (!_isHost) {
+      _pollTimer = Timer.periodic(
+        const Duration(seconds: 3),
+        (_) => _pollForStart(),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _pollForStart() async {
+    if (!mounted) return;
+    try {
+      final uri = Uri.parse(
+        'http://10.0.2.2:8000/friend-challenges/$_challengeId',
+      );
+      final response = await http.get(uri);
+      if (!mounted) return;
+      if (response.statusCode != 200) return;
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['status'] != 'started') return;
+
+      // Challenge has started — cancel polling and go to exam.
+      _pollTimer?.cancel();
+
+      final questionsUri = Uri.parse(
+        'http://10.0.2.2:8000/friend-challenges/$_challengeId/questions'
+        '?user_id=${widget.currentUserId}',
+      );
+      final questionsResponse = await http.get(questionsUri);
+      if (!mounted) return;
+      if (questionsResponse.statusCode != 200) return;
+
+      final questionData =
+          jsonDecode(questionsResponse.body) as Map<String, dynamic>;
+      final durationSeconds =
+          (data['duration_seconds'] as num?)?.toInt() ?? 7200;
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FriendChallengeExamScreen(
+            challengeId: _challengeId,
+            userId: widget.currentUserId,
+            title: data['title'] as String? ?? 'Friend Challenge',
+            durationSeconds: durationSeconds,
+            questions:
+                (questionData['questions'] as List<dynamic>? ?? const []),
+          ),
+        ),
+      );
+    } catch (_) {
+      // Silently ignore poll errors
+    }
+  }
 
   Future<void> _shareChallengeLink() async {
     final inviteCode = widget.challengeData['invite_code'] as String? ?? '';
