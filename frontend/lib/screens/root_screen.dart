@@ -29,7 +29,14 @@ class _RootScreenState extends State<RootScreen> {
         child: [
           const BrainexHome(),
           const AIStudyPlanPage2(),
-          LeaderboardPage(userId: widget.userId),
+          LeaderboardPage(
+            userId: widget.userId,
+            onBack: () {
+              setState(() {
+                _currentIndex = 0;
+              });
+            },
+          ),
           const ProfileScreen(),
         ][_currentIndex],
       ),

@@ -9,11 +9,13 @@ enum LeaderboardTab { global, friends }
 class LeaderboardPage extends StatefulWidget {
   final LeaderboardTab initialTab;
   final String userId;
+  final VoidCallback? onBack;
 
   const LeaderboardPage({
     super.key,
     this.initialTab = LeaderboardTab.global,
     required this.userId,
+    this.onBack,
   });
 
   @override
@@ -192,7 +194,16 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         children: [
           Row(
             children: [
-              const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              GestureDetector(
+                onTap: () {
+                  if (widget.onBack != null) {
+                    widget.onBack!();
+                  } else if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              ),
               const SizedBox(width: 10),
               const Text(
                 'Leaderboard',
