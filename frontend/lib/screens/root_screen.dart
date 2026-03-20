@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/home/home.dart';
 import 'package:frontend/screens/profile%20screen/profile_screen.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+import 'package:frontend/screens/leaderboard/leaderboard_page.dart';
 import 'package:frontend/widgets/premium_bottom_nav.dart';
 
 class RootScreen extends StatefulWidget {
@@ -18,15 +19,7 @@ class _RootScreenState extends State<RootScreen> {
   final List<Widget> _screens = [
     const BrainexHome(), // 0: Home
     const AIStudyPlanPage2(), // 1: Plan
-    const Scaffold(
-      backgroundColor: Color(0xFF0D1026),
-      body: Center(
-        child: Text(
-          "Leaderboard Coming Soon",
-          style: TextStyle(color: Colors.white70),
-        ),
-      ),
-    ), // 2: Leaderboard (Placeholder)
+    const LeaderboardPage(), // 2: Leaderboard
     const ProfileScreen(), // 3: Profile
   ];
 
