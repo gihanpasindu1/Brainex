@@ -62,10 +62,23 @@ def generate_study_plan_ai(data: StudyPlanRequest) -> dict:
           "focus_area": "Main topic for the week",
           "topics_to_cover": ["Subtopic 1", "Subtopic 2", "Subtopic 3"],
           "suggested_hours_per_day": 0,
-          "study_advice": "Specific study strategy or tip for this week's content."
+          "study_advice": "Specific study strategy or tip for this week's content.",
+          "days": [
+            {{
+              "day_number": 1,
+              "topic": "Logic Gates",
+              "learning_step": "Read AND, OR, NOT gate definitions",
+              "understanding_step": "Look at 3 truth table examples",
+              "practice_step": "Answer 15 MCQs on Logic Gates",
+              "review_step": "Check wrong answers and read explanations",
+              "revision_step": "Revise yesterday's Boolean Algebra notes for 15 minutes",
+              "checkpoint": "Did you finish all tasks? Confidence level: Good, Average, Weak"
+            }}
+          ]
         }}
       ]
     }}
+    CRITICAL: YOU MUST generate exactly 7 elements in the "days" array for each week (day_number 1 through 7). Each day MUST have all 7 steps defined.
     """
 
     response = client.models.generate_content(
