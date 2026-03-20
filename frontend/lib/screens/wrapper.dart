@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/models/user_model.dart';
 import 'package:frontend/screens/root_screen.dart';
+import 'package:frontend/screens/admin_dashboard_screen.dart';
 import 'package:frontend/screens/language/language_screen.dart';
 import 'package:frontend/screens/exam_details/exam_details.dart';
 import 'package:frontend/services/auth.dart';
@@ -27,6 +28,10 @@ class Wrapper extends StatelessWidget {
 
         if (user == null) {
           return const LanguageScreen();
+        }
+
+        if (user.uid == '2zJK3J7TClQ7Sk6uTKMqHgOwpsu2') {
+          return const AdminDashboardScreen();
         }
 
         return FutureBuilder<Map<String, dynamic>?>(
