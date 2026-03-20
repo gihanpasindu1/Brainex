@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/home/home.dart';
 import 'package:frontend/screens/profile%20screen/profile_screen.dart';
-import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart' as frontend;
 import 'package:frontend/screens/leaderboard/leaderboard_page.dart';
 import 'package:frontend/widgets/premium_bottom_nav.dart';
 
@@ -16,7 +16,6 @@ class RootScreen extends StatefulWidget {
 class _RootScreenState extends State<RootScreen> {
   int _currentIndex = 0;
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +27,6 @@ class _RootScreenState extends State<RootScreen> {
         },
         child: [
           const BrainexHome(),
-          const AIStudyPlanPage2(),
           LeaderboardPage(
             userId: widget.userId,
             onBack: () {
@@ -38,11 +36,18 @@ class _RootScreenState extends State<RootScreen> {
             },
           ),
           const ProfileScreen(),
-        ][_currentIndex],
+        ][_currentIndex > 1 ? _currentIndex - 1 : _currentIndex],
       ),
       bottomNavigationBar: PremiumBottomNav(
         currentIndex: _currentIndex,
         onTap: (index) {
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const frontend.AIStudyPlanSetupPage()),
+            );
+            return;
+          }
           if (_currentIndex != index) {
             setState(() {
               _currentIndex = index;
