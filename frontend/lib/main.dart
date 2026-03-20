@@ -1,15 +1,16 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:frontend/providers/locale_provider.dart';
+import 'package:frontend/screens/activity_challenges/friend_challenge_entry_screen.dart';
 import 'package:frontend/screens/splash_screen/splash_screen.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/screens/create_profile/create_profile.dart';
-import 'package:frontend/screens/exam_details/exam_details.dart';
-import 'package:frontend/screens/choose_plan/choose_plan.dart';
-import 'package:frontend/screens/hear_about_us/hear_about_us.dart';
+import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
+import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,9 +23,7 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => LocaleProvider())],
       child: const MyApp(),
     ),
   );
@@ -35,17 +34,82 @@ class MyApp extends StatelessWidget {
 
   static const _overlayStyle = SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light, 
-    statusBarBrightness: Brightness.dark, 
-    systemNavigationBarColor: Colors.black, 
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemNavigationBarColor: Colors.black,
     systemNavigationBarIconBrightness: Brightness.light,
   );
+
+  @override
+  Widget build(BuildContext context) {
+    return const _AppRoot();
+  }
+}
+
+class _AppRoot extends StatefulWidget {
+  const _AppRoot();
+
+  @override
+  State<_AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<_AppRoot> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  StreamSubscription<Uri>? _linkSubscription;
+  final AppLinks _appLinks = AppLinks();
+  static const _overlayStyle = MyApp._overlayStyle;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  Future<void> _initDeepLinks() async {
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (_) {}
+
+    _linkSubscription = _appLinks.uriLinkStream.listen(_handleDeepLink);
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme != 'brainex') return;
+
+    String? challengeId;
+    if (uri.host == 'challenge' && uri.pathSegments.isNotEmpty) {
+      challengeId = uri.pathSegments.first;
+    }
+
+    if (challengeId == null || challengeId.isEmpty) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = _navigatorKey.currentState;
+      if (navigator == null) return;
+
+      navigator.push(
+        MaterialPageRoute(
+          builder: (_) => FriendChallengeEntryScreen(challengeId: challengeId!),
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<LocaleProvider>(
       builder: (context, provider, child) {
         return MaterialApp(
+          navigatorKey: _navigatorKey,
           debugShowCheckedModeBanner: false,
           locale: provider.locale,
           supportedLocales: const [
@@ -70,9 +134,8 @@ class MyApp extends StatelessWidget {
           ),
           routes: {
             '/profile': (context) => const CreateProfile(),
-            '/exam-details': (context) => const ExamDetails(),
-            '/plan': (context) => const ChoosePlan(),
-            '/referral': (context) => const HearAboutUs(),
+            '/activity-challenges': (context) =>
+                const ActivityChallengesScreen(),
           },
           home: const SplashScreen(),
         );

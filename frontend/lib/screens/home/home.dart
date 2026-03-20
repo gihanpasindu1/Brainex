@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:frontend/services/auth.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
@@ -9,6 +8,7 @@ import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
 import 'package:frontend/screens/papers/papers_screen.dart';
+import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -32,12 +32,6 @@ class BrainexHome extends StatelessWidget {
     final tr = AppLocalizations.of(context);
     String t(String key) => tr?.translate(key) ?? key;
     final localeProvider = Provider.of<LocaleProvider>(context);
-
-    // Logout logic
-    Future<void> logout() async {
-      await localeProvider.clearLocale();
-      await AuthServices().signOut();
-    }
 
     return Scaffold(
       extendBody: true,
@@ -102,9 +96,8 @@ class BrainexHome extends StatelessWidget {
                         // Let's add the logout functionality to a long press or a separate button?
                         // The existing code had a logout button. I'll add a logout button.
                         _GlowIconButton(
-                          icon: Icons
-                              .logout, // Changed from notifications to Logout for utility
-                          onTap: logout,
+                          icon: Icons.notifications_none,
+                          onTap: () {},
                         ),
                       ],
                     ),
@@ -297,6 +290,15 @@ class BrainexHome extends StatelessWidget {
                         icon: Icons.public_rounded,
                         color: const Color(0xFFFB7185),
                         subtitle: t('compete_live'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ActivityChallengesScreen(),
+                            ),
+                          );
+                        },
                       ),
                       _PremiumActionCard(
                         title: t('paper_correction'),

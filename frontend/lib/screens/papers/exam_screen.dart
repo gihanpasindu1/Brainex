@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
+import 'package:frontend/services/backend_config.dart';
 import 'feedback_screen.dart';
 
 class ModelPaperOverviewScreen extends StatefulWidget {
@@ -18,7 +21,7 @@ class ModelPaperOverviewScreen extends StatefulWidget {
 class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
   int currentQuestionIndex = 0;
   List<dynamic> questions = [];
-  bool isLoading = true;
+  bool isLoading = false;
   bool isSubmitting = false;
 
   late Timer _timer;
@@ -142,11 +145,17 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
         });
       }
 
-      final uri = Uri.parse('http://10.0.2.2:8000/modelpapers/analyze');
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final submissionId = const Uuid().v4();
       final response = await http.post(
-        uri,
+        Uri.parse('${BackendConfig.baseUrl}/modelpapers/analyze'),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"results": results}),
+        body: jsonEncode({
+          "user_id": currentUser?.uid,
+          "paper_id": widget.paperData['id'],
+          "submission_id": submissionId,
+          "results": results,
+        }),
       );
 
       if (response.statusCode == 200) {

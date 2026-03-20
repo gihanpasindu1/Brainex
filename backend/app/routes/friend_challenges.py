@@ -31,6 +31,11 @@ async def create_friend_challenge_endpoint(req: CreateFriendChallengeRequest):
         title=req.title,
         duration_seconds=req.duration_seconds,
         question_count=req.question_count,
+        paper_type=req.paper_type,
+        difficulty=req.difficulty,
+        grade=req.grade,
+        term=req.term,
+        topic=req.topic,
     )
 
 

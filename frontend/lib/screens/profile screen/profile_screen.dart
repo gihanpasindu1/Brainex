@@ -1,7 +1,30 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:frontend/services/user_profile_service.dart';
+import 'package:frontend/screens/profile screen/edit_profile_screen.dart';
+import 'package:frontend/services/auth.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late Future<Map<String, dynamic>?> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _profileFuture = UserProfileService().getUserProfile(user.uid);
+    } else {
+      _profileFuture = Future.value(null);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +70,45 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 25),
-                  const _UserCard(),
-                  const SizedBox(height: 20),
-                  const _StatsCard(),
+                  FutureBuilder<Map<String, dynamic>?>(
+                    future: _profileFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: CircularProgressIndicator(color: Colors.cyanAccent),
+                          ),
+                        );
+                      }
+                      if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Text("Error loading profile data", style: TextStyle(color: Colors.white54)),
+                          ),
+                        );
+                      }
+                      final profile = snapshot.data!;
+                      return Column(
+                        children: [
+                          _UserCard(
+                            profile: profile,
+                            onEditComplete: () {
+                              setState(() {
+                                final user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  _profileFuture = UserProfileService().getUserProfile(user.uid);
+                                }
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          _StatsCard(profile: profile),
+                        ],
+                      );
+                    },
+                  ),
                   const SizedBox(height: 25),
 
                   // Badges Title
@@ -77,9 +136,27 @@ class ProfileScreen extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 10),
-
                   const _MoreSection(),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      label: const Text(
+                        "Log Out",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
+                        side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.5)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      onPressed: () async {
+                        await AuthServices().signOut();
+                      },
+                    ),
+                  ),
                   const SizedBox(height: 100), // Space for bottom nav
                 ],
               ),
@@ -132,10 +209,45 @@ class DarkCard extends StatelessWidget {
 /// USER CARD
 //////////////////////////////////////////////////////////////
 class _UserCard extends StatelessWidget {
-  const _UserCard();
+  final Map<String, dynamic> profile;
+  final VoidCallback onEditComplete;
+  const _UserCard({required this.profile, required this.onEditComplete});
+
+  Widget _buildAvatar() {
+    final base64String = profile['profile_picture_base64'];
+    if (base64String != null && base64String.isNotEmpty) {
+      try {
+        final bytes = base64Decode(base64String);
+        return ClipOval(
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          ),
+        );
+      } catch (_) {}
+    }
+    return const Icon(Icons.person, color: Colors.white38, size: 40);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final int xp = profile['total_xp'] ?? 0;
+    
+    Map<String, dynamic> leagueInfo;
+    if (xp >= 10000) {
+      leagueInfo = {"name": "Diamond League", "color": const Color(0xFF00E5FF)};
+    } else if (xp >= 4000) {
+      leagueInfo = {"name": "Platinum League", "color": const Color(0xFFE5E4E2)};
+    } else if (xp >= 1000) {
+      leagueInfo = {"name": "Gold League", "color": const Color(0xFFFFD700)};
+    } else if (xp >= 250) {
+      leagueInfo = {"name": "Silver League", "color": const Color(0xFFC0C0C0)};
+    } else {
+      leagueInfo = {"name": "Bronze League", "color": const Color(0xFFCD7F32)};
+    }
+
     return DarkCard(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -161,7 +273,7 @@ class _UserCard extends StatelessWidget {
                 color: Color(0xFF16193A),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person, color: Colors.white38, size: 40),
+              child: _buildAvatar(),
             ),
           ),
           const SizedBox(width: 16),
@@ -170,40 +282,40 @@ class _UserCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  "You",
-                  style: TextStyle(
+                Text(
+                  profile['name'] ?? "You",
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  "A/L ICT • 2026 Batch",
-                  style: TextStyle(
+                Text(
+                  "${profile['grade'] ?? 'Unknown'} • ${profile['exam_year'] ?? 'Unknown'} Batch",
+                  style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Gold League Badge
+                // Dynamic League Badge
                 Row(
                   children: [
                     Container(
                       width: 14,
                       height: 14,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFC107), // Gold
+                      decoration: BoxDecoration(
+                        color: leagueInfo['color'] as Color,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Text(
-                      "Gold League",
+                    Text(
+                      leagueInfo['name'] as String,
                       style: TextStyle(
-                        color: Color(0xFFFFC107),
+                        color: leagueInfo['color'] as Color,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -214,23 +326,36 @@ class _UserCard extends StatelessWidget {
             ),
           ),
           // Edit Button
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF40C4FF),
-                  Color(0xFF8C9EFF),
-                ], // Cyan to Purple tint
+          GestureDetector(
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditProfileScreen(currentProfile: profile),
+                ),
+              );
+              if (result == true) {
+                onEditComplete();
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF40C4FF),
+                    Color(0xFF8C9EFF),
+                  ], // Cyan to Purple tint
+                ),
               ),
-            ),
-            child: const Text(
-              "Edit",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
+              child: const Text(
+                "Edit",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
             ),
           ),
@@ -244,7 +369,8 @@ class _UserCard extends StatelessWidget {
 /// STATS CARD
 //////////////////////////////////////////////////////////////
 class _StatsCard extends StatelessWidget {
-  const _StatsCard();
+  final Map<String, dynamic> profile;
+  const _StatsCard({required this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -259,17 +385,17 @@ class _StatsCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.1),
               thickness: 1,
             ),
-            const _StatItem("Papers", "📝", "14", Colors.white),
+            _StatItem("Papers", "📝", "${profile['papers_completed'] ?? 0}", Colors.white),
             VerticalDivider(
               color: Colors.white.withValues(alpha: 0.1),
               thickness: 1,
             ),
-            const _StatItem(
-              "Accuracy",
+            _StatItem(
+              "XP Points",
               "🎯",
-              "78%",
-              Color(0xFF69F0AE),
-            ), // Slightly green text
+              "${profile['total_xp'] ?? 0}",
+              const Color(0xFF69F0AE),
+            ),
           ],
         ),
       ),

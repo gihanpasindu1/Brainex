@@ -5,25 +5,19 @@ from datetime import datetime
 # --- Incoming Request Models ---
 class StudyPlanRequest(BaseModel):
     user_id: str
-    exam_type: str = Field(..., description="'Final Exam' or 'Term Exam'")
+    exam_type: str = Field(..., description="'Final Exam', 'Term Exam', or 'Topic-wise Plan'")
     grade: str = Field(..., description="'Grade 12' or 'Grade 13'")
     term_number: Optional[int] = Field(None, description="1, 2, or 3 (if Term Exam)")
     weak_topics: List[str] = Field(default_factory=list, description="Topics user struggles with")
-    hours_per_day: int = Field(..., ge=1, le=12)
-    days_to_exam: int = Field(..., ge=7)
+    weeks_to_exam: int = Field(..., ge=1, description="Number of weeks until the exam")
 
 # --- AI Response / Sub-models ---
-class DailyTask(BaseModel):
-    day_number: int
-    topic: str
-    subtopics: List[str]
-    estimated_minutes: int
-    task_type: str
-
 class WeeklyPlan(BaseModel):
     week_number: int
     focus_area: str
-    daily_tasks: List[DailyTask]
+    topics_to_cover: List[str]
+    suggested_hours_per_day: int
+    study_advice: str
 
 # --- Database Model ---
 class StudyPlanDB(BaseModel):
