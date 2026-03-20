@@ -29,6 +29,7 @@ async def create_note(user_uid: str, note: ShortNoteCreate):
             "_id": note_id,
             "title": note.title,
             "desc": note.desc,
+            "content": note.content,
             "user_uid": user_uid,
             "date": date_str
         }

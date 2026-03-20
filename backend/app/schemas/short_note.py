@@ -4,6 +4,7 @@ from typing import Optional
 class ShortNoteCreate(BaseModel):
     title: str
     desc: str
+    content: str
 
 class ShortNoteDB(ShortNoteCreate):
     id: str = Field(alias="_id")

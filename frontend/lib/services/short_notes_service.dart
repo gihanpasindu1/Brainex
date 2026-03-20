@@ -27,6 +27,7 @@ class ShortNotesService {
         return {
           'title': data['title']?.toString() ?? 'Generated Note',
           'desc': data['desc']?.toString() ?? '',
+          'content': data['content']?.toString() ?? '',
         };
       } else {
         throw Exception('Failed to generate note: ${response.statusCode}');
@@ -36,7 +37,7 @@ class ShortNotesService {
     }
   }
 
-  static Future<ShortNoteModel> saveShortNote(String userUid, String title, String desc) async {
+  static Future<ShortNoteModel> saveShortNote(String userUid, String title, String desc, String content) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/short_notes/$userUid'),
@@ -44,6 +45,7 @@ class ShortNotesService {
         body: jsonEncode({
           'title': title,
           'desc': desc,
+          'content': content,
         }),
       );
 
