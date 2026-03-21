@@ -118,10 +118,34 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
   }
 
   Future<void> _generatePlan() async {
-    if (_weeksController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter the number of weeks.")),
-      );
+    // 1. Validate Weeks (Duration)
+    String weeksText = _weeksController.text.trim();
+    if (weeksText.isEmpty) {
+      _showError("Please enter the number of weeks.");
+      return;
+    }
+
+    int? weeks = int.tryParse(weeksText);
+    if (weeks == null || weeks <= 0) {
+      _showError("Please enter a valid number of weeks (at least 1).");
+      return;
+    }
+
+    // 2. Validate Term selection (if applicable)
+    if (_selectedPlan == 'Term') {
+      if (_selectedGrade == null) {
+        _showError("Please select a Class Grade.");
+        return;
+      }
+      if (_selectedTerm == null) {
+        _showError("Please select a School Term.");
+        return;
+      }
+    }
+
+    // 3. Validate Subject selection (Unit Selection)
+    if (_selectedSubjects.isEmpty) {
+      _showError("Please select at least one Focus Topic/Unit.");
       return;
     }
 
@@ -130,9 +154,7 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please login first.")));
+      _showError("Please login first.");
       return;
     }
 
@@ -162,7 +184,6 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
         termNumber = 3;
     }
 
-    int weeks = int.tryParse(_weeksController.text) ?? 4;
 
     final request = {
       "user_id": user.uid,
@@ -655,6 +676,18 @@ class _AIStudyPlanSetupPageState extends State<AIStudyPlanSetupPage> {
                   fontStyle: FontStyle.italic,
                 ),
               ),
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
