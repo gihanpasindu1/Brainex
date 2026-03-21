@@ -383,7 +383,7 @@ async def _gemini_generate(prompt: str) -> str:
     def _run():
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
         return client.models.generate_content(
-            model="gemini-3.1-pro-preview",
+            model="gemini-2.5-flash",
             contents=types.Part.from_text(text=prompt),
             config=types.GenerateContentConfig(
                 temperature=0.6,
