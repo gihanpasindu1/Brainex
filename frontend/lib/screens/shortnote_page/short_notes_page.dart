@@ -39,24 +39,28 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
       "desc":
           "A complete list of formulas for Mechanics, Waves, and Thermodynamics...",
       "date": "Updated: Sep 2023",
+      "content": "• F=ma\n• E=mc^2\n• v=u+at",
     },
     {
       "title": "Math Cheat Sheet",
       "desc":
           "Quick reference for Algebra, Trigonometry, and Calculus identities...",
       "date": "Updated: Aug 2023",
+      "content": "• a^2 + b^2 = c^2\n• sin(x) = Opposite/Hypotenuse\n• d/dx(x^n) = n*x^(n-1)",
     },
     {
       "title": "Chemistry Periodic Table",
       "desc":
           "High definition periodic table with atomic properties and trends...",
       "date": "Updated: Jul 2023",
+      "content": "• H: Hydrogen (1)\n• He: Helium (2)\n• Li: Lithium (3)",
     },
     {
       "title": "English Grammar Rules",
       "desc":
           "Comprehensive grammar guide covering tenses, voice, and speech...",
       "date": "Updated: Jun 2023",
+      "content": "• Noun: a person, place, or thing\n• Verb: an action word\n• Adjective: describes a noun",
     },
   ];
 
@@ -321,6 +325,14 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                             if (dialogContext.mounted) {
                               Navigator.pop(dialogContext);
                             }
+                            if (mounted) {
+                              _showNoteBottomSheet(
+                                savedNote.title,
+                                savedNote.desc,
+                                savedNote.content,
+                                savedNote.date,
+                              );
+                            }
                           } catch (e) {
                             if (!context.mounted) return;
                             setDialogState(() => isSaving = false);
@@ -337,6 +349,110 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                         ),
                       ),
               ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showNoteBottomSheet(String title, String desc, String content, String date) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, controller) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF0B1326),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(70),
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: controller,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.access_time_rounded, color: Colors.white54, size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                date,
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (desc.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withAlpha(30)),
+                              ),
+                              child: Text(
+                                desc,
+                                style: TextStyle(
+                                  color: Colors.white.withAlpha(200),
+                                  fontSize: 14,
+                                  fontStyle: FontStyle.italic,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+                          const Divider(color: Colors.white24, height: 1),
+                          const SizedBox(height: 24),
+                          Text(
+                            content.isEmpty ? "No content available." : content,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              height: 1.7,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -462,15 +578,23 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                                           itemBuilder: (context, index) {
                                             final note =
                                                 _filteredMyNotes[index];
-                                            return Column(
-                                              children: [
-                                                _NoteCard(
-                                                  title: note.title,
-                                                  desc: note.desc,
-                                                  dateText: note.date,
-                                                ),
-                                                const SizedBox(height: 12),
-                                              ],
+                                            return GestureDetector(
+                                              onTap: () => _showNoteBottomSheet(
+                                                note.title,
+                                                note.desc,
+                                                note.content,
+                                                note.date,
+                                              ),
+                                              child: Column(
+                                                children: [
+                                                  _NoteCard(
+                                                    title: note.title,
+                                                    desc: note.desc,
+                                                    dateText: note.date,
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                ],
+                                              ),
                                             );
                                           },
                                         ),
@@ -481,15 +605,23 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                                     itemBuilder: (context, index) {
                                       final note =
                                           _filteredPredefinedNotes[index];
-                                      return Column(
-                                        children: [
-                                          _NoteCard(
-                                            title: note["title"]!,
-                                            desc: note["desc"]!,
-                                            dateText: note["date"]!,
-                                          ),
-                                          const SizedBox(height: 12),
-                                        ],
+                                      return GestureDetector(
+                                        onTap: () => _showNoteBottomSheet(
+                                          note["title"] ?? "",
+                                          note["desc"] ?? "",
+                                          note["content"] ?? "",
+                                          note["date"] ?? "",
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            _NoteCard(
+                                              title: note["title"]!,
+                                              desc: note["desc"]!,
+                                              dateText: note["date"]!,
+                                            ),
+                                            const SizedBox(height: 12),
+                                          ],
+                                        ),
                                       );
                                     },
                                   ),
