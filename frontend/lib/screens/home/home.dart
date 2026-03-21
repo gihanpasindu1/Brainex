@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/localization_service.dart';
@@ -202,7 +203,20 @@ class BrainexHome extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            _Pill(text: t('focused_learner')),
+                            _Pill(
+                              text: [
+                                'Stay Focused', 'Dream Big', 'Work Hard',
+                                'Keep Pushing', 'Never Settle', 'Think Big',
+                                'Aim High', 'Keep Growing', 'Be Great',
+                                'Stay Sharp', 'Stay Strong', 'Move Forward',
+                                'Be Bold', 'Push Limits', 'Keep Going',
+                                'Rise Up', 'Take Action', 'Stay Positive',
+                                'Work Smart', 'Believe Now', 'No Excuses',
+                                'Chase Dreams', 'Keep Learning', 'Stay Humble',
+                                'Own It', 'Think Fast', 'Stay Calm',
+                                'Show Up', 'Keep Building', 'Go Hard'
+                              ][Random().nextInt(30)],
+                            ),
                           ],
                         ),
                       ),
