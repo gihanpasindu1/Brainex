@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/models/user_model.dart';
 import 'package:frontend/screens/root_screen.dart';
-import 'package:frontend/screens/admin_dashboard_screen.dart';
 import 'package:frontend/screens/language/language_screen.dart';
 import 'package:frontend/screens/exam_details/exam_details.dart';
-import 'package:frontend/screens/splash_screen/splash_screen.dart';
 import 'package:frontend/services/auth.dart';
 import 'package:frontend/services/user_profile_service.dart';
+
+import 'package:frontend/screens/splash_screen/splash_screen.dart';
 
 class Wrapper extends StatefulWidget {
   const Wrapper({super.key});
@@ -18,17 +18,18 @@ class Wrapper extends StatefulWidget {
 class _WrapperState extends State<Wrapper> {
   final AuthServices _auth = AuthServices();
   final UserProfileService _profileService = UserProfileService();
-  bool _minSplashDurationMet = false;
+  bool _minSplashFinished = false;
+
+  String? _lastUid;
+  Future<Map<String, dynamic>?>? _profileFuture;
 
   @override
   void initState() {
     super.initState();
-    // Ensures the actual animated splash screen shows for at least 4.5 seconds
-    // to play its animations fully.
-    Future.delayed(const Duration(milliseconds: 4500), () {
+    Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
         setState(() {
-          _minSplashDurationMet = true;
+          _minSplashFinished = true;
         });
       }
     });
@@ -39,32 +40,33 @@ class _WrapperState extends State<Wrapper> {
     return StreamBuilder<UserModel?>(
       stream: _auth.user,
       builder: (context, snapshot) {
-        // If data is loading or we haven't met the minimum splash time,
-        // we return the exact same SplashScreen widget. Because it's const, 
-        // Flutter reuses the same state and its animations continue smoothly!
-        if (!_minSplashDurationMet || snapshot.connectionState == ConnectionState.waiting) {
-          return const SplashScreen();
-        }
-
+        final bool isAuthLoading = snapshot.connectionState == ConnectionState.waiting;
         final user = snapshot.data;
 
-        if (user == null) {
-          return const LanguageScreen();
-        }
-
-        if (user.uid == '2zJK3J7TClQ7Sk6uTKMqHgOwpsu2') {
-          return const AdminDashboardScreen();
+        // Manage caching the profile future to avoid rebuilding on every setState
+        if (user != null && user.uid != _lastUid) {
+          _lastUid = user.uid;
+          _profileFuture = _profileService.getUserProfile(user.uid);
         }
 
         return FutureBuilder<Map<String, dynamic>?>(
-          future: _profileService.getUserProfile(user.uid),
+          future: user != null ? _profileFuture : Future.value(null),
           builder: (context, profileSnapshot) {
-            if (!_minSplashDurationMet || profileSnapshot.connectionState == ConnectionState.waiting) {
+            final bool isProfileLoading = user != null && profileSnapshot.connectionState == ConnectionState.waiting;
+            
+            final bool showSplash = isAuthLoading || isProfileLoading || !_minSplashFinished;
+
+            if (showSplash) {
               return const SplashScreen();
             }
+
+            if (user == null) {
+              return const LanguageScreen();
+            }
+
             final profile = profileSnapshot.data;
             if (profile != null && profile['onboarding_completed'] == true) {
-              return const RootScreen();
+              return RootScreen(userId: user.uid);
             } else {
               return const ExamDetails();
             }

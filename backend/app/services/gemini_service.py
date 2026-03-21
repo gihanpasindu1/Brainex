@@ -85,7 +85,7 @@ Context (use only this):
 """.strip()
 
     resp = client.models.generate_content(
-        model="gemini-3.1-pro-preview",
+        model="gemini-2.5-flash",
         contents=types.Part.from_text(text=prompt),
         config=types.GenerateContentConfig(
             temperature=0.6,

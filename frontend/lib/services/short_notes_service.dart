@@ -60,6 +60,28 @@ class ShortNotesService {
     }
   }
 
+  static Future<List<Map<String, String>>> getPredefinedNotes() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/short_notes/predefined/all'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) {
+          return {
+            "title": json["title"]?.toString() ?? "Untitled Note",
+            "desc": json["desc"]?.toString() ?? "",
+            "date": json["date"]?.toString() ?? "",
+            "content": json["content"]?.toString() ?? "",
+          };
+        }).toList();
+      } else {
+        throw Exception('Failed to load predefined notes: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading predefined notes: $e');
+    }
+  }
+
   static Future<List<ShortNoteModel>> getShortNotes(String userUid) async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/short_notes/$userUid'));

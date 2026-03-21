@@ -5,9 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
-import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
-import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart';
 import 'package:frontend/screens/papers/papers_screen.dart';
 import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
 
@@ -244,99 +243,60 @@ class BrainexHome extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 Expanded(
-                  child: GridView.count(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.only(bottom: 90),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 0.95,
-                    children: [
-                      _PremiumActionCard(
-                        title: t('chatbot'),
-                        icon: Icons.chat_bubble_outline_rounded,
-                        color: const Color(0xFF38BDF8),
-                        subtitle: t('ask_anything'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ChatbotScreen(),
+                    child: Column(
+                      children: [
+                        // 2x2 grid of 4 action cards
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 0.95,
+                          children: [
+                            _PremiumActionCard(
+                              title: t('chatbot'),
+                              icon: Icons.chat_bubble_outline_rounded,
+                              color: const Color(0xFF38BDF8),
+                              subtitle: t('ask_anything'),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen())),
                             ),
-                          );
-                        },
-                      ),
-                      _PremiumActionCard(
-                        title: t('papers'),
-                        icon: Icons.description_outlined,
-                        color: const Color(0xFFC084FC),
-                        subtitle: t('past_papers'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const PapersScreen(),
+                            _PremiumActionCard(
+                              title: t('papers'),
+                              icon: Icons.description_outlined,
+                              color: const Color(0xFFC084FC),
+                              subtitle: t('past_papers'),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PapersScreen())),
                             ),
-                          );
-                        },
-                      ),
-                      _PremiumActionCard(
-                        title: t('short_notes'),
-                        icon: Icons.menu_book_rounded,
-                        color: const Color(0xFF34D399),
-                        subtitle: t('quick_review'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ShortNotesPage(),
+                            _PremiumActionCard(
+                              title: t('short_notes'),
+                              icon: Icons.menu_book_rounded,
+                              color: const Color(0xFF34D399),
+                              subtitle: t('quick_review'),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShortNotesPage())),
                             ),
-                          );
-                        },
-                      ),
-                      _PremiumActionCard(
-                        title: t('ai_study_plan'),
-                        icon: Icons.calendar_today_rounded,
-                        color: const Color(0xFFF59E0B),
-                        subtitle: t('daily_schedule'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AIStudyPlanPage2(),
+                            _PremiumActionCard(
+                              title: t('ai_study_plan'),
+                              icon: Icons.calendar_today_rounded,
+                              color: const Color(0xFFF59E0B),
+                              subtitle: t('daily_schedule'),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AIStudyPlanSetupPage())),
                             ),
-                          );
-                        },
-                      ),
-                      _PremiumActionCard(
-                        title: t('active_challenge'),
-                        icon: Icons.public_rounded,
-                        color: const Color(0xFFFB7185),
-                        subtitle: t('compete_live'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ActivityChallengesScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      _PremiumActionCard(
-                        title: t('paper_correction'),
-                        icon: Icons.emoji_events_rounded,
-                        color: const Color(0xFFFDE047),
-                        subtitle: t('improve_marks'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const UploadPaperScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        // Full-width Active Challenges card
+                        _PremiumActionCardWide(
+                          title: t('active_challenge'),
+                          icon: Icons.public_rounded,
+                          color: const Color(0xFFFB7185),
+                          subtitle: t('compete_live'),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityChallengesScreen())),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -630,6 +590,114 @@ class _PremiumActionCardState extends State<_PremiumActionCard> {
                   fontSize: 12.5,
                   color: Colors.white70,
                   decoration: TextDecoration.none,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Full-width wide card used for Active Challenges ──────────────────────────
+class _PremiumActionCardWide extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _PremiumActionCardWide({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  State<_PremiumActionCardWide> createState() => _PremiumActionCardWideState();
+}
+
+class _PremiumActionCardWideState extends State<_PremiumActionCardWide> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      scale: _pressed ? 0.98 : 1.0,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTap: widget.onTap,
+        child: _GlassCard(
+          radius: 26,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Row(
+            children: [
+              // Icon badge
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  color: widget.color.withValues(alpha: 0.18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.30),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: Icon(widget.icon, color: widget.color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              // Text
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.subtitle,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Arrow
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.color.withValues(alpha: 0.18),
+                  border: Border.all(color: widget.color.withValues(alpha: 0.35)),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: widget.color,
+                  size: 18,
                 ),
               ),
             ],

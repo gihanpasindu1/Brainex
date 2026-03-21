@@ -12,12 +12,23 @@ class StudyPlanRequest(BaseModel):
     weeks_to_exam: int = Field(..., ge=1, description="Number of weeks until the exam")
 
 # --- AI Response / Sub-models ---
+class DailyPlan(BaseModel):
+    day_number: int
+    topic: str
+    learning_step: str
+    understanding_step: str
+    practice_step: str
+    review_step: str
+    revision_step: str
+    checkpoint: str
+
 class WeeklyPlan(BaseModel):
     week_number: int
     focus_area: str
     topics_to_cover: List[str]
     suggested_hours_per_day: int
     study_advice: str
+    days: List[DailyPlan]
 
 # --- Database Model ---
 class StudyPlanDB(BaseModel):

@@ -3,10 +3,10 @@ import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:frontend/models/short_note_model.dart';
-import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/services/short_notes_service.dart';
 
 class ShortNotesPage extends StatefulWidget {
@@ -18,7 +18,6 @@ class ShortNotesPage extends StatefulWidget {
 
 class _ShortNotesPageState extends State<ShortNotesPage> {
   int selectedTab = 0; // 0 = My Notes, 1 = Predefined Notes
-  int bottomIndex = 1; // default highlight like screenshot (Plan)
 
   late PageController _pageController;
   final TextEditingController _searchController = TextEditingController();
@@ -32,43 +31,30 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
   final String userUid =
       FirebaseAuth.instance.currentUser?.uid ?? 'test_user_uid';
 
-  // Dummy Data for Predefined Notes
-  final List<Map<String, String>> predefinedNotes = [
-    {
-      "title": "Physics Formula Sheet",
-      "desc":
-          "A complete list of formulas for Mechanics, Waves, and Thermodynamics...",
-      "date": "Updated: Sep 2023",
-      "content": "• F=ma\n• E=mc^2\n• v=u+at",
-    },
-    {
-      "title": "Math Cheat Sheet",
-      "desc":
-          "Quick reference for Algebra, Trigonometry, and Calculus identities...",
-      "date": "Updated: Aug 2023",
-      "content": "• a^2 + b^2 = c^2\n• sin(x) = Opposite/Hypotenuse\n• d/dx(x^n) = n*x^(n-1)",
-    },
-    {
-      "title": "Chemistry Periodic Table",
-      "desc":
-          "High definition periodic table with atomic properties and trends...",
-      "date": "Updated: Jul 2023",
-      "content": "• H: Hydrogen (1)\n• He: Helium (2)\n• Li: Lithium (3)",
-    },
-    {
-      "title": "English Grammar Rules",
-      "desc":
-          "Comprehensive grammar guide covering tenses, voice, and speech...",
-      "date": "Updated: Jun 2023",
-      "content": "• Noun: a person, place, or thing\n• Verb: an action word\n• Adjective: describes a noun",
-    },
-  ];
+  List<Map<String, String>> predefinedNotes = [];
+  bool isLoadingPredefined = true;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: selectedTab);
     _loadMyNotes();
+    _loadPredefinedNotes();
+  }
+
+  Future<void> _loadPredefinedNotes() async {
+    setState(() => isLoadingPredefined = true);
+    try {
+      final notes = await ShortNotesService.getPredefinedNotes();
+      if (!mounted) return;
+      setState(() {
+        predefinedNotes = notes;
+        isLoadingPredefined = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isLoadingPredefined = false);
+    }
   }
 
   Future<void> _loadMyNotes() async {
@@ -325,14 +311,6 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                             if (dialogContext.mounted) {
                               Navigator.pop(dialogContext);
                             }
-                            if (mounted) {
-                              _showNoteBottomSheet(
-                                savedNote.title,
-                                savedNote.desc,
-                                savedNote.content,
-                                savedNote.date,
-                              );
-                            }
                           } catch (e) {
                             if (!context.mounted) return;
                             setDialogState(() => isSaving = false);
@@ -349,110 +327,6 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                         ),
                       ),
               ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showNoteBottomSheet(String title, String desc, String content, String date) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (_, controller) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF0B1326),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(70),
-                      borderRadius: BorderRadius.circular(2.5),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: controller,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.access_time_rounded, color: Colors.white54, size: 14),
-                              const SizedBox(width: 6),
-                              Text(
-                                date,
-                                style: const TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (desc.isNotEmpty) ...[
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withAlpha(30)),
-                              ),
-                              child: Text(
-                                desc,
-                                style: TextStyle(
-                                  color: Colors.white.withAlpha(200),
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-                          const Divider(color: Colors.white24, height: 1),
-                          const SizedBox(height: 24),
-                          Text(
-                            content.isEmpty ? "No content available." : content,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              height: 1.7,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             );
           },
         );
@@ -526,27 +400,29 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                             ),
                             const SizedBox(height: 14),
 
-                            isProcessingScan
-                                ? Container(
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF0B1326,
-                                      ).withValues(alpha: 0.5),
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Color(0xFF2DE2E6),
+                            if (selectedTab == 0) ...[
+                              isProcessingScan
+                                  ? Container(
+                                      height: 56,
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF0B1326,
+                                        ).withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(18),
                                       ),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Color(0xFF2DE2E6),
+                                        ),
+                                      ),
+                                    )
+                                  : _GradientActionButton(
+                                      icon: Icons.qr_code_scanner_rounded,
+                                      label: "Scan New Note",
+                                      onTap: _showImageSourceDialog,
                                     ),
-                                  )
-                                : _GradientActionButton(
-                                    icon: Icons.qr_code_scanner_rounded,
-                                    label: "Scan New Note",
-                                    onTap: _showImageSourceDialog,
-                                  ),
-                            const SizedBox(height: 14),
+                              const SizedBox(height: 14),
+                            ],
 
                             Expanded(
                               child: PageView(
@@ -578,53 +454,52 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                                           itemBuilder: (context, index) {
                                             final note =
                                                 _filteredMyNotes[index];
-                                            return GestureDetector(
-                                              onTap: () => _showNoteBottomSheet(
-                                                note.title,
-                                                note.desc,
-                                                note.content,
-                                                note.date,
-                                              ),
-                                              child: Column(
-                                                children: [
-                                                  _NoteCard(
-                                                    title: note.title,
-                                                    desc: note.desc,
-                                                    dateText: note.date,
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                ],
-                                              ),
+                                            return Column(
+                                              children: [
+                                                _NoteCard(
+                                                  title: note.title,
+                                                  desc: note.desc,
+                                                  dateText: note.date,
+                                                ),
+                                                const SizedBox(height: 12),
+                                              ],
                                             );
                                           },
                                         ),
                                   // Tab 1: Predefined Notes
-                                  ListView.builder(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                    itemCount: _filteredPredefinedNotes.length,
-                                    itemBuilder: (context, index) {
-                                      final note =
-                                          _filteredPredefinedNotes[index];
-                                      return GestureDetector(
-                                        onTap: () => _showNoteBottomSheet(
-                                          note["title"] ?? "",
-                                          note["desc"] ?? "",
-                                          note["content"] ?? "",
-                                          note["date"] ?? "",
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            _NoteCard(
-                                              title: note["title"]!,
-                                              desc: note["desc"]!,
-                                              dateText: note["date"]!,
+                                  isLoadingPredefined
+                                      ? const Center(
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFF2DE2E6),
+                                          ),
+                                        )
+                                      : _filteredPredefinedNotes.isEmpty
+                                          ? const Center(
+                                              child: Text(
+                                                "No predefined notes found.",
+                                                style: TextStyle(
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                            )
+                                          : ListView.builder(
+                                              padding: const EdgeInsets.only(bottom: 8),
+                                              itemCount: _filteredPredefinedNotes.length,
+                                              itemBuilder: (context, index) {
+                                                final note = _filteredPredefinedNotes[index];
+                                                return Column(
+                                                  children: [
+                                                    _NoteCard(
+                                                      title: note["title"]!,
+                                                      desc: note["desc"]!,
+                                                      content: note["content"] ?? "",
+                                                      dateText: note["date"]!,
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                  ],
+                                                );
+                                              },
                                             ),
-                                            const SizedBox(height: 12),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
                                 ],
                               ),
                             ),
@@ -638,11 +513,6 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
             ],
           ),
         ),
-      ),
-      extendBody: true,
-      bottomNavigationBar: _BottomNav(
-        currentIndex: bottomIndex,
-        onChanged: (i) => setState(() => bottomIndex = i),
       ),
     );
   }
@@ -969,203 +839,123 @@ class _GradientActionButton extends StatelessWidget {
 
 /* -------------------------------- NOTE CARD --------------------------- */
 
-class _NoteCard extends StatelessWidget {
+class _NoteCard extends StatefulWidget {
   final String title;
   final String desc;
+  final String content;
   final String dateText;
 
   const _NoteCard({
     required this.title,
     required this.desc,
+    this.content = "",
     required this.dateText,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B1326).withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: Icon(
-                  Icons.mic_rounded,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  size: 16,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            desc,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            dateText,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  State<_NoteCard> createState() => _NoteCardState();
 }
 
-/* ------------------------------ BOTTOM NAV ---------------------------- */
-
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onChanged;
-
-  const _BottomNav({required this.currentIndex, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final tr = AppLocalizations.of(context);
-    String t(String key) => tr?.translate(key) ?? key;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: t('nav_home'),
-                  active: currentIndex == 0,
-                  onTap: () {
-                    onChanged(0);
-                    Navigator.maybePop(context);
-                  },
-                ),
-                _NavItem(
-                  icon: Icons.calendar_month_rounded,
-                  label: t('nav_plan'),
-                  active: currentIndex == 1,
-                  onTap: () => onChanged(1),
-                ),
-                _NavItem(
-                  icon: Icons.emoji_events_rounded,
-                  label: t('nav_leaderboard'),
-                  active: currentIndex == 2,
-                  onTap: () => onChanged(2),
-                ),
-                _NavItem(
-                  icon: Icons.person_rounded,
-                  label: t('nav_profile'),
-                  active: currentIndex == 3,
-                  onTap: () => onChanged(3),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
+class _NoteCardState extends State<_NoteCard> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        setState(() {
+          _isExpanded = !_isExpanded;
+        });
+      },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: active
-            ? BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blueAccent.withValues(alpha: 0.9),
-                    Colors.purpleAccent.withValues(alpha: 0.85),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blueAccent.withValues(alpha: 0.22),
-                    blurRadius: 16,
-                  ),
-                ],
-              )
-            : null,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1326).withValues(alpha: _isExpanded ? 0.35 : 0.2),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white.withValues(alpha: _isExpanded ? 0.25 : 0.1)),
+          boxShadow: _isExpanded
+              ? [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5)),
+                ]
+              : null,
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 20, color: active ? Colors.white : Colors.white60),
-            const SizedBox(height: 2),
             Text(
-              label,
+              widget.title,
               style: TextStyle(
-                fontSize: 10.5,
-                color: active ? Colors.white : Colors.white60,
+                color: _isExpanded ? const Color(0xFF2DE2E6) : Colors.white,
+                fontSize: 14.0,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
               ),
+            ),
+            const SizedBox(height: 8),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: _isExpanded
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.desc.isNotEmpty && widget.content.isNotEmpty)
+                          Text(
+                            widget.desc,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
+                            ),
+                          ),
+                        if (widget.desc.isNotEmpty && widget.content.isNotEmpty)
+                          const SizedBox(height: 12),
+                        MarkdownBody(
+                          data: widget.content.isNotEmpty ? widget.content : widget.desc,
+                          styleSheet: MarkdownStyleSheet(
+                            p: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, height: 1.5),
+                            h1: const TextStyle(color: Color(0xFF2DE2E6), fontSize: 18, fontWeight: FontWeight.bold),
+                            h2: const TextStyle(color: Color(0xFF2DE2E6), fontSize: 16, fontWeight: FontWeight.bold),
+                            h3: const TextStyle(color: Color(0xFF2DE2E6), fontSize: 15, fontWeight: FontWeight.bold),
+                            listBullet: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      widget.desc,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.dateText,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Icon(
+                  _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                  color: Colors.white.withValues(alpha: 0.4),
+                  size: 18,
+                ),
+              ],
             ),
           ],
         ),
