@@ -4,8 +4,7 @@ import 'dart:math' as math;
 import 'package:frontend/screens/wrapper.dart';
 
 class SplashScreen extends StatefulWidget {
-  final bool autoNavigate;
-  const SplashScreen({super.key, this.autoNavigate = true});
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -53,19 +52,6 @@ class _SplashScreenState extends State<SplashScreen>
         dotCount = (dotCount + 1) % 4;
       });
     });
-
-    // Splash duration → go to Wrapper
-    if (widget.autoNavigate) {
-      Future.delayed(const Duration(seconds: 5), () {
-        if (!mounted) return;
-        final route = ModalRoute.of(context);
-        if (route?.isCurrent != true) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => Wrapper()),
-        );
-      });
-    }
   }
 
   @override

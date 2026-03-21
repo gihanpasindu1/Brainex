@@ -136,6 +136,7 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
       _showEditDialog(
         geminiData['title'] ?? 'Generated Note',
         geminiData['desc'] ?? '',
+        geminiData['content'] ?? '',
       );
     } catch (e) {
       if (!mounted) return;
@@ -193,9 +194,10 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
     );
   }
 
-  void _showEditDialog(String initialTitle, String initialDesc) {
+  void _showEditDialog(String initialTitle, String initialDesc, String initialContent) {
     final titleController = TextEditingController(text: initialTitle);
     final descController = TextEditingController(text: initialDesc);
+    final contentController = TextEditingController(text: initialContent);
     bool isSaving = false;
 
     showDialog(
@@ -232,9 +234,25 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                     TextField(
                       controller: descController,
                       style: const TextStyle(color: Colors.white),
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        labelText: "Short Description",
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white30),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF2DE2E6)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: contentController,
+                      style: const TextStyle(color: Colors.white),
                       maxLines: 8,
                       decoration: const InputDecoration(
-                        labelText: "Note Description",
+                        labelText: "Notes Content (Point-wise Markdown)",
                         labelStyle: TextStyle(color: Colors.white70),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.white30),
@@ -282,6 +300,7 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                                   userUid,
                                   titleController.text.trim(),
                                   descController.text.trim(),
+                                  contentController.text.trim(),
                                 );
 
                             if (!mounted) return;
