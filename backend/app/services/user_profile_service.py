@@ -49,6 +49,10 @@ async def complete_user_onboarding(user_id: str, data: UserOnboardingRequest) ->
     update_data["onboarding_completed"] = True
     update_data["updated_at"] = now
     
+    # Store email if provided
+    if "email" in update_data and update_data["email"]:
+        update_data["email"] = update_data["email"].lower().strip()
+
     await users_col.update_one(
         {"user_id": user_id},
         {"$set": update_data}
