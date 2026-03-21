@@ -216,6 +216,14 @@ class BrainexHome extends StatelessWidget {
                                 'Own It', 'Think Fast', 'Stay Calm',
                                 'Show Up', 'Keep Building', 'Go Hard'
                               ][Random().nextInt(30)],
+                              glowColor: [
+                                Colors.blueAccent,
+                                Colors.purpleAccent,
+                                Colors.pinkAccent,
+                                Colors.orangeAccent,
+                                Colors.greenAccent,
+                                Colors.cyanAccent,
+                              ][Random().nextInt(6)],
                             ),
                           ],
                         ),
@@ -453,7 +461,9 @@ class _GlowIconButton extends StatelessWidget {
 
 class _Pill extends StatelessWidget {
   final String text;
-  const _Pill({required this.text});
+  final Color? glowColor;
+
+  const _Pill({required this.text, this.glowColor});
 
   @override
   Widget build(BuildContext context) {
@@ -462,13 +472,25 @@ class _Pill extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        border: Border.all(
+          color: glowColor?.withValues(alpha: 0.5) ??
+              Colors.white.withValues(alpha: 0.10),
+        ),
+        boxShadow: glowColor != null
+            ? [
+                BoxShadow(
+                  color: glowColor!.withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  spreadRadius: 2,
+                )
+              ]
+            : null,
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12.5,
-          color: Colors.white70,
+          color: glowColor != null ? Colors.white : Colors.white70,
           fontWeight: FontWeight.w600,
         ),
       ),
