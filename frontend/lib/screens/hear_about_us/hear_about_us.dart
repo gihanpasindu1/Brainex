@@ -48,7 +48,7 @@ class _HearAboutUsPageState extends State<HearAboutUs> {
       } else {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const RootScreen()),
+          MaterialPageRoute(builder: (_) => RootScreen(userId: user.uid)),
           (route) => false,
         );
       }

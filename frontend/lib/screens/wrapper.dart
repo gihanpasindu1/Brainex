@@ -9,7 +9,7 @@ import 'package:frontend/services/user_profile_service.dart';
 import 'package:frontend/screens/splash_screen/splash_screen.dart';
 
 class Wrapper extends StatefulWidget {
-  Wrapper({super.key});
+  const Wrapper({super.key});
 
   @override
   State<Wrapper> createState() => _WrapperState();
@@ -57,7 +57,7 @@ class _WrapperState extends State<Wrapper> {
             final bool showSplash = isAuthLoading || isProfileLoading || !_minSplashFinished;
 
             if (showSplash) {
-              return const SplashScreen(autoNavigate: false);
+              return const SplashScreen();
             }
 
             if (user == null) {

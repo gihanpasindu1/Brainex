@@ -138,7 +138,7 @@ class _AppRootState extends State<_AppRoot> {
             '/activity-challenges': (context) =>
                 const ActivityChallengesScreen(),
           },
-          home: const Wrapper(),
+          home:  Wrapper(),
         );
       },
     );
