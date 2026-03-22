@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:frontend/services/auth.dart';
 import 'package:frontend/services/admin_service.dart';
 import 'package:frontend/screens/admin_past_papers_screen.dart';
+import 'package:frontend/screens/admin_notes_screen.dart';
+import 'package:frontend/screens/admin_users_screen.dart';
+import 'package:frontend/screens/admin_mcq_upload_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -155,11 +158,32 @@ class AdminDashboardScreen extends StatelessWidget {
                           },
                         ),
                         const SizedBox(height: 12),
-                        _buildSecondaryActionButton('Add Note', null),
+                        _buildSecondaryActionButton('Add Note', () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AdminNotesScreen(),
+                            ),
+                          );
+                        }),
                         const SizedBox(height: 12),
-                        _buildSecondaryActionButton('Manage Users', null),
+                        _buildSecondaryActionButton('Manage Users', () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AdminUsersScreen(),
+                            ),
+                          );
+                        }),
                         const SizedBox(height: 12),
-                        _buildSecondaryActionButton('MCQ Bank Upload', null),
+                        _buildSecondaryActionButton('MCQ Bank Upload', () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AdminMcqUploadScreen(),
+                            ),
+                          );
+                        }),
 
                         const SizedBox(height: 32),
 
@@ -216,10 +240,11 @@ class AdminDashboardScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildNavItem('Dashboard', true),
-                        _buildNavItem('Users', false),
-                        _buildNavItem('Content', false),
-                        _buildNavItem('Settings', false),
+                        _buildNavItem(context, 'Dashboard', true),
+                        _buildNavItem(context, 'Users', false),
+                        _buildNavItem(context, 'Notes', false),
+                        _buildNavItem(context, 'Papers', false),
+                        _buildNavItem(context, 'Settings', false),
                       ],
                     ),
                   ),
@@ -330,13 +355,31 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(String label, bool isSelected) {
-    return Text(
-      label,
-      style: TextStyle(
-        color: isSelected ? const Color(0xFF4AC4F3) : Colors.white54,
-        fontSize: 13,
-        fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+  Widget _buildNavItem(BuildContext context, String label, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        if (isSelected) return;
+        if (label == 'Dashboard') {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
+        } else if (label == 'Users') {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminUsersScreen()));
+        } else if (label == 'Notes') {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminNotesScreen()));
+        } else if (label == 'Papers') {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminPastPapersScreen()));
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        color: Colors.transparent, // expand tap area
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? const Color(0xFF4AC4F3) : Colors.white54,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }

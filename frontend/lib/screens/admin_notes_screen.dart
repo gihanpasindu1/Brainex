@@ -1,30 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:frontend/services/admin_service.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:frontend/screens/admin_dashboard_screen.dart';
 import 'package:frontend/screens/admin_users_screen.dart';
-import 'package:frontend/screens/admin_notes_screen.dart';
-import 'package:frontend/screens/admin_mcq_upload_screen.dart'; // Ensure correct import for upload screen
+import 'package:frontend/screens/admin_past_papers_screen.dart';
 
-class AdminPastPapersScreen extends StatefulWidget {
-  const AdminPastPapersScreen({super.key});
+class AdminNotesScreen extends StatefulWidget {
+  const AdminNotesScreen({super.key});
 
   @override
-  State<AdminPastPapersScreen> createState() => _AdminPastPapersScreenState();
+  State<AdminNotesScreen> createState() => _AdminNotesScreenState();
 }
 
-class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
+class _AdminNotesScreenState extends State<AdminNotesScreen> {
   final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedFilter = 'All'; // "All" or "Grade"
   
   bool _isLoading = true;
-  List<dynamic> _allPapers = [];
-  String _searchQuery = '';
-  String _selectedFilter = 'All'; // 'All' or 'Grade'
+  List<dynamic> _allNotes = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchPapers();
+    _fetchNotes();
+  }
+
+  Future<void> _fetchNotes() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final notes = await AdminService().getAllShortNotes();
+      if (mounted) {
+        setState(() {
+          _allNotes = notes;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -33,66 +54,49 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchPapers() async {
-    setState(() => _isLoading = true);
-    final fetched = await AdminService().getAllPapers();
-    if (mounted) {
-      setState(() {
-        _allPapers = fetched;
-        _isLoading = false;
-      });
-    }
-  }
+  List<dynamic> get _filteredNotes {
+    List<dynamic> filtered = _allNotes;
 
-  List<dynamic> get _filteredPapers {
-    List<dynamic> filtered = List.from(_allPapers);
-
-    // Filter by search
+    // Filter by search query
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((paper) {
-        final title = (paper['title'] ?? '').toString().toLowerCase();
-        return title.contains(_searchQuery.toLowerCase());
+      filtered = filtered.where((note) {
+        final title = (note['title'] ?? '').toString().toLowerCase();
+        final desc = (note['desc'] ?? '').toString().toLowerCase();
+        final content = (note['content'] ?? '').toString().toLowerCase();
+        return title.contains(_searchQuery.toLowerCase()) || 
+               desc.contains(_searchQuery.toLowerCase()) ||
+               content.contains(_searchQuery.toLowerCase());
       }).toList();
     }
 
-    // Sort by Grade if selected
+    // Filter by Grade toggle
     if (_selectedFilter == 'Grade') {
-      filtered.sort((a, b) {
-        final gA = a['grade']?.toString() ?? '';
-        final gB = b['grade']?.toString() ?? '';
-        return gB.compareTo(gA); // descending
-      });
+      filtered = filtered.where((note) {
+        final desc = (note['desc'] ?? '').toString().toLowerCase();
+        final title = (note['title'] ?? '').toString().toLowerCase();
+        return desc.contains('grade') || title.contains('grade');
+      }).toList();
     }
 
     return filtered;
   }
 
-  String _formatDate(String? isoDate) {
-    if (isoDate == null || isoDate.isEmpty) return 'Unknown date';
-    try {
-      final dt = DateTime.parse(isoDate);
-      return DateFormat('MMM d, yyyy').format(dt);
-    } catch (_) {
-      return 'Unknown date';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    int totalPapers = _allPapers.length;
-    
-    // Count recently added papers (e.g. within last 7 days)
-    final now = DateTime.now();
-    int recentPapers = _allPapers.where((p) {
-      final isoDate = p['created_at'];
-      if (isoDate == null) return false;
-      try {
-        final dt = DateTime.parse(isoDate);
-        return now.difference(dt).inDays <= 7;
-      } catch (_) {
-        return false;
-      }
-    }).length;
+    int recentlyUpdated = 0;
+    try {
+      final now = DateTime.now();
+      recentlyUpdated = _allNotes.where((note) {
+        final dateStr = note['date']?.toString();
+        if (dateStr == null) return false;
+        try {
+          final date = DateFormat('MMM dd, yyyy').parse(dateStr);
+          return now.difference(date).inDays <= 7;
+        } catch (_) {
+           return false;
+        }
+      }).length;
+    } catch (_) {}
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F1123),
@@ -127,7 +131,7 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text(
-                          'Past Papers',
+                          'Short Notes',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 28,
@@ -135,7 +139,7 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                           ),
                         ),
                         Text(
-                          'Manage uploaded exam papers',
+                          'Manage study notes',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
@@ -173,10 +177,14 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                           ),
                           child: TextField(
                             controller: _searchController,
-                            onChanged: (val) => setState(() => _searchQuery = val),
+                            onChanged: (value) {
+                              setState(() {
+                                _searchQuery = value;
+                              });
+                            },
                             style: const TextStyle(color: Colors.white),
                             decoration: const InputDecoration(
-                              hintText: 'Search papers...',
+                              hintText: 'Search dynamic notes...',
                               hintStyle: TextStyle(color: Colors.white54, fontSize: 13),
                               border: InputBorder.none,
                               prefixIcon: Icon(Icons.search, color: Colors.white54, size: 20),
@@ -190,19 +198,20 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                         Row(
                           children: [
                             GestureDetector(
-                               onTap: () => setState(() => _selectedFilter = 'All'),
-                               child: _buildFilterPill('All', _selectedFilter == 'All'),
+                              onTap: () => setState(() => _selectedFilter = 'All'),
+                              child: _buildFilterPill('All', _selectedFilter == 'All'),
                             ),
                             const SizedBox(width: 12),
                             GestureDetector(
-                               onTap: () => setState(() => _selectedFilter = 'Grade'),
-                               child: _buildFilterPill('Grade', _selectedFilter == 'Grade'),
+                              onTap: () => setState(() => _selectedFilter = 'Grade'),
+                              child: _buildFilterPill('Grade', _selectedFilter == 'Grade'),
                             ),
+                            // Removed "Subject" filter pill here
                           ],
                         ),
                         const SizedBox(height: 24),
 
-                        // Paper Items list dynamically populated
+                        // Note Items list
                         if (_isLoading)
                           const Center(
                             child: Padding(
@@ -210,36 +219,36 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                               child: CircularProgressIndicator(color: Color(0xFF4AC4F3)),
                             ),
                           )
-                        else if (_filteredPapers.isEmpty)
+                        else if (_filteredNotes.isEmpty)
                           const Center(
                             child: Padding(
                               padding: EdgeInsets.all(32.0),
                               child: Text(
-                                'No papers found.',
+                                'No notes generated yet or matching search.',
                                 style: TextStyle(color: Colors.white54, fontSize: 14),
                               ),
                             ),
                           )
                         else
-                          ..._filteredPapers.map((paper) {
-                            final title = paper['title'] ?? 'Unknown Title';
-                            final grade = paper['grade'] ?? 'Unknown Grade';
-                            final type = paper['paper_type'] ?? 'Paper';
-                            final dateStr = _formatDate(paper['created_at']);
+                          ..._filteredNotes.map((note) {
+                            final title = note['title']?.toString() ?? 'Untitled Note';
+                            final desc = note['desc']?.toString() ?? '';
+                            final date = note['date']?.toString() ?? 'Recent';
                             
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12.0),
-                              child: _buildPaperItem(
-                                title,
-                                'Grade $grade • $type',
-                                'Uploaded $dateStr',
+                              child: _buildDynamicNoteItem(
+                                title: title,
+                                subtitle: desc,
+                                date: 'Uploaded: $date',
+                                noteData: note,
                               ),
                             );
                           }).toList(),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 12),
 
-                        // Upload New Paper Button
+                        // Add New Note Button
                         Container(
                           width: double.infinity,
                           height: 56,
@@ -250,19 +259,16 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                               end: Alignment.centerRight,
                             ),
                             borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF4AC4F3).withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: ElevatedButton(
-                            onPressed: () async {
-                              // Navigate to Upload screen and wait for return
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AdminMcqUploadScreen(),
-                                ),
-                              );
-                              // Refresh papers after returning from upload screen
-                              _fetchPapers();
-                            },
+                            onPressed: () {},
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
@@ -271,7 +277,7 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                               ),
                             ),
                             child: const Text(
-                              'Upload New Paper',
+                              'Add New Note',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -283,9 +289,9 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
 
                         const SizedBox(height: 32),
 
-                        // Paper Summary box
+                        // Notes Summary box
                         const Text(
-                          'Paper Summary',
+                          'Notes Summary',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -307,16 +313,16 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Total Papers', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                                  Text('$totalPapers', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                  const Text('Total Notes In DB', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                                  Text('${_allNotes.length}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Recently Added (7 days)', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                                  Text('$recentPapers', style: const TextStyle(color: Color(0xFF4AC4F3), fontSize: 16, fontWeight: FontWeight.bold)),
+                                  const Text('Recently Updated', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                                  Text('$recentlyUpdated', style: const TextStyle(color: Color(0xFF4AC4F3), fontSize: 16, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ],
@@ -347,8 +353,8 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                       children: [
                         _buildNavItem(context, 'Dashboard', false),
                         _buildNavItem(context, 'Users', false),
-                        _buildNavItem(context, 'Notes', false),
-                        _buildNavItem(context, 'Papers', true), // Papers selected
+                        _buildNavItem(context, 'Notes', true), // Notes selected
+                        _buildNavItem(context, 'Papers', false),
                         _buildNavItem(context, 'Settings', false),
                       ],
                     ),
@@ -364,7 +370,7 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
 
   Widget _buildFilterPill(String title, bool isSelected) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       decoration: BoxDecoration(
         gradient: isSelected
             ? const LinearGradient(
@@ -374,7 +380,7 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
               )
             : null,
         color: isSelected ? null : const Color(0xFF1A1C36),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(25),
         border: Border.all(color: isSelected ? Colors.transparent : Colors.white12),
       ),
       child: Text(
@@ -388,52 +394,150 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
     );
   }
 
-  Widget _buildPaperItem(String title, String subtitle, String date) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1C36),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
+  Widget _buildDynamicNoteItem({
+    required String title,
+    required String subtitle,
+    required String date,
+    required Map<String, dynamic> noteData,
+  }) {
+    // Elegant JSON presentation formatting
+    return GestureDetector(
+      onTap: () => _showNoteDetails(context, title, subtitle, date, noteData),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1C36),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF222544),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.description_outlined, color: Color(0xFF4AC4F3), size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle.isNotEmpty ? subtitle : 'No description provided',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 13,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                  ),
+              ],
+            ),
+            
+            Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4AC4F3).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 6),
-                Text(
+                child: Text(
                   date,
                   style: const TextStyle(
-                    color: Color(0xFF4AC4F3), // Cyan color for upload date
+                    color: Color(0xFF4AC4F3),
                     fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNoteDetails(BuildContext context, String title, String subtitle, String date, Map<String, dynamic> noteData) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: const Color(0xFF131427),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            constraints: const BoxConstraints(maxHeight: 600, maxWidth: 500),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white54),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white54, fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white12),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: MarkdownBody(
+                      data: noteData['content']?.toString() ?? 'No content available.',
+                      styleSheet: MarkdownStyleSheet(
+                        p: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13, height: 1.5),
+                        h1: const TextStyle(color: Color(0xFF4AC4F3), fontSize: 18, fontWeight: FontWeight.bold),
+                        h2: const TextStyle(color: Color(0xFF4AC4F3), fontSize: 16, fontWeight: FontWeight.bold),
+                        h3: const TextStyle(color: Color(0xFF4AC4F3), fontSize: 15, fontWeight: FontWeight.bold),
+                        listBullet: TextStyle(color: Colors.white.withOpacity(0.8)),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          // We removed the static View/Edit buttons here to make the item cleaner,
-          // or we can keep a simple icon if we want.
-          const Icon(Icons.picture_as_pdf, color: Colors.white38, size: 28),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -464,5 +568,12 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
         ),
       ),
     );
+  }
+}
+
+extension StringExtension on String {
+  String take(int length) {
+    if (this.length <= length) return this;
+    return substring(0, length);
   }
 }

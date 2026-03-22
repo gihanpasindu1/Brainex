@@ -7,6 +7,7 @@ import 'package:frontend/services/auth.dart';
 import 'package:frontend/services/user_profile_service.dart';
 
 import 'package:frontend/screens/splash_screen/splash_screen.dart';
+import 'package:frontend/screens/admin_dashboard_screen.dart';
 
 class Wrapper extends StatefulWidget {
   const Wrapper({super.key});
@@ -42,17 +43,22 @@ class _WrapperState extends State<Wrapper> {
       builder: (context, snapshot) {
         final bool isAuthLoading = snapshot.connectionState == ConnectionState.waiting;
         final user = snapshot.data;
+        final bool isAdmin = user != null && user.uid == '2zJK3J7TClQ7Sk6uTKMqHgOwpsu2';
 
         // Manage caching the profile future to avoid rebuilding on every setState
         if (user != null && user.uid != _lastUid) {
           _lastUid = user.uid;
-          _profileFuture = _profileService.getUserProfile(user.uid);
+          if (isAdmin) {
+             _profileFuture = Future.value(null);
+          } else {
+             _profileFuture = _profileService.getUserProfile(user.uid);
+          }
         }
 
         return FutureBuilder<Map<String, dynamic>?>(
           future: user != null ? _profileFuture : Future.value(null),
           builder: (context, profileSnapshot) {
-            final bool isProfileLoading = user != null && profileSnapshot.connectionState == ConnectionState.waiting;
+            final bool isProfileLoading = !isAdmin && user != null && profileSnapshot.connectionState == ConnectionState.waiting;
             
             final bool showSplash = isAuthLoading || isProfileLoading || !_minSplashFinished;
 
@@ -62,6 +68,10 @@ class _WrapperState extends State<Wrapper> {
 
             if (user == null) {
               return const LanguageScreen();
+            }
+
+            if (isAdmin) {
+              return const AdminDashboardScreen();
             }
 
             final profile = profileSnapshot.data;

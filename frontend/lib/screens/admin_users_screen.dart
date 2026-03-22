@@ -1,30 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:frontend/services/admin_service.dart';
 import 'package:frontend/screens/admin_dashboard_screen.dart';
-import 'package:frontend/screens/admin_users_screen.dart';
 import 'package:frontend/screens/admin_notes_screen.dart';
-import 'package:frontend/screens/admin_mcq_upload_screen.dart'; // Ensure correct import for upload screen
+import 'package:frontend/screens/admin_past_papers_screen.dart';
 
-class AdminPastPapersScreen extends StatefulWidget {
-  const AdminPastPapersScreen({super.key});
+class AdminUsersScreen extends StatefulWidget {
+  const AdminUsersScreen({super.key});
 
   @override
-  State<AdminPastPapersScreen> createState() => _AdminPastPapersScreenState();
+  State<AdminUsersScreen> createState() => _AdminUsersScreenState();
 }
 
-class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
+class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final TextEditingController _searchController = TextEditingController();
   
   bool _isLoading = true;
-  List<dynamic> _allPapers = [];
+  List<dynamic> _allUsers = [];
   String _searchQuery = '';
-  String _selectedFilter = 'All'; // 'All' or 'Grade'
+  String _selectedFilter = 'All'; // 'All', 'Active', 'Blocked'
 
   @override
   void initState() {
     super.initState();
-    _fetchPapers();
+    _fetchUsers();
   }
 
   @override
@@ -33,66 +31,57 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchPapers() async {
+  Future<void> _fetchUsers() async {
     setState(() => _isLoading = true);
-    final fetched = await AdminService().getAllPapers();
+    final users = await AdminService().getAllUsers();
     if (mounted) {
       setState(() {
-        _allPapers = fetched;
+        _allUsers = users;
         _isLoading = false;
       });
     }
   }
 
-  List<dynamic> get _filteredPapers {
-    List<dynamic> filtered = List.from(_allPapers);
+  Future<void> _toggleBlockStatus(String userId, bool currentStatus) async {
+    final success = await AdminService().updateUserStatus(userId, !currentStatus);
+    if (success) {
+      // Refresh the list to reflect changes
+      _fetchUsers();
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update user status')),
+        );
+      }
+    }
+  }
 
-    // Filter by search
+  List<dynamic> get _filteredUsers {
+    List<dynamic> filtered = _allUsers;
+
+    // Search filter
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((paper) {
-        final title = (paper['title'] ?? '').toString().toLowerCase();
-        return title.contains(_searchQuery.toLowerCase());
+      filtered = filtered.where((user) {
+        final email = (user['email'] ?? '').toString().toLowerCase();
+        return email.contains(_searchQuery.toLowerCase());
       }).toList();
     }
 
-    // Sort by Grade if selected
-    if (_selectedFilter == 'Grade') {
-      filtered.sort((a, b) {
-        final gA = a['grade']?.toString() ?? '';
-        final gB = b['grade']?.toString() ?? '';
-        return gB.compareTo(gA); // descending
-      });
+    // Role/Status filter
+    if (_selectedFilter == 'Active') {
+      filtered = filtered.where((user) => user['is_blocked'] != true).toList();
+    } else if (_selectedFilter == 'Blocked') {
+      filtered = filtered.where((user) => user['is_blocked'] == true).toList();
     }
 
     return filtered;
   }
 
-  String _formatDate(String? isoDate) {
-    if (isoDate == null || isoDate.isEmpty) return 'Unknown date';
-    try {
-      final dt = DateTime.parse(isoDate);
-      return DateFormat('MMM d, yyyy').format(dt);
-    } catch (_) {
-      return 'Unknown date';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    int totalPapers = _allPapers.length;
-    
-    // Count recently added papers (e.g. within last 7 days)
-    final now = DateTime.now();
-    int recentPapers = _allPapers.where((p) {
-      final isoDate = p['created_at'];
-      if (isoDate == null) return false;
-      try {
-        final dt = DateTime.parse(isoDate);
-        return now.difference(dt).inDays <= 7;
-      } catch (_) {
-        return false;
-      }
-    }).length;
+    int totalUsers = _allUsers.length;
+    int blockedUsers = _allUsers.where((u) => u['is_blocked'] == true).length;
+    int activeUsers = totalUsers - blockedUsers;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F1123),
@@ -127,7 +116,7 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text(
-                          'Past Papers',
+                          'Users',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 28,
@@ -135,7 +124,7 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                           ),
                         ),
                         Text(
-                          'Manage uploaded exam papers',
+                          'Manage student accounts',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
@@ -176,7 +165,7 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                             onChanged: (val) => setState(() => _searchQuery = val),
                             style: const TextStyle(color: Colors.white),
                             decoration: const InputDecoration(
-                              hintText: 'Search papers...',
+                              hintText: 'Search user email...',
                               hintStyle: TextStyle(color: Colors.white54, fontSize: 13),
                               border: InputBorder.none,
                               prefixIcon: Icon(Icons.search, color: Colors.white54, size: 20),
@@ -190,19 +179,24 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                         Row(
                           children: [
                             GestureDetector(
-                               onTap: () => setState(() => _selectedFilter = 'All'),
-                               child: _buildFilterPill('All', _selectedFilter == 'All'),
+                              onTap: () => setState(() => _selectedFilter = 'All'),
+                              child: _buildFilterPill('All', _selectedFilter == 'All'),
                             ),
                             const SizedBox(width: 12),
                             GestureDetector(
-                               onTap: () => setState(() => _selectedFilter = 'Grade'),
-                               child: _buildFilterPill('Grade', _selectedFilter == 'Grade'),
+                              onTap: () => setState(() => _selectedFilter = 'Active'),
+                              child: _buildFilterPill('Active', _selectedFilter == 'Active'),
+                            ),
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                               onTap: () => setState(() => _selectedFilter = 'Blocked'),
+                               child: _buildFilterPill('Blocked', _selectedFilter == 'Blocked'),
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
 
-                        // Paper Items list dynamically populated
+                        // User Items list
                         if (_isLoading)
                           const Center(
                             child: Padding(
@@ -210,82 +204,42 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                               child: CircularProgressIndicator(color: Color(0xFF4AC4F3)),
                             ),
                           )
-                        else if (_filteredPapers.isEmpty)
+                        else if (_filteredUsers.isEmpty)
                           const Center(
                             child: Padding(
                               padding: EdgeInsets.all(32.0),
                               child: Text(
-                                'No papers found.',
+                                'No users found matching filters.',
                                 style: TextStyle(color: Colors.white54, fontSize: 14),
                               ),
                             ),
                           )
                         else
-                          ..._filteredPapers.map((paper) {
-                            final title = paper['title'] ?? 'Unknown Title';
-                            final grade = paper['grade'] ?? 'Unknown Grade';
-                            final type = paper['paper_type'] ?? 'Paper';
-                            final dateStr = _formatDate(paper['created_at']);
-                            
+                          ..._filteredUsers.map((user) {
+                            final email = user['email']?.toString() ?? 'Unknown User';
+                            final name = email.split('@').first;
+                            final isBlocked = user['is_blocked'] == true;
+                            final totalXp = user['total_xp']?.toString() ?? '0';
+                            final userId = user['user_id']?.toString() ?? '';
+                            final avatarLetter = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12.0),
-                              child: _buildPaperItem(
-                                title,
-                                'Grade $grade • $type',
-                                'Uploaded $dateStr',
+                              child: _buildUserItem(
+                                userId: userId,
+                                name: name,
+                                status: '$totalXp XP • ${isBlocked ? "Blocked" : "Active"}',
+                                avatarLetter: avatarLetter,
+                                isBlocked: isBlocked,
                               ),
                             );
                           }).toList(),
 
                         const SizedBox(height: 24),
 
-                        // Upload New Paper Button
-                        Container(
-                          width: double.infinity,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF4AC4F3), Color(0xFFB55DFF)], // Cyan to Purple
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              // Navigate to Upload screen and wait for return
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AdminMcqUploadScreen(),
-                                ),
-                              );
-                              // Refresh papers after returning from upload screen
-                              _fetchPapers();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: const Text(
-                              'Upload New Paper',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        // Paper Summary box
+                        // User Summary box
                         const Text(
-                          'Paper Summary',
+                          'User Summary',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -307,16 +261,24 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Total Papers', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                                  Text('$totalPapers', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                  const Text('Total Users', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                                  Text('$totalUsers', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Recently Added (7 days)', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                                  Text('$recentPapers', style: const TextStyle(color: Color(0xFF4AC4F3), fontSize: 16, fontWeight: FontWeight.bold)),
+                                  const Text('Active Users', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                                  Text('$activeUsers', style: const TextStyle(color: Color(0xFF4AC4F3), fontSize: 16, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Blocked Users', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                                  Text('$blockedUsers', style: const TextStyle(color: Color(0xFFB55DFF), fontSize: 16, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ],
@@ -346,9 +308,9 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildNavItem(context, 'Dashboard', false),
-                        _buildNavItem(context, 'Users', false),
+                        _buildNavItem(context, 'Users', true), // Users selected
                         _buildNavItem(context, 'Notes', false),
-                        _buildNavItem(context, 'Papers', true), // Papers selected
+                        _buildNavItem(context, 'Papers', false),
                         _buildNavItem(context, 'Settings', false),
                       ],
                     ),
@@ -388,7 +350,13 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
     );
   }
 
-  Widget _buildPaperItem(String title, String subtitle, String date) {
+  Widget _buildUserItem({
+    required String userId,
+    required String name,
+    required String status,
+    required String avatarLetter,
+    required bool isBlocked,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -398,12 +366,35 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
       ),
       child: Row(
         children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Color(0xFF4AC4F3), Color(0xFFB55DFF)], // Cyan to Purple
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                avatarLetter,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  name,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
@@ -412,27 +403,49 @@ class _AdminPastPapersScreenState extends State<AdminPastPapersScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Colors.white54,
+                  status,
+                  style: TextStyle(
+                    color: isBlocked ? const Color(0xFFB55DFF) : const Color(0xFF4AC4F3),
                     fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  date,
-                  style: const TextStyle(
-                    color: Color(0xFF4AC4F3), // Cyan color for upload date
-                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          // We removed the static View/Edit buttons here to make the item cleaner,
-          // or we can keep a simple icon if we want.
-          const Icon(Icons.picture_as_pdf, color: Colors.white38, size: 28),
+          Column(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  _toggleBlockStatus(userId, isBlocked);
+                },
+                child: _buildSmallButton(isBlocked ? 'Unblock' : 'Block', isAccent: isBlocked),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSmallButton(String label, {bool isAccent = false}) {
+    return Container(
+      width: 72,
+      height: 30,
+      decoration: BoxDecoration(
+        color: isAccent ? const Color(0xFFB55DFF).withOpacity(0.1) : const Color(0xFF222544),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: isAccent ? const Color(0xFFB55DFF).withOpacity(0.5) : Colors.white12),
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isAccent ? const Color(0xFFB55DFF) : Colors.white70,
+            fontSize: 12,
+            fontWeight: isAccent ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
