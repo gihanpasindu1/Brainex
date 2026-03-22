@@ -25,8 +25,15 @@ class Home extends StatelessWidget {
   }
 }
 
-class BrainexHome extends StatelessWidget {
+class BrainexHome extends StatefulWidget {
   const BrainexHome({super.key});
+
+  @override
+  State<BrainexHome> createState() => _BrainexHomeState();
+}
+
+class _BrainexHomeState extends State<BrainexHome> {
+  bool _isCountdownVisible = true;
 
   @override
   Widget build(BuildContext context) {
@@ -131,47 +138,65 @@ class BrainexHome extends StatelessWidget {
                             ),
                           ),
                           const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.10),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isCountdownVisible = !_isCountdownVisible;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
-                            ),
-                            child: Text(
-                              t('hide'),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                ),
+                              ),
+                              child: Text(
+                                _isCountdownVisible ? t('hide') : t('show'), // Make sure you have 'show' in localization, or fallback to 'show'
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '48 ${t('days')}',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          _Pill(text: '11h'),
-                          const SizedBox(width: 10),
-                          _Pill(text: '21m'),
-                          const SizedBox(width: 10),
-                          _Pill(text: t('keep_going')),
-                        ],
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: _isCountdownVisible
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    '48 ${t('days')}',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.5,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      const _Pill(text: '11h'),
+                                      const SizedBox(width: 10),
+                                      const _Pill(text: '21m'),
+                                      const SizedBox(width: 10),
+                                      _Pill(text: t('keep_going')),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : const SizedBox(width: double.infinity),
                       ),
                     ],
                   ),
