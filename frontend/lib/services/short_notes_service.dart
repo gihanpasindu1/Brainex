@@ -96,4 +96,18 @@ class ShortNotesService {
       throw Exception('Error loading notes: $e');
     }
   }
+
+  static Future<void> deleteShortNote(String userUid, String noteId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/short_notes/$userUid/$noteId'),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete note: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error deleting note: $e');
+    }
+  }
 }
