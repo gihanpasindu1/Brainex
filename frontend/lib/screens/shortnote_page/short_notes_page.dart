@@ -147,6 +147,46 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
     }
   }
 
+  Future<void> _deleteNote(ShortNoteModel note) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0B1326),
+        title: const Text('Delete Note', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to delete this short note?', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ShortNotesService.deleteShortNote(userUid, note.id);
+      if (!mounted) return;
+      setState(() {
+        myNotes.removeWhere((n) => n.id == note.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note deleted successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting note: $e')),
+      );
+    }
+  }
+
   void _showImageSourceDialog() {
     showModalBottomSheet(
       context: context,
@@ -459,7 +499,9 @@ class _ShortNotesPageState extends State<ShortNotesPage> {
                                                 _NoteCard(
                                                   title: note.title,
                                                   desc: note.desc,
+                                                  content: note.content,
                                                   dateText: note.date,
+                                                  onDelete: () => _deleteNote(note),
                                                 ),
                                                 const SizedBox(height: 12),
                                               ],
@@ -844,12 +886,14 @@ class _NoteCard extends StatefulWidget {
   final String desc;
   final String content;
   final String dateText;
+  final VoidCallback? onDelete;
 
   const _NoteCard({
     required this.title,
     required this.desc,
     this.content = "",
     required this.dateText,
+    this.onDelete,
   });
 
   @override
@@ -950,10 +994,22 @@ class _NoteCardState extends State<_NoteCard> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Icon(
-                  _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                  color: Colors.white.withValues(alpha: 0.4),
-                  size: 18,
+                Row(
+                  children: [
+                    if (widget.onDelete != null)
+                      GestureDetector(
+                        onTap: widget.onDelete,
+                        child: const Padding(
+                          padding: EdgeInsets.only(right: 12.0),
+                          child: Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                        ),
+                      ),
+                    Icon(
+                      _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      size: 18,
+                    ),
+                  ],
                 ),
               ],
             ),

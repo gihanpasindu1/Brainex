@@ -58,3 +58,13 @@ async def get_notes(user_uid: str):
         return notes
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{user_uid}/{note_id}")
+async def delete_note(user_uid: str, note_id: str):
+    try:
+        result = await short_notes_col.delete_one({"_id": note_id, "user_uid": user_uid})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Note not found")
+        return {"message": "Note deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
