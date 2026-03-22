@@ -1,0 +1,12 @@
+UserID,Task_Chatbot,Task_StudyPlan,Task_ModelPaper,Task_ShortNotes,Overall_Satisfaction,Feedback
+U001,5,4,5,4,5,Very helpful chatbot!
+U002,4,4,5,5,4,Liked the model paper generation.
+U003,5,5,4,4,5,The study plan is very organized.
+U004,4,4,5,4,4,Ease of navigation is good.
+U005,5,3,5,3,4,Study plan had some minor layout bugs but useful.
+U006,5,5,5,5,5,Excellent UI.
+U007,4,4,4,4,4,Easy to understand.
+U008,5,5,5,5,5,Best learning app I've used.
+U009,4,5,4,4,4,Language switching could be clearer.
+U010,5,5,3,5,4,Overall satisfied with the features.
+Avg,4.6,4.4,4.5,4.3,4.4,
