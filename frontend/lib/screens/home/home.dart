@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/localization_service.dart';
@@ -8,6 +9,7 @@ import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart';
 import 'package:frontend/screens/papers/papers_screen.dart';
 import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
+import 'package:frontend/screens/notifications/notifications_page.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -23,8 +25,15 @@ class Home extends StatelessWidget {
   }
 }
 
-class BrainexHome extends StatelessWidget {
+class BrainexHome extends StatefulWidget {
   const BrainexHome({super.key});
+
+  @override
+  State<BrainexHome> createState() => _BrainexHomeState();
+}
+
+class _BrainexHomeState extends State<BrainexHome> {
+  bool _isCountdownVisible = true;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +105,14 @@ class BrainexHome extends StatelessWidget {
                         // The existing code had a logout button. I'll add a logout button.
                         _GlowIconButton(
                           icon: Icons.notifications_none,
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NotificationsPage(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -122,47 +138,65 @@ class BrainexHome extends StatelessWidget {
                             ),
                           ),
                           const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.10),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isCountdownVisible = !_isCountdownVisible;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
-                            ),
-                            child: Text(
-                              t('hide'),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                ),
+                              ),
+                              child: Text(
+                                _isCountdownVisible ? t('hide') : t('show'), // Make sure you have 'show' in localization, or fallback to 'show'
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '48 ${t('days')}',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          _Pill(text: '11h'),
-                          const SizedBox(width: 10),
-                          _Pill(text: '21m'),
-                          const SizedBox(width: 10),
-                          _Pill(text: t('keep_going')),
-                        ],
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: _isCountdownVisible
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    '48 ${t('days')}',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.5,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      const _Pill(text: '11h'),
+                                      const SizedBox(width: 10),
+                                      const _Pill(text: '21m'),
+                                      const SizedBox(width: 10),
+                                      _Pill(text: t('keep_going')),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : const SizedBox(width: double.infinity),
                       ),
                     ],
                   ),
@@ -201,7 +235,28 @@ class BrainexHome extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            _Pill(text: t('focused_learner')),
+                            _Pill(
+                              text: [
+                                'Stay Focused', 'Dream Big', 'Work Hard',
+                                'Keep Pushing', 'Never Settle', 'Think Big',
+                                'Aim High', 'Keep Growing', 'Be Great',
+                                'Stay Sharp', 'Stay Strong', 'Move Forward',
+                                'Be Bold', 'Push Limits', 'Keep Going',
+                                'Rise Up', 'Take Action', 'Stay Positive',
+                                'Work Smart', 'Believe Now', 'No Excuses',
+                                'Chase Dreams', 'Keep Learning', 'Stay Humble',
+                                'Own It', 'Think Fast', 'Stay Calm',
+                                'Show Up', 'Keep Building', 'Go Hard'
+                              ][Random().nextInt(30)],
+                              glowColor: [
+                                Colors.blueAccent,
+                                Colors.purpleAccent,
+                                Colors.pinkAccent,
+                                Colors.orangeAccent,
+                                Colors.greenAccent,
+                                Colors.cyanAccent,
+                              ][Random().nextInt(6)],
+                            ),
                           ],
                         ),
                       ),
@@ -399,7 +454,9 @@ class _GlowIconButton extends StatelessWidget {
 
 class _Pill extends StatelessWidget {
   final String text;
-  const _Pill({required this.text});
+  final Color? glowColor;
+
+  const _Pill({required this.text, this.glowColor});
 
   @override
   Widget build(BuildContext context) {
@@ -408,13 +465,25 @@ class _Pill extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        border: Border.all(
+          color: glowColor?.withValues(alpha: 0.5) ??
+              Colors.white.withValues(alpha: 0.10),
+        ),
+        boxShadow: glowColor != null
+            ? [
+                BoxShadow(
+                  color: glowColor!.withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  spreadRadius: 2,
+                )
+              ]
+            : null,
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12.5,
-          color: Colors.white70,
+          color: glowColor != null ? Colors.white : Colors.white70,
           fontWeight: FontWeight.w600,
         ),
       ),
