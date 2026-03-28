@@ -12,6 +12,9 @@ import 'package:frontend/screens/papers/papers_screen.dart';
 import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
 import 'package:frontend/services/motivation_service.dart';
 import 'package:frontend/screens/notifications/notifications_page.dart';
+import 'package:frontend/services/user_profile_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 
 class Home extends StatelessWidget {
@@ -40,6 +43,13 @@ class _BrainexHomeState extends State<BrainexHome> {
   late String _motivationQuote;
   late Color _motivationColor;
 
+  // Countdown timers
+  String _days = '0';
+  String _hours = '0';
+  String _minutes = '0';
+  Timer? _timer;
+  int? _examYear;
+
   final List<String> _quotes = [
     'Stay Focused', 'Dream Big', 'Work Hard',
     'Keep Pushing', 'Never Settle', 'Think Big',
@@ -57,6 +67,60 @@ class _BrainexHomeState extends State<BrainexHome> {
   void initState() {
     super.initState();
     _shuffleMotivation();
+    _fetchProfileData();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchProfileData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final profile = await UserProfileService().getUserProfile(user.uid);
+      if (profile != null && profile['exam_year'] != null) {
+        final year = int.tryParse(profile['exam_year'].toString());
+        if (year != null) {
+          setState(() {
+            _examYear = year;
+          });
+          _startCountdown();
+        }
+      }
+    }
+  }
+
+  void _startCountdown() {
+    _timer?.cancel();
+    _updateTime();
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _updateTime();
+    });
+  }
+
+  void _updateTime() {
+    if (_examYear == null) return;
+
+    final targetDate = DateTime(_examYear!, 8, 10);
+    final now = DateTime.now();
+    final difference = targetDate.difference(now);
+
+    if (difference.isNegative) {
+      setState(() {
+        _days = '0';
+        _hours = '0';
+        _minutes = '0';
+      });
+      return;
+    }
+
+    setState(() {
+      _days = difference.inDays.toString();
+      _hours = (difference.inHours % 24).toString();
+      _minutes = (difference.inMinutes % 60).toString();
+    });
   }
 
   void _shuffleMotivation() {
@@ -213,7 +277,7 @@ class _BrainexHomeState extends State<BrainexHome> {
                                 children: [
                                   const SizedBox(height: 12),
                                   Text(
-                                    '48 ${t('days')}',
+                                    '$_days ${t('days')}',
                                     style: const TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w800,
@@ -224,9 +288,9 @@ class _BrainexHomeState extends State<BrainexHome> {
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      const _Pill(text: '11h'),
+                                      _Pill(text: '${_hours}h'),
                                       const SizedBox(width: 10),
-                                      const _Pill(text: '21m'),
+                                      _Pill(text: '${_minutes}m'),
                                       const SizedBox(width: 10),
                                       _Pill(text: t('keep_going')),
                                     ],
