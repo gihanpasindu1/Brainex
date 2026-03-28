@@ -21,6 +21,7 @@ class GenerateModelPaperRequest(BaseModel):
     topic: Optional[str] = None       # required only when paper_type="Subject"
     count: int = Field(default=1, ge=1, le=10)
     mcq_count: int = Field(default=50, ge=5, le=60)
+    user_id: Optional[str] = None
 
     @model_validator(mode='before')
     @classmethod
