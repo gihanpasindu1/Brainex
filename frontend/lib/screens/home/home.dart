@@ -42,6 +42,17 @@ class _BrainexHomeState extends State<BrainexHome> {
     String t(String key) => tr?.translate(key) ?? key;
     final localeProvider = Provider.of<LocaleProvider>(context);
 
+    // Calculate time until next August 10
+    final DateTime now = DateTime.now();
+    DateTime targetDate = DateTime(now.year, 8, 10);
+    if (now.isAfter(targetDate)) {
+      targetDate = DateTime(now.year + 1, 8, 10);
+    }
+    final Duration diff = targetDate.difference(now);
+    final int days = diff.inDays;
+    final int hours = diff.inHours % 24;
+    final int minutes = diff.inMinutes % 60;
+
     return Scaffold(
       extendBody: true,
       body: Container(
@@ -169,7 +180,7 @@ class _BrainexHomeState extends State<BrainexHome> {
                           children: [
                             const SizedBox(height: 12),
                             Text(
-                              _isCountdownVisible ? '48 ${t('days')}' : '** ${t('days')}',
+                              _isCountdownVisible ? '$days ${t('days')}' : '** ${t('days')}',
                               style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w800,
@@ -180,9 +191,9 @@ class _BrainexHomeState extends State<BrainexHome> {
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                _Pill(text: _isCountdownVisible ? '11h' : '**h'),
+                                _Pill(text: _isCountdownVisible ? '${hours}h' : '**h'),
                                 const SizedBox(width: 10),
-                                _Pill(text: _isCountdownVisible ? '21m' : '**m'),
+                                _Pill(text: _isCountdownVisible ? '${minutes}m' : '**m'),
                                 const SizedBox(width: 10),
                                 _Pill(text: t('keep_going')),
                               ],
