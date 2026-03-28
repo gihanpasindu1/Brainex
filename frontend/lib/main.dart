@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:frontend/providers/locale_provider.dart';
 import 'package:frontend/screens/activity_challenges/friend_challenge_entry_screen.dart';
 import 'package:frontend/screens/splash_screen/splash_screen.dart';
+import 'package:frontend/screens/wrapper.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/screens/create_profile/create_profile.dart';
@@ -137,7 +138,7 @@ class _AppRootState extends State<_AppRoot> {
             '/activity-challenges': (context) =>
                 const ActivityChallengesScreen(),
           },
-          home: const SplashScreen(),
+          home:  Wrapper(),
         );
       },
     );
