@@ -1,4 +1,4 @@
-
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -38,11 +38,22 @@ class BrainexHome extends StatefulWidget {
 class _BrainexHomeState extends State<BrainexHome> {
   bool _isCountdownVisible = true;
   String? _examYear;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _fetchProfile();
+    // Update the countdown every minute
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchProfile() async {
