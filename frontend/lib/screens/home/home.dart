@@ -288,9 +288,15 @@ class _BrainexHomeState extends State<BrainexHome> {
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      _Pill(text: '${_hours}h'),
+                                      _Pill(
+                                        text: '${_hours}h',
+                                        glowColor: Colors.blueAccent,
+                                      ),
                                       const SizedBox(width: 10),
-                                      _Pill(text: '${_minutes}m'),
+                                      _Pill(
+                                        text: '${_minutes}m',
+                                        glowColor: Colors.purpleAccent,
+                                      ),
                                       const SizedBox(width: 10),
                                       _Pill(text: t('keep_going')),
                                     ],
