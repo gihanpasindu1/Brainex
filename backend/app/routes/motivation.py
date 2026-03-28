@@ -8,21 +8,21 @@ router = APIRouter(
 )
 
 MOTIVATIONAL_QUOTES = [
-    {"id": 1, "text": "Focused Learner"},
-    {"id": 2, "text": "Brain Architect"},
-    {"id": 3, "text": "Exam Conqueror"},
-    {"id": 4, "text": "Knowledge Seeker"},
-    {"id": 5, "text": "Future Leader"},
-    {"id": 6, "text": "Silent Achiever"},
-    {"id": 7, "text": "Limitless Mind"},
-    {"id": 8, "text": "Goal Digger"},
-    {"id": 9, "text": "Daily Scholar"},
-    {"id": 10, "text": "Peak Performer"},
-    {"id": 11, "text": "Deep Thinker"},
-    {"id": 12, "text": "Study Champion"},
-    {"id": 13, "text": "Rising Star"},
-    {"id": 14, "text": "Relentless Student"},
-    {"id": 15, "text": "Smart Worker"}
+    {"id": 1, "text": "Academic Warrior"},
+    {"id": 2, "text": "Unstoppable Mind"},
+    {"id": 3, "text": "Master Scholar"},
+    {"id": 4, "text": "Future Legend"},
+    {"id": 5, "text": "Brilliant Mind"},
+    {"id": 6, "text": "Knowledge Titan"},
+    {"id": 7, "text": "Daily Grind"},
+    {"id": 8, "text": "Peak Focus"},
+    {"id": 9, "text": "Elite Learner"},
+    {"id": 10, "text": "Success Magnet"},
+    {"id": 11, "text": "Power Student"},
+    {"id": 12, "text": "Wisdom Seeker"},
+    {"id": 13, "text": "Victory Chaser"},
+    {"id": 14, "text": "Infinite Potential"},
+    {"id": 15, "text": "Goal Crusher"}
 ]
 
 @router.get("/")
