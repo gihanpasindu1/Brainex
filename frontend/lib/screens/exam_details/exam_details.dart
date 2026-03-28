@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/choose_plan/choose_plan.dart';
 
@@ -116,14 +115,11 @@ class _ExamDetailsState extends State<ExamDetails> {
                           return;
                         }
                         
-                        final user = FirebaseAuth.instance.currentUser;
-                        
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => ChoosePlan(
                             onboardingData: {
                               "name": _nameController.text.trim(),
-                              "email": user?.email ?? "",
                               "grade": _selectedGrade,
                               "exam_year": _selectedYear,
                               "school": _schoolController.text.trim(),

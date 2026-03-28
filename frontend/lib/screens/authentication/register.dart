@@ -65,18 +65,6 @@ class _RegisterState extends State<Register> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(t("error_register_failed"))));
-    } else if (result is String) {
-      // Handle specific Firebase error codes
-      String message = t("error_register_failed");
-      if (result == 'email-already-in-use') {
-        message = t("error_email_already_in_use"); // Make sure this key exists in localization
-      } else if (result == 'weak-password') {
-        message = t("error_weak_password");
-      } else if (result == 'invalid-email') {
-        message = t("error_invalid_email");
-      }
-      
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } else {
       // Success -> Navigate to Home (via Wrapper or directly)
       Navigator.pushAndRemoveUntil(

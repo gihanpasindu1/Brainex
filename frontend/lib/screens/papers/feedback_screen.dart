@@ -4,15 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 class PerformanceFeedbackScreen extends StatelessWidget {
   final Map<String, dynamic> analysis;
   final String paperTitle;
-  final List<dynamic>? questions;
-  final Map<int, String?>? selectedAnswers;
 
   const PerformanceFeedbackScreen({
     super.key,
     required this.analysis,
     required this.paperTitle,
-    this.questions,
-    this.selectedAnswers,
   });
 
   @override
@@ -63,21 +59,6 @@ class PerformanceFeedbackScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     _buildHowToImprove(suggestions),
-                    const SizedBox(height: 30),
-                    if (questions != null) ...[
-                      const Divider(color: Colors.white10),
-                      const SizedBox(height: 20),
-                      Text(
-                        "Detailed Answers & Explanations",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ..._buildReviewList(),
-                    ],
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -350,104 +331,6 @@ class PerformanceFeedbackScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildReviewList() {
-    if (questions == null) return [];
-    
-    return List.generate(questions!.length, (index) {
-      final q = questions![index];
-      final Map<int, String?> answers = selectedAnswers ?? {};
-      final String? selected = answers[index];
-      final String correct = q['correct_answer'] ?? '';
-      final bool isCorrect = selected == correct;
-
-      return Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1C26),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isCorrect ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: isCorrect ? Colors.greenAccent.withValues(alpha: 0.1) : Colors.redAccent.withValues(alpha: 0.1),
-                  child: Text(
-                    "${index + 1}",
-                    style: TextStyle(
-                      color: isCorrect ? Colors.greenAccent : Colors.redAccent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    q['question'] ?? "",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildAnswerLine("Your Answer: ", selected ?? "No Answer", isCorrect ? Colors.greenAccent : Colors.redAccent),
-            if (!isCorrect)
-              _buildAnswerLine("Correct Answer: ", correct, Colors.greenAccent),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                q['explanation'] ?? "No explanation.",
-                style: GoogleFonts.poppins(
-                  color: Colors.white54,
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildAnswerLine(String label, String value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4, left: 32),
-      child: RichText(
-        text: TextSpan(
-          text: label,
-          style: GoogleFonts.poppins(color: Colors.white38, fontSize: 11),
-          children: [
-            TextSpan(
-              text: value,
-              style: GoogleFonts.poppins(
-                color: color,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildBottomActions(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -457,6 +340,23 @@ class PerformanceFeedbackScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.white24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+              child: const Text(
+                "Review Answers",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
@@ -468,7 +368,7 @@ class PerformanceFeedbackScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
               child: const Text(
-                "Back to Dashboard",
+                "Retry Test",
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

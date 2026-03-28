@@ -14,7 +14,6 @@ from app.services.global_challenge_service import (
 from .routes.planner import router as planner_router
 from .routes.short_notes import router as short_notes_router
 from app.routes.pastpapers import router as pastpapers_router
-from app.routes.admin import router as admin_router
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -54,4 +53,3 @@ app.include_router(users_router)
 app.include_router(planner_router)
 app.include_router(short_notes_router)
 app.include_router(pastpapers_router)
-app.include_router(admin_router)

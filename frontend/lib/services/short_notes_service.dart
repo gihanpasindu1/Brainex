@@ -27,7 +27,6 @@ class ShortNotesService {
         return {
           'title': data['title']?.toString() ?? 'Generated Note',
           'desc': data['desc']?.toString() ?? '',
-          'content': data['content']?.toString() ?? '',
         };
       } else {
         throw Exception('Failed to generate note: ${response.statusCode}');
@@ -37,7 +36,7 @@ class ShortNotesService {
     }
   }
 
-  static Future<ShortNoteModel> saveShortNote(String userUid, String title, String desc, String content) async {
+  static Future<ShortNoteModel> saveShortNote(String userUid, String title, String desc) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/short_notes/$userUid'),
@@ -45,7 +44,6 @@ class ShortNotesService {
         body: jsonEncode({
           'title': title,
           'desc': desc,
-          'content': content,
         }),
       );
 
@@ -57,28 +55,6 @@ class ShortNotesService {
       }
     } catch (e) {
       throw Exception('Error saving note: $e');
-    }
-  }
-
-  static Future<List<Map<String, String>>> getPredefinedNotes() async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/short_notes/predefined/all'));
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) {
-          return {
-            "title": json["title"]?.toString() ?? "Untitled Note",
-            "desc": json["desc"]?.toString() ?? "",
-            "date": json["date"]?.toString() ?? "",
-            "content": json["content"]?.toString() ?? "",
-          };
-        }).toList();
-      } else {
-        throw Exception('Failed to load predefined notes: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error loading predefined notes: $e');
     }
   }
 
@@ -94,20 +70,6 @@ class ShortNotesService {
       }
     } catch (e) {
       throw Exception('Error loading notes: $e');
-    }
-  }
-
-  static Future<void> deleteShortNote(String userUid, String noteId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/short_notes/$userUid/$noteId'),
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to delete note: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error deleting note: $e');
     }
   }
 }

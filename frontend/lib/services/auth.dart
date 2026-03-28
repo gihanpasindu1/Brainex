@@ -80,7 +80,7 @@ class AuthServices {
   }
 
   // register with email and password
-  Future<dynamic> registerWithEmailPassword(
+  Future<UserModel?> registerWithEmailPassword(
     String email,
     String password,
   ) async {
@@ -94,11 +94,8 @@ class AuthServices {
         await _userProfileService.syncDailyLoginXp(user.uid);
       }
       return _userWithFirebaseUserUid(user);
-    } on FirebaseAuthException catch (e) {
-      debugPrint("Firebase Auth Error: ${e.code} - ${e.message}");
-      return e.code; // Return the error code (e.g., 'email-already-in-use')
     } catch (err) {
-      debugPrint("General Registration Error: ${err.toString()}");
+      debugPrint(err.toString());
       return null;
     }
   }

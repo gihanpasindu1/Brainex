@@ -168,8 +168,6 @@ class _ModelPaperOverviewScreenState extends State<ModelPaperOverviewScreen> {
               builder: (context) => PerformanceFeedbackScreen(
                 analysis: analysis,
                 paperTitle: widget.paperData['title'] ?? 'Model Paper',
-                questions: questions,
-                selectedAnswers: selectedAnswers,
               ),
             ),
           ).then((_) {

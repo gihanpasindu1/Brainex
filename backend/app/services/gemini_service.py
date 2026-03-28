@@ -85,7 +85,7 @@ Context (use only this):
 """.strip()
 
     resp = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-pro-preview",
         contents=types.Part.from_text(text=prompt),
         config=types.GenerateContentConfig(
             temperature=0.6,
@@ -104,22 +104,16 @@ def generate_short_note_with_gemini(ocr_text: str) -> dict:
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
     prompt = f"""
-You are an expert study assistant. Your job is to process raw text extracted from a scanned student note or textbook and convert it into a highly structured, point-wise summary.
+You are an expert tutor. Please take the following raw OCR text and structure it into a clean, easy-to-read Short Note.
+Extract a suitable "title" for the note, and rewrite the text into a well-formatted "desc" (description) that summarizes and organizes the key points.
 
-STRICT FORMATTING RULES:
-1. **Point-Wise Only**: The entire content MUST be in bullet points. Do NOT use paragraphs.
-2. **Concise Sentences**: Each bullet point should relate a single key fact, concept, or formula.
-3. **Structured Hierarchy**: Use main bullet points for topics and nested sub-bullets for supporting details.
-4. **Markdown Formatting**: Use Markdown (*) or (-) for bullets, and use **bold text** for key terms.
-5. **No Additions**: Do not add external facts. Fix spelling/OCR errors and logically organize facts.
-6. JSON Keys: Return ONLY valid JSON with three string keys: "title", "desc", and "content".
-7. "title": A short 3-5 word title.
-8. "desc": A one-sentence summary of the note.
-9. "content": The entire point-wise markdown string.
-10. STRICT RULE: Do NOT use literal newlines in the JSON string. Use \\n.
-11. STRICT RULE: Do NOT use ANY double quotes (") inside strings. Use single quotes (') instead.
+Rules:
+- Return ONLY valid JSON (no markdown, no explanation outside JSON).
+- The JSON must have exactly two string keys: "title" and "desc".
+- Do NOT use ANY double quotes (") inside the title or description strings. Use single quotes (') instead.
+- Do NOT include literal newlines inside strings. If you need a newline, use \\n.
 
-Raw Text:
+Raw OCR Text:
 {ocr_text}
 """.strip()
 

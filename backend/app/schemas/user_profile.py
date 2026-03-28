@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 class UserOnboardingRequest(BaseModel):
     name: str
-    email: Optional[str] = None
     grade: str
     exam_year: str
     school: Optional[str] = None
@@ -37,7 +36,6 @@ class XpHistoryItem(BaseModel):
 
 class UserProfileResponse(BaseModel):
     user_id: str
-    email: Optional[str] = None
     total_xp: int = Field(..., ge=0)
     papers_completed: int = 0
     last_login_xp_date: Optional[str] = None

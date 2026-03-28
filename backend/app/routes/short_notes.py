@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from ..schemas.short_note import ShortNoteCreate, ShortNoteDB, ShortNoteGenerateRequest
-from ..db.mongo import short_notes_col, predefined_notes_col
+from ..db.mongo import short_notes_col
 from ..services.gemini_service import generate_short_note_with_gemini
 import uuid
 from datetime import datetime
@@ -29,7 +29,6 @@ async def create_note(user_uid: str, note: ShortNoteCreate):
             "_id": note_id,
             "title": note.title,
             "desc": note.desc,
-            "content": note.content,
             "user_uid": user_uid,
             "date": date_str
         }
@@ -39,32 +38,11 @@ async def create_note(user_uid: str, note: ShortNoteCreate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/predefined/all")
-async def get_predefined_notes():
-    try:
-        cursor = predefined_notes_col.find({})
-        notes = await cursor.to_list(length=100)
-        for note in notes:
-            note["_id"] = str(note.get("_id", ""))
-        return notes
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/{user_uid}", response_model=List[ShortNoteDB])
 async def get_notes(user_uid: str):
     try:
         cursor = short_notes_col.find({"user_uid": user_uid})
         notes = await cursor.to_list(length=100)
         return notes
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/{user_uid}/{note_id}")
-async def delete_note(user_uid: str, note_id: str):
-    try:
-        result = await short_notes_col.delete_one({"_id": note_id, "user_uid": user_uid})
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Note not found")
-        return {"message": "Note deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

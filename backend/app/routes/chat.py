@@ -117,7 +117,7 @@ async def chat_endpoint(request: ChatRequest):
         history_for_ai.append({"role": role, "content": m.get("text", "")})
 
     # 3. Ask AI with history and optional pdf text
-    response_data = await ask_ai(request.message, final_pdf_text, history=history_for_ai)
+    response_data = ask_ai(request.message, final_pdf_text, history=history_for_ai)
 
     # Extract answer
     answer = response_data.get("answer", "")

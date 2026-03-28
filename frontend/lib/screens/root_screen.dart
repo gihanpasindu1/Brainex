@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/home/home.dart';
 import 'package:frontend/screens/profile%20screen/profile_screen.dart';
-import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart' as frontend;
-import 'package:frontend/screens/leaderboard/leaderboard_page.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_2.dart';
 import 'package:frontend/widgets/premium_bottom_nav.dart';
 
 class RootScreen extends StatefulWidget {
-  final String userId;
-  const RootScreen({super.key, required this.userId});
+  const RootScreen({super.key});
 
   @override
   State<RootScreen> createState() => _RootScreenState();
@@ -15,6 +13,22 @@ class RootScreen extends StatefulWidget {
 
 class _RootScreenState extends State<RootScreen> {
   int _currentIndex = 0;
+
+  // List of the main screens that correspond to the bottom nav tabs
+  final List<Widget> _screens = [
+    const BrainexHome(), // 0: Home
+    const AIStudyPlanPage2(), // 1: Plan
+    const Scaffold(
+      backgroundColor: Color(0xFF0D1026),
+      body: Center(
+        child: Text(
+          "Leaderboard Coming Soon",
+          style: TextStyle(color: Colors.white70),
+        ),
+      ),
+    ), // 2: Leaderboard (Placeholder)
+    const ProfileScreen(), // 3: Profile
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -25,29 +39,11 @@ class _RootScreenState extends State<RootScreen> {
         transitionBuilder: (Widget child, Animation<double> animation) {
           return FadeTransition(opacity: animation, child: child);
         },
-        child: [
-          const BrainexHome(),
-          LeaderboardPage(
-            userId: widget.userId,
-            onBack: () {
-              setState(() {
-                _currentIndex = 0;
-              });
-            },
-          ),
-          const ProfileScreen(),
-        ][_currentIndex > 1 ? _currentIndex - 1 : _currentIndex],
+        child: _screens[_currentIndex],
       ),
       bottomNavigationBar: PremiumBottomNav(
         currentIndex: _currentIndex,
         onTap: (index) {
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const frontend.AIStudyPlanSetupPage()),
-            );
-            return;
-          }
           if (_currentIndex != index) {
             setState(() {
               _currentIndex = index;

@@ -52,6 +52,17 @@ class _SplashScreenState extends State<SplashScreen>
         dotCount = (dotCount + 1) % 4;
       });
     });
+
+    // Splash duration → go to Wrapper
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      final route = ModalRoute.of(context);
+      if (route?.isCurrent != true) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => Wrapper()),
+      );
+    });
   }
 
   @override
