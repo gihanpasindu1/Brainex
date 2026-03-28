@@ -9,6 +9,9 @@ import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart';
 import 'package:frontend/screens/papers/papers_screen.dart';
 import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
+import 'package:frontend/services/motivation_service.dart';
+import 'package:frontend/screens/notifications/notifications_page.dart';
+
 
 class Home extends StatelessWidget {
   const Home({super.key});
