@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
@@ -36,6 +37,40 @@ class BrainexHome extends StatefulWidget {
 
 class _BrainexHomeState extends State<BrainexHome> {
   bool _isCountdownVisible = true;
+  late String _motivationQuote;
+  late Color _motivationColor;
+
+  final List<String> _quotes = [
+    'Stay Focused', 'Dream Big', 'Work Hard',
+    'Keep Pushing', 'Never Settle', 'Think Big',
+    'Aim High', 'Keep Growing', 'Be Great',
+    'Stay Sharp', 'Stay Strong', 'Move Forward',
+    'Be Bold', 'Push Limits', 'Keep Going',
+    'Rise Up', 'Take Action', 'Stay Positive',
+    'Work Smart', 'Believe Now', 'No Excuses',
+    'Chase Dreams', 'Keep Learning', 'Stay Humble',
+    'Own It', 'Think Fast', 'Stay Calm',
+    'Show Up', 'Keep Building', 'Go Hard'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _shuffleMotivation();
+  }
+
+  void _shuffleMotivation() {
+    final random = Random();
+    _motivationQuote = _quotes[random.nextInt(_quotes.length)];
+    _motivationColor = [
+      Colors.blueAccent,
+      Colors.purpleAccent,
+      Colors.pinkAccent,
+      Colors.orangeAccent,
+      Colors.greenAccent,
+      Colors.cyanAccent,
+    ][random.nextInt(6)];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -223,22 +258,39 @@ class _BrainexHomeState extends State<BrainexHome> {
                     ),
                     const SizedBox(width: 14),
                     Expanded(
-                      child: _GlassCard(
-                        radius: 22,
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t('motivation_title'),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _shuffleMotivation();
+                          });
+                        },
+                        child: _GlassCard(
+                          radius: 22,
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                t('motivation_title'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w600,
+                                  shadows: [
+                                    Shadow(
+                                      color: _motivationColor.withValues(alpha: 0.8),
+                                      blurRadius: 12,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            _Pill(text: t('focused_learner')),
-                          ],
+                              const SizedBox(height: 10),
+                              _Pill(
+                                text: _motivationQuote,
+                                glowColor: _motivationColor,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
