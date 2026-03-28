@@ -2,12 +2,14 @@ class ShortNoteModel {
   final String id;
   final String title;
   final String desc;
+  final String content;
   final String date;
 
   ShortNoteModel({
     required this.id,
     required this.title,
     required this.desc,
+    required this.content,
     required this.date,
   });
 
@@ -16,6 +18,7 @@ class ShortNoteModel {
       id: json['_id'] ?? '',
       title: json['title'] ?? '',
       desc: json['desc'] ?? '',
+      content: json['content'] ?? '',
       date: json['date'] ?? '',
     );
   }
@@ -24,6 +27,7 @@ class ShortNoteModel {
     return {
       'title': title,
       'desc': desc,
+      'content': content,
       'date': date,
     };
   }

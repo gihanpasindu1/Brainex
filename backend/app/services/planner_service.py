@@ -46,9 +46,9 @@ def generate_study_plan_ai(data: StudyPlanRequest) -> dict:
     [{official_syllabus}]
 
     IMPORTANT PLANNING RULE:
-    - If the Target is "Final Exam" or "Term Exam", create a comprehensive revision plan that prioritizes the "Topics to Focus On", but also pulls other topics strictly from the OFFICIAL SYLLABUS BOUNDARIES above.
-    - If the Target is "Topic-wise Plan", you MUST restrict the entire study plan ONLY to the "Topics to Focus On" provided. Do NOT add other syllabus topics.
-    - Do NOT invent topics outside of the official syllabus.
+    - If "Topics to Focus On" is specified (not 'None specified'), you MUST restrict the entire study plan ONLY to those topics. Do NOT include other units.
+    - If "Topics to Focus On" is "None specified", utilize the OFFICIAL SYLLABUS BOUNDARIES provided above.
+    - Do NOT invent topics outside of the official Sri Lankan GCE A/L ICT syllabus.
 
     CRITICAL INSTRUCTION FOR DAILY HOURS:
     Do NOT copy the dummy number (0) from the example below. You MUST dynamically calculate a realistic integer between 1 and 4 for "suggested_hours_per_day" for EACH week. Heavy topics (like Python/MySQL) should get more hours, lighter topics should get fewer.
@@ -62,10 +62,23 @@ def generate_study_plan_ai(data: StudyPlanRequest) -> dict:
           "focus_area": "Main topic for the week",
           "topics_to_cover": ["Subtopic 1", "Subtopic 2", "Subtopic 3"],
           "suggested_hours_per_day": 0,
-          "study_advice": "Specific study strategy or tip for this week's content."
+          "study_advice": "Specific study strategy or tip for this week's content.",
+          "days": [
+            {{
+              "day_number": 1,
+              "topic": "Logic Gates",
+              "learning_step": "Read AND, OR, NOT gate definitions",
+              "understanding_step": "Look at 3 truth table examples",
+              "practice_step": "Answer 15 MCQs on Logic Gates",
+              "review_step": "Check wrong answers and read explanations",
+              "revision_step": "Revise yesterday's Boolean Algebra notes for 15 minutes",
+              "checkpoint": "Did you finish all tasks? Confidence level: Good, Average, Weak"
+            }}
+          ]
         }}
       ]
     }}
+    CRITICAL: YOU MUST generate exactly 7 elements in the "days" array for each week (day_number 1 through 7). Each day MUST have all 7 steps defined.
     """
 
     response = client.models.generate_content(

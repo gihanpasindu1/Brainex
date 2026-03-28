@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart' as frontend;
 import 'exam_screen.dart';
 
 class PapersScreen extends StatefulWidget {
@@ -191,7 +192,7 @@ class _PapersScreenState extends State<PapersScreen> {
                             Text(
                               isSuccess
                                   ? "Paper Generated!\nSuccesfully added to Suggested Papers."
-                                  : "Generating Paper with AI...\nThis usually takes 15-25 seconds",
+                                  : "Generating Paper with AI...\nThis usually takes 1-3 minutes",
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -971,7 +972,7 @@ class _PapersScreenState extends State<PapersScreen> {
 
       final response = await http
           .post(uri, headers: {"Content-Type": "application/json"}, body: jsonEncode(payload))
-          .timeout(const Duration(seconds: 120));
+          .timeout(const Duration(seconds: 300));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -1074,7 +1075,12 @@ class _BottomNav extends StatelessWidget {
                   icon: Icons.calendar_month_rounded,
                   label: t('nav_plan'),
                   active: currentIndex == 1,
-                  onTap: () => onChanged(1),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const frontend.AIStudyPlanSetupPage()),
+                    );
+                  },
                 ),
                 _NavItem(
                   icon: Icons.emoji_events_rounded,

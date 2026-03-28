@@ -2,6 +2,8 @@ from openai import OpenAI
 import os
 import re
 from dotenv import load_dotenv
+from typing import Optional, Dict, Any
+from app.services.past_paper_service import get_question_by_year_and_number, get_questions_by_unit
 
 load_dotenv()
 
@@ -68,6 +70,68 @@ def _extract_answer(text: str) -> str:
     if "ANSWER:" in text:
         return text.split("ANSWER:", 1)[1].strip()
     return text.strip()
+
+
+async def _detect_past_paper_intent(question: str) -> Optional[Dict[str, Any]]:
+    """
+    Detects if the user is asking for a specific past paper question or unit-wise questions.
+    Returns a dict with intent 'specific_question' or 'unit_questions' and relevant data.
+    """
+    q_lower = question.lower()
+    
+    # 1. Specific question: "2018 24th MCQ", "2011 Q5", "Explain 2015 10mcq"
+    # Regex for year (4 digits) and question number (1-2 digits), with optional space before suffix
+    # Pattern A: year first, then number: "2023 A/L 10th question"
+    specific_match = re.search(r"(?P<year>20\d{2})\s+.*?(?P<num>\d{1,2})\s*(?:st|nd|rd|th)?\s*(?:mcq|q|question)", q_lower)
+    if not specific_match:
+        # Pattern B: "MCQ 24 in 2018"
+        specific_match = re.search(r"(?:mcq|q|question)\s*(?P<num>\d{1,2}).*?(?P<year>20\d{2})", q_lower)
+    if not specific_match:
+        # Pattern C: number first, then year: "10 th question on 2023 A/L exam"
+        specific_match = re.search(r"(?P<num>\d{1,2})\s*(?:st|nd|rd|th)?\s*(?:mcq|q|question).*?(?P<year>20\d{2})", q_lower)
+    
+    if specific_match:
+        year = specific_match.group("year")
+        num = specific_match.group("num")
+        question_data = await get_question_by_year_and_number(year, num)
+        if question_data:
+            return {
+                "intent": "specific_question",
+                "year": year,
+                "question_number": num,
+                "data": question_data,
+                "found_in_db": True
+            }
+        else:
+            return {
+                "intent": "specific_question",
+                "year": year,
+                "question_number": num,
+                "data": None,
+                "found_in_db": False
+            }
+
+    # 2. Unit-wise questions: "Unit 10 questions", "Explain questions from unit 9"
+    unit_match = re.search(r"unit\s*(?P<unit_num>\d{1,2})\s*questions?", q_lower)
+    if unit_match:
+        unit_num = unit_match.group("unit_num")
+        questions = await get_questions_by_unit(f"Unit {unit_num}")
+        if questions:
+            return {
+                "intent": "unit_questions",
+                "unit": unit_num,
+                "data": questions,
+                "found_in_db": True
+            }
+        else:
+            return {
+                "intent": "unit_questions",
+                "unit": unit_num,
+                "data": None,
+                "found_in_db": False
+            }
+            
+    return None
 
 
 # ----------------------------------
@@ -163,20 +227,77 @@ Example: Python Basics, Python Functions
 # MAIN FUNCTION
 # ----------------------------------
 
-def ask_ai(question: str, pdf_text: str | None = None, history: list[dict] | None = None) -> dict:
+async def ask_ai(question: str, pdf_text: str | None = None, history: list[dict] | None = None) -> dict:
     """
-    A/L ICT Tutor Bot
-
-    - AI decides syllabus boundaries
-    - Answers use-case questions
-    - PDF is OPTIONAL
-    - If NOT in syllabus → NO evidence
+    A/L ICT Tutor Bot with Past Paper awareness.
     """
 
     # ✅ Exact solver for number system questions
     solved = _solve_number_system(question)
     if solved:
         return {"answer": solved, "evidence": [], "used_pdf": False}
+
+    # ✅ Past Paper Intent Detection
+    past_paper_info = await _detect_past_paper_intent(question)
+    
+    past_paper_context = ""
+    if past_paper_info:
+        if past_paper_info["intent"] == "specific_question":
+            if past_paper_info["found_in_db"]:
+                q_data = past_paper_info["data"]
+                # Formatting options broadly to handle different structures
+                options_text = ""
+                options_dict = q_data.get('options', {})
+                if isinstance(options_dict, dict):
+                    for k, v in options_dict.items():
+                        if isinstance(v, dict):
+                            options_text += f"{k}: {v.get('text', '')}\n"
+                        else:
+                            options_text += f"{k}: {v}\n"
+                
+                correct_ans = q_data.get('answer') or q_data.get('correct_answer')
+                db_exp = q_data.get('explanation') or "No explanation provided in DB."
+
+                past_paper_context = f"""
+--- SOURCE: Past Paper {past_paper_info['year']} MCQ {past_paper_info['question_number']} ---
+Question: {q_data.get('question')}
+Options:
+{options_text.strip()}
+Correct Answer: {correct_ans}
+DB Explanation: {db_exp}
+
+INSTRUCTION: The student is asking you to EXPLAIN this past paper question. You MUST:
+1. First, clearly state the question and all the options.
+2. Then explain WHY the correct answer is correct, using ICT concepts from the A/L syllabus.
+3. Briefly explain why the other options are wrong (if applicable).
+4. Provide a clear, detailed, educational explanation. Do NOT just state the answer number.
+"""
+                print(f"[DEBUG] Found specific past paper question: {past_paper_info['year']} {past_paper_info['question_number']}")
+            else:
+                past_paper_context = f"""
+--- MISSING PAST PAPER QUERY ---
+The student is asking about GCE A/L {past_paper_info['year']} MCQ {past_paper_info['question_number']}, but this specific question was NOT found in the database.
+You must inform the student that you don't have this specific question in your records right now, and politely ask them to type or upload the question itself so you can help. Do NOT say 'Not in the GCE A/L ICT syllabus'.
+"""
+                print(f"[DEBUG] Missing specific past paper question: {past_paper_info['year']} {past_paper_info['question_number']}")
+            
+        elif past_paper_info["intent"] == "unit_questions":
+            if past_paper_info["found_in_db"]:
+                questions = past_paper_info["data"]
+                # User wants exact list, no explanation
+                q_list = []
+                for i, q in enumerate(questions[:40]): # Limit to first 40 to avoid token blowout
+                    q_list.append(f"{i+1}. [{q.get('year')} Q{q.get('question_number')}] {q.get('question')}")
+                
+                past_paper_context = f"\n--- SOURCE: Unit {past_paper_info['unit']} Questions ---\n" + "\n".join(q_list)
+                print(f"[DEBUG] Found {len(questions)} questions for Unit {past_paper_info['unit']}")
+            else:
+                past_paper_context = f"""
+--- MISSING PAST PAPER QUERY ---
+The student asked for questions from Unit {past_paper_info['unit']}, but none were found in the database. 
+You must inform the student that you don't have questions for this unit in your records right now. Do NOT say 'Not in the GCE A/L ICT syllabus'.
+"""
+                print(f"[DEBUG] Missing questions for Unit {past_paper_info['unit']}")
 
     system_prompt = """
 You are a Sri Lankan GCE A/L ICT tutor.
@@ -193,6 +314,17 @@ BOUNDARY RULE (MOST IMPORTANT):
      - NO: Reply EXACTLY:
        Not in the GCE A/L ICT syllabus.
 
+3. PAST PAPERS & UNITS:
+   - If Past Paper context is provided with a specific question:
+     - You MUST provide a DETAILED EXPLANATION. Do NOT just say the answer number.
+     - First show the question and options clearly.
+     - Then explain WHY the correct answer is correct using A/L ICT concepts.
+     - Briefly explain why other key options are wrong.
+     - Follow the INSTRUCTION block inside the Past Paper context.
+   - For unit-based question requests: Provide the list of questions exactly as found in the source. Do not explain them unless asked.
+   - If the Past Paper Context says MISSING PAST PAPER QUERY, you MUST follow its instructions exactly (ask the user to provide the question) and DO NOT say 'Not in the GCE A/L ICT syllabus'.
+
+
 DEPTH LIMIT RULE (CRITICAL):
 - Answer ONLY to the depth expected in the GCE A/L ICT syllabus.
 - If a question asks about internal electronics, memory cells,
@@ -204,10 +336,9 @@ IMPORTANT:
 - The exact wording does NOT need to appear in the textbook.
 - Stay strictly within ICT.
 
-PDF RULE:
-- PDF text is OPTIONAL.
-- Evidence is NOT REQUIRED.
-- If PDF is irrelevant or empty, still answer if within syllabus.
+PDF/SOURCE RULE:
+- PDF/Past Paper text is OPTIONAL but preferred if provided.
+- If context is irrelevant or empty, still answer if within syllabus.
 
 FORMAT (MUST FOLLOW EXACTLY):
 
@@ -218,6 +349,9 @@ ANSWER: <your answer OR 'Not in the GCE A/L ICT syllabus.'>
 QUESTION:
 {question}
 
+PAST PAPER CONTEXT (optional):
+{past_paper_context}
+
 PDF TEXT (optional):
 {pdf_text or ""}
 """.strip()
@@ -226,16 +360,14 @@ PDF TEXT (optional):
     messages = [{"role": "system", "content": system_prompt}]
 
     if history:
-        # history items are dicts: {"role": "user"|"assistant", "text": "..."}
         for h in history:
             h_role = h.get("role")
+            content = h.get("content", "") or h.get("text", "") # Handle both
             if h_role == "user":
-                messages.append({"role": "user", "content": h.get("text", "")})
+                messages.append({"role": "user", "content": content})
             else:
-                # assistant stored messages should be sent as assistant role
-                messages.append({"role": "assistant", "content": h.get("text", "")})
+                messages.append({"role": "assistant", "content": content})
 
-    # Append current user message last
     messages.append({"role": "user", "content": user_content})
 
     completion = client.chat.completions.create(
@@ -253,7 +385,6 @@ PDF TEXT (optional):
     content = full_content.strip()
     answer = _extract_answer(content)
 
-    # ❗ If NOT in syllabus → return NO evidence
     if answer.strip() == "Not in the GCE A/L ICT syllabus.":
         return {
             "answer": answer,
@@ -263,6 +394,6 @@ PDF TEXT (optional):
 
     return {
         "answer": answer,
-        "evidence": [],   # evidence intentionally empty
-        "used_pdf": bool(pdf_text)
+        "evidence": [],
+        "used_pdf": bool(pdf_text or past_paper_context)
     }
