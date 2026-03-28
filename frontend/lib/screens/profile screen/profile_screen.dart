@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:frontend/services/user_profile_service.dart';
 import 'package:frontend/screens/profile screen/edit_profile_screen.dart';
 import 'package:frontend/services/auth.dart';
+import 'package:frontend/screens/profile screen/about_brainex_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -723,16 +724,22 @@ class _MoreSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: const [
+      children: [
         Expanded(
           child: _MoreTile(
             icon: Icons.info_outline,
-            iconColor: Color(0xFF40C4FF),
+            iconColor: const Color(0xFF40C4FF),
             text: "About Brainex",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AboutBrainexScreen()),
+              );
+            },
           ),
         ),
-        SizedBox(width: 12),
-        Expanded(
+        const SizedBox(width: 12),
+        const Expanded(
           child: _MoreTile(
             icon: Icons.help_outline,
             iconColor: Colors.redAccent,
@@ -748,33 +755,38 @@ class _MoreTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String text;
+  final VoidCallback? onTap;
 
   const _MoreTile({
     required this.icon,
     required this.iconColor,
     required this.text,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return DarkCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: onTap,
+      child: DarkCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-          const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 12),
-        ],
+            const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 12),
+          ],
+        ),
       ),
     );
   }
