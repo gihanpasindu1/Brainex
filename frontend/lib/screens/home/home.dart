@@ -1,6 +1,6 @@
 import 'dart:ui';
-import 'dart:math';
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/providers/locale_provider.dart';
