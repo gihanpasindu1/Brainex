@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/providers/locale_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:frontend/services/user_profile_service.dart';
 import 'package:frontend/screens/chatbot/chatbot_screen.dart';
 import 'package:frontend/screens/upload_screen/upload_screen.dart';
 import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
@@ -35,6 +37,25 @@ class BrainexHome extends StatefulWidget {
 
 class _BrainexHomeState extends State<BrainexHome> {
   bool _isCountdownVisible = true;
+  String? _examYear;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final profile = await UserProfileService().getUserProfile(user.uid);
+      if (profile != null && profile['exam_year'] != null && mounted) {
+        setState(() {
+          _examYear = profile['exam_year'].toString();
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,13 +63,21 @@ class _BrainexHomeState extends State<BrainexHome> {
     String t(String key) => tr?.translate(key) ?? key;
     final localeProvider = Provider.of<LocaleProvider>(context);
 
-    // Calculate time until next August 10
+    // Calculate time until target August 10
     final DateTime now = DateTime.now();
-    DateTime targetDate = DateTime(now.year, 8, 10);
-    if (now.isAfter(targetDate)) {
+    int targetYear = now.year;
+    if (_examYear != null) {
+      targetYear = int.tryParse(_examYear!) ?? now.year;
+    }
+    DateTime targetDate = DateTime(targetYear, 8, 10);
+    
+    if (_examYear == null && now.isAfter(targetDate)) {
       targetDate = DateTime(now.year + 1, 8, 10);
     }
-    final Duration diff = targetDate.difference(now);
+    
+    Duration diff = targetDate.difference(now);
+    if (diff.isNegative) diff = Duration.zero;
+
     final int days = diff.inDays;
     final int hours = diff.inHours % 24;
     final int minutes = diff.inMinutes % 60;
