@@ -62,6 +62,7 @@ async def generate_modelpapers(req: GenerateModelPaperRequest):
             "term": req.term,
             "topic": req.topic,
             "duration_min": 120,
+            "user_id": req.user_id,
             "questions": questions,
         }
 
@@ -79,7 +80,8 @@ async def list_modelpapers(
     grade: Optional[str] = None, 
     term: Optional[str] = None, 
     paper_type: Optional[str] = None,
-    year: Optional[int] = None
+    year: Optional[int] = None,
+    user_id: Optional[str] = None
 ):
     from typing import Any
     query: dict[str, Any] = {}
@@ -98,6 +100,9 @@ async def list_modelpapers(
         elif "Subject" in paper_type: query["paper_type"] = "Subject"
         elif "Past" in paper_type: query["paper_type"] = "Past Paper"
         else: query["paper_type"] = paper_type
+    
+    if user_id:
+        query["user_id"] = user_id
 
     cursor = model_papers_col.find(query).sort("_id", -1).limit(50)
     items = []

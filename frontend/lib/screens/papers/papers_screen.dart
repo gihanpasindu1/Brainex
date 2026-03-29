@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart' as frontend;
 import 'exam_screen.dart';
 
@@ -70,7 +71,6 @@ class _PapersScreenState extends State<PapersScreen> {
         } else if (selectedPaperType == 'Subject Paper') {
           apiType = 'Subject';
         }
-
         String query = "paper_type=$apiType";
         // ONLY send grade/term if NOT a Final paper (Finals conceptually encompass many units)
         if (apiType != 'Final') {
@@ -81,6 +81,12 @@ class _PapersScreenState extends State<PapersScreen> {
             query += "&term=${Uri.encodeComponent(selectedTerm!)}";
           }
         }
+        
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          query += "&user_id=${user.uid}";
+        }
+        
         uri = Uri.parse("http://10.0.2.2:8000/modelpapers?$query");
       } else {
         // Fetch official past papers registry
@@ -957,6 +963,7 @@ class _PapersScreenState extends State<PapersScreen> {
         "difficulty": selectedDifficulty ?? "Medium",
         "count": 1,
         "mcq_count": 50,
+        "user_id": FirebaseAuth.instance.currentUser?.uid,
       };
 
       if (apiType == 'Term' || apiType == 'Subject') {

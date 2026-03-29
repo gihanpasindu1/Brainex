@@ -67,7 +67,7 @@ class _ExamDetailsState extends State<ExamDetails> {
                   DropdownButtonFormField<String>(
                     dropdownColor: const Color(0xFF1D2671),
                     style: const TextStyle(color: Colors.white),
-                    value: _selectedGrade,
+                    initialValue: _selectedGrade,
                     items: const [
                       DropdownMenuItem(value: "A/L", child: Text("A/L")),
                     ],
@@ -79,7 +79,7 @@ class _ExamDetailsState extends State<ExamDetails> {
                   DropdownButtonFormField<String>(
                     dropdownColor: const Color(0xFF1D2671),
                     style: const TextStyle(color: Colors.white),
-                    value: _selectedYear,
+                    initialValue: _selectedYear,
                     items: const [
                       DropdownMenuItem(value: "2026", child: Text("2026")),
                       DropdownMenuItem(value: "2027", child: Text("2027")),
