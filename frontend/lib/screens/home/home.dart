@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:math';
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
 import 'package:frontend/services/localization_service.dart';
 import 'package:frontend/providers/locale_provider.dart';
@@ -9,7 +10,12 @@ import 'package:frontend/screens/shortnote_page/short_notes_page.dart';
 import 'package:frontend/screens/ai_studyplan/ai_study_plan_setup.dart';
 import 'package:frontend/screens/papers/papers_screen.dart';
 import 'package:frontend/screens/activity_challenges/activity_challenges_screen.dart';
+import 'package:frontend/services/motivation_service.dart';
 import 'package:frontend/screens/notifications/notifications_page.dart';
+import 'package:frontend/services/user_profile_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -34,6 +40,101 @@ class BrainexHome extends StatefulWidget {
 
 class _BrainexHomeState extends State<BrainexHome> {
   bool _isCountdownVisible = true;
+  late String _motivationQuote;
+  late Color _motivationColor;
+
+  // Countdown timers
+  String _days = '0';
+  String _hours = '0';
+  String _minutes = '0';
+  Timer? _timer;
+  int? _examYear;
+
+  final List<String> _quotes = [
+    'Stay Focused', 'Dream Big', 'Work Hard',
+    'Keep Pushing', 'Never Settle', 'Think Big',
+    'Aim High', 'Keep Growing', 'Be Great',
+    'Stay Sharp', 'Stay Strong', 'Move Forward',
+    'Be Bold', 'Push Limits', 'Keep Going',
+    'Rise Up', 'Take Action', 'Stay Positive',
+    'Work Smart', 'Believe Now', 'No Excuses',
+    'Chase Dreams', 'Keep Learning', 'Stay Humble',
+    'Own It', 'Think Fast', 'Stay Calm',
+    'Show Up', 'Keep Building', 'Go Hard'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _shuffleMotivation();
+    _fetchProfileData();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchProfileData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final profile = await UserProfileService().getUserProfile(user.uid);
+      if (profile != null && profile['exam_year'] != null) {
+        final year = int.tryParse(profile['exam_year'].toString());
+        if (year != null) {
+          setState(() {
+            _examYear = year;
+          });
+          _startCountdown();
+        }
+      }
+    }
+  }
+
+  void _startCountdown() {
+    _timer?.cancel();
+    _updateTime();
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _updateTime();
+    });
+  }
+
+  void _updateTime() {
+    if (_examYear == null) return;
+
+    final targetDate = DateTime(_examYear!, 8, 10);
+    final now = DateTime.now();
+    final difference = targetDate.difference(now);
+
+    if (difference.isNegative) {
+      setState(() {
+        _days = '0';
+        _hours = '0';
+        _minutes = '0';
+      });
+      return;
+    }
+
+    setState(() {
+      _days = difference.inDays.toString();
+      _hours = (difference.inHours % 24).toString();
+      _minutes = (difference.inMinutes % 60).toString();
+    });
+  }
+
+  void _shuffleMotivation() {
+    final random = Random();
+    _motivationQuote = _quotes[random.nextInt(_quotes.length)];
+    _motivationColor = [
+      Colors.blueAccent,
+      Colors.purpleAccent,
+      Colors.pinkAccent,
+      Colors.orangeAccent,
+      Colors.greenAccent,
+      Colors.cyanAccent,
+    ][random.nextInt(6)];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +277,7 @@ class _BrainexHomeState extends State<BrainexHome> {
                                 children: [
                                   const SizedBox(height: 12),
                                   Text(
-                                    '48 ${t('days')}',
+                                    '$_days ${t('days')}',
                                     style: const TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w800,
@@ -187,11 +288,15 @@ class _BrainexHomeState extends State<BrainexHome> {
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      const _Pill(text: '11h'),
+                                      _Pill(
+                                        text: '${_hours}h',
+                                        glowColor: Colors.cyanAccent,
+                                      ),
                                       const SizedBox(width: 10),
-                                      const _Pill(text: '21m'),
-                                      const SizedBox(width: 10),
-                                      _Pill(text: t('keep_going')),
+                                      _Pill(
+                                        text: '${_minutes}m',
+                                        glowColor: Colors.cyanAccent,
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -221,43 +326,39 @@ class _BrainexHomeState extends State<BrainexHome> {
                     ),
                     const SizedBox(width: 14),
                     Expanded(
-                      child: _GlassCard(
-                        radius: 22,
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t('motivation_title'),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _shuffleMotivation();
+                          });
+                        },
+                        child: _GlassCard(
+                          radius: 22,
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                t('motivation_title'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w600,
+                                  shadows: [
+                                    Shadow(
+                                      color: _motivationColor.withValues(alpha: 0.8),
+                                      blurRadius: 12,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            _Pill(
-                              text: [
-                                'Stay Focused', 'Dream Big', 'Work Hard',
-                                'Keep Pushing', 'Never Settle', 'Think Big',
-                                'Aim High', 'Keep Growing', 'Be Great',
-                                'Stay Sharp', 'Stay Strong', 'Move Forward',
-                                'Be Bold', 'Push Limits', 'Keep Going',
-                                'Rise Up', 'Take Action', 'Stay Positive',
-                                'Work Smart', 'Believe Now', 'No Excuses',
-                                'Chase Dreams', 'Keep Learning', 'Stay Humble',
-                                'Own It', 'Think Fast', 'Stay Calm',
-                                'Show Up', 'Keep Building', 'Go Hard'
-                              ][Random().nextInt(30)],
-                              glowColor: [
-                                Colors.blueAccent,
-                                Colors.purpleAccent,
-                                Colors.pinkAccent,
-                                Colors.orangeAccent,
-                                Colors.greenAccent,
-                                Colors.cyanAccent,
-                              ][Random().nextInt(6)],
-                            ),
-                          ],
+                              const SizedBox(height: 10),
+                              _Pill(
+                                text: _motivationQuote,
+                                glowColor: _motivationColor,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -486,6 +587,8 @@ class _Pill extends StatelessWidget {
           color: glowColor != null ? Colors.white : Colors.white70,
           fontWeight: FontWeight.w600,
         ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -846,3 +949,88 @@ class _NavItem extends StatelessWidget {
 }
 
 //test comment
+
+class _MotivationWidget extends StatefulWidget {
+  final String title;
+  const _MotivationWidget({required this.title});
+
+  @override
+  State<_MotivationWidget> createState() => _MotivationWidgetState();
+}
+
+class _MotivationWidgetState extends State<_MotivationWidget> {
+  final MotivationService _motivationService = MotivationService();
+  late Future<Map<String, dynamic>> _motivationFuture;
+  int? _lastQuoteId;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMotivation();
+  }
+
+  void _fetchMotivation() {
+    setState(() {
+      _motivationFuture = _motivationService.fetchMotivation(
+        lastQuoteId: _lastQuoteId,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _GlassCard(
+      radius: 22,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              GestureDetector(
+                onTap: _fetchMotivation,
+                child: const Icon(
+                  Icons.refresh,
+                  size: 14,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          FutureBuilder<Map<String, dynamic>>(
+            future: _motivationFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white70,
+                  ),
+                );
+              }
+              String quote = 'Focused learner';
+              if (snapshot.hasData && snapshot.data != null) {
+                final data = snapshot.data!;
+                quote = data['quote']?.toString() ?? quote;
+                _lastQuoteId = data['id'] is int ? data['id'] : _lastQuoteId;
+              }
+              return _Pill(text: quote);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
