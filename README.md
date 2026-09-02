@@ -369,7 +369,7 @@ flowchart TD
 
 ## 10) Local Setup & Run Guide
 
-## Backend
+### Backend
 
 ```bash
 cd /home/runner/work/Brainex/Brainex/backend
@@ -379,7 +379,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## Frontend
+### Frontend
 
 ```bash
 cd /home/runner/work/Brainex/Brainex/frontend
